@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
     }
 
     const role = (session.user as any).role;
-    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+    if (!["ADMIN", "COURIER"].includes(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

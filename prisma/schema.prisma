@@ -13,7 +13,6 @@ datasource db {
 enum Role {
   CUSTOMER
   ADMIN
-  DISPATCHER
   COURIER
 }
 
@@ -47,14 +46,27 @@ model PickupRequest {
   contactEmail        String?
   pickupAddress       String
   pickupCity          String
+  pickupState         String?
+  pickupPostalCode    String?
   pickupCountry       String
+  recipientName       String
+  recipientEmail      String?
+  recipientPhone      String
+  recipientPhoneSecondary String?
+  recipientAddress    String
+  recipientCity       String
+  recipientState      String?
+  recipientPostalCode String?
+  recipientCountry    String
   destinationCountry  String
   packageType         String
   estimatedWeight     Float?
   dimensions          String?
+  packageContents     String?
   preferredDate       DateTime
   preferredTimeWindow String
   specialInstructions String?
+  notes               String?
   status              PickupStatus    @default(PENDING)
   assignedCourierId   String?
   assignedCourier     User?           @relation("CourierAssignments", fields: [assignedCourierId], references: [id])

@@ -72,7 +72,7 @@ export async function PATCH(
     const role = (session.user as any).role;
     const userId = (session.user as any).id;
 
-    if (!["ADMIN", "DISPATCHER"].includes(role)) {
+    if (role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
