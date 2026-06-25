@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -76,11 +76,7 @@ export default function MiCuentaPage() {
           </Link>
           <h1 className="text-2xl font-bold text-indigo-600">Mi Cuenta</h1>
           <button
-            onClick={() => {
-              fetch("/api/auth/signout", { method: "POST" }).then(() => {
-                router.push("/");
-              });
-            }}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="text-red-600 hover:text-red-800 font-semibold"
           >
             Cerrar Sesión

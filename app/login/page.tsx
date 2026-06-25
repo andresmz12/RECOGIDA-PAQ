@@ -2,17 +2,26 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Show error from URL (e.g. ?error=CredentialsSignin when NextAuth redirects back)
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      setError("Email o contraseña inválidos");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,46 +29,31 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      console.log("Attempting login with:", email);
-
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: true,
-        callbackUrl: "/dashboard",
+        redirect: false,
       });
 
-      console.log("Login result:", result);
-
       if (!result) {
-        setError("No response from server. Please try again.");
-        setIsLoading(false);
+        setError("Sin respuesta del servidor. Intenta de nuevo.");
         return;
       }
 
       if (result.error) {
-        console.error("Login error:", result.error);
         setError("Email o contraseña inválidos");
-        setIsLoading(false);
         return;
       }
 
-      // If redirect:true, signIn will handle the redirect
-      // But just in case, also use router.push as fallback
-      if (result.ok || result.url) {
-        console.log("Login successful, waiting for redirect...");
-        // Give it a moment then redirect manually
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 500);
+      if (result.ok) {
+        window.location.href = "/dashboard";
         return;
       }
 
-      setError("Unknown error. Please try again.");
-      setIsLoading(false);
+      setError("Error desconocido. Intenta de nuevo.");
     } catch (err) {
-      console.error("Login exception:", err);
       setError("Error: " + (err as Error).message);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -109,6 +103,14 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm">
+          <p className="font-semibold text-gray-700 mb-2">Usuarios de prueba:</p>
+          <p className="text-gray-600">admin@example.com / password123</p>
+          <p className="text-gray-600">dispatcher@example.com / password123</p>
+          <p className="text-gray-600">courier@example.com / password123</p>
+          <p className="text-gray-600">customer@example.com / password123</p>
+        </div>
+
         <p className="text-center text-gray-600 mt-6">
           ¿No tienes cuenta?{" "}
           <Link href="/registro" className="text-indigo-600 hover:text-indigo-800 font-semibold">
@@ -129,5 +131,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

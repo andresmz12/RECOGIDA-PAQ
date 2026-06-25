@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -79,11 +79,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-indigo-600">O'Globo Cargo Dashboard</h1>
           <button
-            onClick={() => {
-              fetch("/api/auth/signout", { method: "POST" }).then(() => {
-                router.push("/");
-              });
-            }}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="text-red-600 hover:text-red-800 font-semibold"
           >
             Cerrar Sesión
