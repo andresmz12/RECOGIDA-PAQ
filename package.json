@@ -7,6 +7,7 @@
     "build": "node scripts/build.js",
     "start": "node scripts/start.js",
     "lint": "next lint",
+    "verify": "node scripts/verify-setup.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
