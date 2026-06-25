@@ -79,6 +79,7 @@ declare module "@prisma/client" {
       findFirst(query?: any): Promise<PickupRequest | null>;
       findMany(query?: any): Promise<PickupRequest[]>;
       count(query?: any): Promise<number>;
+      groupBy(query: any): Promise<any[]>;
       update(query: any): Promise<PickupRequest>;
       delete(query: any): Promise<PickupRequest>;
     };
