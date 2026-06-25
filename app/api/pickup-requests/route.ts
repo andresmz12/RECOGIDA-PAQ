@@ -138,7 +138,6 @@ export async function POST(request: NextRequest) {
         recipientState: recipientState || null,
         recipientPostalCode: recipientPostalCode || null,
         recipientCountry,
-        recipientCountry,
         // Package
         packageType,
         estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight) : null,
