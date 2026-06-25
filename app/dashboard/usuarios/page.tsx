@@ -17,10 +17,10 @@ interface User {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Administrador", DISPATCHER: "Despachador", COURIER: "Mensajero", CUSTOMER: "Cliente",
+  ADMIN: "Administrador", COURIER: "Mensajero", CUSTOMER: "Cliente",
 };
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-violet-100 text-violet-700", DISPATCHER: "bg-blue-100 text-blue-700",
+  ADMIN: "bg-violet-100 text-violet-700",
   COURIER: "bg-amber-100 text-amber-700", CUSTOMER: "bg-emerald-100 text-emerald-700",
 };
 const EMPTY = { email: "", password: "", name: "", phone: "", role: "COURIER" };
@@ -99,7 +99,6 @@ export default function UsuariosPage() {
           <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
             <option value="">Todos los roles</option>
             <option value="ADMIN">Administrador</option>
-            <option value="DISPATCHER">Despachador</option>
             <option value="COURIER">Mensajero</option>
             <option value="CUSTOMER">Cliente</option>
           </select>
@@ -177,15 +176,13 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Teléfono</label>
-                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="+57 300 000 0000" />
+                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="+1 (555) 000-0000" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Rol</label>
                 <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
                   <option value="ADMIN">Administrador</option>
-                  <option value="DISPATCHER">Despachador</option>
                   <option value="COURIER">Mensajero / Courier</option>
-                  <option value="CUSTOMER">Cliente</option>
                 </select>
               </div>
               {error && <p className="text-red-500 text-sm bg-red-50 px-4 py-2.5 rounded-xl">{error}</p>}

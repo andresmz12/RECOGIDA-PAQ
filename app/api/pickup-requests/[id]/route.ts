@@ -72,7 +72,7 @@ export async function PATCH(
     const role = (session.user as any).role;
     const userId = (session.user as any).id;
 
-    if (!["ADMIN", "DISPATCHER"].includes(role)) {
+    if (role !== "ADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -93,16 +93,11 @@ export async function PATCH(
     const oldStatus = pickupRequest.status;
 
     // Update the request
-    const updatedRequest = await prisma.pickupRequest.update({
+    await prisma.pickupRequest.update({
       where: { id: params.id },
       data: {
         ...(status && { status }),
         ...(assignedCourierId && { assignedCourierId }),
-      },
-      include: {
-        user: true,
-        assignedCourier: true,
-        statusHistory: true,
       },
     });
 
@@ -125,12 +120,24 @@ export async function PATCH(
           pickupRequest.trackingCode,
           pickupRequest.contactName,
           status,
-          updatedRequest.preferredDate
+          pickupRequest.preferredDate
         );
       }
     }
 
-    return NextResponse.json(updatedRequest);
+    // Re-fetch so the response includes the new status history entry
+    const finalRequest = await prisma.pickupRequest.findUnique({
+      where: { id: params.id },
+      include: {
+        user: true,
+        assignedCourier: true,
+        statusHistory: {
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    return NextResponse.json(finalRequest);
   } catch (error) {
     console.error("Error updating pickup request:", error);
     return NextResponse.json(

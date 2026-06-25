@@ -13,13 +13,13 @@ export async function middleware(req: NextRequest) {
     secureCookie: secureCookies,
   });
 
-  // Dashboard routes - require ADMIN, DISPATCHER, or COURIER
+  // Dashboard routes - require ADMIN or COURIER
   if (pathname.startsWith("/dashboard")) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
     const role = token.role as string;
-    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+    if (!["ADMIN", "COURIER"].includes(role)) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
     if (pathname.startsWith("/dashboard/usuarios") && role !== "ADMIN") {

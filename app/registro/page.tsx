@@ -56,13 +56,20 @@ export default function RegistroPage() {
         return;
       }
 
-      // Auto-login
-      await signIn("credentials", {
+      // Auto-login - ESPERAR resultado y validar
+      const signInResult = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
+      if (!signInResult || !signInResult.ok) {
+        // Cuenta creada exitosamente pero auto-login falló — mandar al login
+        router.push("/login?registered=1");
+        return;
+      }
+
+      // CUSTOMER siempre va a /mi-cuenta
       router.push("/mi-cuenta");
     } catch (err) {
       setError("Ocurrió un error. Intenta de nuevo.");
@@ -111,7 +118,7 @@ export default function RegistroPage() {
               value={formData.phone}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-              placeholder="+1234567890"
+              placeholder="+1 (555) 123-4567"
             />
           </div>
 

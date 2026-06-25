@@ -24,7 +24,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status !== "authenticated") return;
     const role = (session?.user as any)?.role;
-    if (!["ADMIN", "DISPATCHER"].includes(role)) return;
+    if (role !== "ADMIN") return;
 
     const load = async () => {
       try {

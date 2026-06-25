@@ -80,8 +80,8 @@ export default function SolicitudDetailPage() {
     const load = async () => {
       const [pickupRes, couriersRes] = await Promise.all([
         fetch(`/api/pickup-requests/${id}`),
-        role === "ADMIN" || role === "DISPATCHER"
-          ? fetch("/api/admin/users")
+        role === "ADMIN"
+          ? fetch("/api/couriers")
           : Promise.resolve(null),
       ]);
       if (!pickupRes.ok) { router.push("/dashboard/solicitudes"); return; }
@@ -92,7 +92,7 @@ export default function SolicitudDetailPage() {
 
       if (couriersRes) {
         const ud = await couriersRes.json();
-        setCouriers((ud.users ?? []).filter((u: any) => u.role === "COURIER"));
+        setCouriers(ud.couriers ?? []);
       }
       setLoading(false);
     };
@@ -259,7 +259,7 @@ export default function SolicitudDetailPage() {
           </div>
 
           {/* Sidebar: actions */}
-          {(role === "ADMIN" || role === "DISPATCHER") && (
+          {role === "ADMIN" && (
             <div>
               <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-8">
                 <h2 className="font-bold text-slate-900 mb-5">Actualizar solicitud</h2>

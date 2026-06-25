@@ -11,19 +11,36 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const {
+      // Sender/pickup
       contactName,
       contactPhone,
       contactEmail,
       pickupAddress,
       pickupCity,
+      pickupState,
+      pickupPostalCode,
       pickupCountry,
-      destinationCountry,
+      // Recipient
+      recipientName,
+      recipientEmail,
+      recipientPhone,
+      recipientPhoneSecondary,
+      recipientAddress,
+      recipientCity,
+      recipientState,
+      recipientPostalCode,
+      recipientCountry,
+      // Package
       packageType,
       estimatedWeight,
       dimensions,
+      packageContents,
+      // Preferences
       preferredDate,
       preferredTimeWindow,
       specialInstructions,
+      notes,
+      // Account
       createAccount,
       password,
       userId,
@@ -36,7 +53,11 @@ export async function POST(request: NextRequest) {
       !pickupAddress ||
       !pickupCity ||
       !pickupCountry ||
-      !destinationCountry ||
+      !recipientName ||
+      !recipientPhone ||
+      !recipientAddress ||
+      !recipientCity ||
+      !recipientCountry ||
       !packageType ||
       !preferredDate ||
       !preferredTimeWindow
@@ -98,19 +119,35 @@ export async function POST(request: NextRequest) {
       data: {
         trackingCode,
         userId: linkUserId,
+        // Sender/pickup
         contactName,
         contactPhone,
         contactEmail,
         pickupAddress,
         pickupCity,
+        pickupState: pickupState || null,
+        pickupPostalCode: pickupPostalCode || null,
         pickupCountry,
-        destinationCountry,
+        // Recipient
+        recipientName,
+        recipientEmail: recipientEmail || null,
+        recipientPhone,
+        recipientPhoneSecondary: recipientPhoneSecondary || null,
+        recipientAddress,
+        recipientCity,
+        recipientState: recipientState || null,
+        recipientPostalCode: recipientPostalCode || null,
+        recipientCountry,
+        // Package
         packageType,
         estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight) : null,
-        dimensions,
+        dimensions: dimensions || null,
+        packageContents: packageContents || null,
+        // Preferences
         preferredDate: new Date(preferredDate),
         preferredTimeWindow,
-        specialInstructions,
+        specialInstructions: specialInstructions || null,
+        notes: notes || null,
         status: "PENDING",
       },
     });
@@ -153,7 +190,7 @@ export async function GET(request: NextRequest) {
     }
 
     const role = (session.user as any).role;
-    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+    if (!["ADMIN", "COURIER"].includes(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

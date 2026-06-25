@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AddressFields from "@/components/AddressFields";
+import { requiresState, requiresPostalCode } from "@/lib/countries";
 
 export default function RecogerPage() {
   const router = useRouter();
@@ -14,19 +16,42 @@ export default function RecogerPage() {
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
+    // Sender info
     contactName: "",
     contactPhone: "",
     contactEmail: "",
+
+    // Pickup address (always US)
     pickupAddress: "",
     pickupCity: "",
-    pickupCountry: "",
-    destinationCountry: "",
+    pickupState: "",
+    pickupPostalCode: "",
+    pickupCountry: "US",
+
+    // Recipient info
+    recipientName: "",
+    recipientEmail: "",
+    recipientPhone: "",
+    recipientPhoneSecondary: "",
+    recipientAddress: "",
+    recipientCity: "",
+    recipientState: "",
+    recipientPostalCode: "",
+    recipientCountry: "US",
+
+    // Package info
     packageType: "",
     estimatedWeight: "",
     dimensions: "",
+    packageContents: "",
+
+    // Pickup preferences
     preferredDate: "",
     preferredTimeWindow: "08:00-12:00",
     specialInstructions: "",
+    notes: "",
+
+    // Account creation
     createAccount: false,
     password: "",
     confirmPassword: "",
@@ -37,11 +62,7 @@ export default function RecogerPage() {
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +71,6 @@ export default function RecogerPage() {
     setIsLoading(true);
 
     try {
-      // Validation
       if (formData.createAccount) {
         if (!formData.password || !formData.confirmPassword) {
           setError("La contraseña es requerida si deseas crear cuenta");
@@ -62,6 +82,30 @@ export default function RecogerPage() {
           setIsLoading(false);
           return;
         }
+      }
+
+      if (!formData.pickupState) {
+        setError("El estado de recogida es requerido");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!formData.pickupPostalCode) {
+        setError("El código postal de recogida es requerido");
+        setIsLoading(false);
+        return;
+      }
+
+      if (requiresState(formData.recipientCountry) && !formData.recipientState) {
+        setError("El estado del destinatario es requerido para Estados Unidos");
+        setIsLoading(false);
+        return;
+      }
+
+      if (requiresPostalCode(formData.recipientCountry) && !formData.recipientPostalCode) {
+        setError("El código postal del destinatario es requerido para Estados Unidos");
+        setIsLoading(false);
+        return;
       }
 
       const payload: any = {
@@ -134,21 +178,19 @@ export default function RecogerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="max-w-2xl mx-auto px-4 bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-indigo-600 mb-8">Solicitar Recogida</h1>
+      <div className="max-w-4xl mx-auto px-4 bg-white rounded-lg shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-indigo-600 mb-8">Solicitar Recogida de Paquete</h1>
 
-        <form onSubmit={handleSubmit}>
-          {/* Contact Info */}
-          <div className="mb-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+
+          {/* 1 — SENDER INFO */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Información de Contacto
+              Información del Remitente
             </h2>
-
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Nombre Completo *
-                </label>
+                <label className="block text-gray-700 font-semibold mb-2">Nombre Completo *</label>
                 <input
                   type="text"
                   name="contactName"
@@ -160,15 +202,14 @@ export default function RecogerPage() {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Teléfono *
-                </label>
+                <label className="block text-gray-700 font-semibold mb-2">Teléfono *</label>
                 <input
                   type="tel"
                   name="contactPhone"
                   value={formData.contactPhone}
                   onChange={handleChange}
                   required
+                  placeholder="+1 (555) 123-4567"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
                 />
               </div>
@@ -188,144 +229,29 @@ export default function RecogerPage() {
             </div>
           </div>
 
-          {/* Pickup Address */}
-          <div className="mb-8">
+          {/* 2 — PICKUP ADDRESS (US only) */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
               Dirección de Recogida
+              <span className="ml-2 text-sm font-normal text-gray-500">🇺🇸 United States</span>
             </h2>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Dirección Completa *
-              </label>
-              <input
-                type="text"
-                name="pickupAddress"
-                value={formData.pickupAddress}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Ciudad *
-                </label>
-                <input
-                  type="text"
-                  name="pickupCity"
-                  value={formData.pickupCity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  País de Recogida *
-                </label>
-                <input
-                  type="text"
-                  name="pickupCountry"
-                  value={formData.pickupCountry}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Colombia"
-                />
-              </div>
-            </div>
+            <AddressFields
+              prefix="pickup"
+              formData={formData}
+              onChange={handleChange}
+              lockedCountry="US"
+            />
           </div>
 
-          {/* Package Info */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Información del Paquete
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Tipo de Paquete *
-                </label>
-                <select
-                  name="packageType"
-                  value={formData.packageType}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                >
-                  <option value="">Selecciona un tipo</option>
-                  <option value="DOCUMENTO">Documento</option>
-                  <option value="PAQUETE_PEQUEÑO">Paquete Pequeño</option>
-                  <option value="PAQUETE_MEDIANO">Paquete Mediano</option>
-                  <option value="PAQUETE_GRANDE">Paquete Grande</option>
-                  <option value="CAJA">Caja</option>
-                  <option value="OTRO">Otro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Peso Estimado (kg)
-                </label>
-                <input
-                  type="number"
-                  name="estimatedWeight"
-                  value={formData.estimatedWeight}
-                  onChange={handleChange}
-                  step="0.1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  País de Destino *
-                </label>
-                <input
-                  type="text"
-                  name="destinationCountry"
-                  value={formData.destinationCountry}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Ejemplo: España"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Dimensiones (opcional)
-                </label>
-                <input
-                  type="text"
-                  name="dimensions"
-                  value={formData.dimensions}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Ej: 20x30x40 cm"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Preferred Date/Time */}
-          <div className="mb-8">
+          {/* 3 — PICKUP PREFERENCES */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
               Preferencias de Recogida
             </h2>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Fecha Preferida *
-                </label>
+                <label className="block text-gray-700 font-semibold mb-2">Fecha Preferida *</label>
                 <input
                   type="date"
                   name="preferredDate"
@@ -337,18 +263,16 @@ export default function RecogerPage() {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Rango Horario Preferido *
-                </label>
+                <label className="block text-gray-700 font-semibold mb-2">Rango Horario *</label>
                 <select
                   name="preferredTimeWindow"
                   value={formData.preferredTimeWindow}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
                 >
-                  <option value="08:00-12:00">08:00 - 12:00</option>
-                  <option value="12:00-16:00">12:00 - 16:00</option>
-                  <option value="16:00-20:00">16:00 - 20:00</option>
+                  <option value="08:00-12:00">8:00 AM – 12:00 PM</option>
+                  <option value="12:00-16:00">12:00 PM – 4:00 PM</option>
+                  <option value="16:00-20:00">4:00 PM – 8:00 PM</option>
                 </select>
               </div>
             </div>
@@ -361,15 +285,164 @@ export default function RecogerPage() {
                 name="specialInstructions"
                 value={formData.specialInstructions}
                 onChange={handleChange}
-                rows={3}
+                rows={2}
+                placeholder="Ej: Llamar antes de llegar, usar puerta lateral..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                placeholder="Ej: Llamar antes de llegar, puerta lateral..."
               />
             </div>
           </div>
 
-          {/* Account Creation Option */}
-          <div className="mb-8 p-4 bg-blue-50 rounded-lg">
+          {/* 4 — RECIPIENT INFO */}
+          <div className="border-b pb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
+              Información del Destinatario
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Nombre Completo *</label>
+                <input
+                  type="text"
+                  name="recipientName"
+                  value={formData.recipientName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Email</label>
+                <input
+                  type="email"
+                  name="recipientEmail"
+                  value={formData.recipientEmail}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Teléfono *</label>
+                <input
+                  type="tel"
+                  name="recipientPhone"
+                  value={formData.recipientPhone}
+                  onChange={handleChange}
+                  required
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              {formData.recipientCountry !== "US" && (
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Segundo Teléfono (opcional)
+                  </label>
+                  <input
+                    type="tel"
+                    name="recipientPhoneSecondary"
+                    value={formData.recipientPhoneSecondary}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+              )}
+            </div>
+
+            <AddressFields prefix="recipient" formData={formData} onChange={handleChange} />
+
+            {/* Notes field */}
+            <div className="mt-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Notas para el Destinatario (opcional)
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={2}
+                placeholder="Información adicional sobre la entrega al destinatario..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+              />
+            </div>
+          </div>
+
+          {/* 5 — PACKAGE DETAILS */}
+          <div className="border-b pb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
+              Detalles del Paquete
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Tipo de Paquete *</label>
+                <select
+                  name="packageType"
+                  value={formData.packageType}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                >
+                  <option value="">Selecciona un tipo</option>
+                  <option value="DOCUMENTO">Documento</option>
+                  <option value="CAJA">Caja</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Peso Estimado (lbs)
+                </label>
+                <input
+                  type="number"
+                  name="estimatedWeight"
+                  value={formData.estimatedWeight}
+                  onChange={handleChange}
+                  step="0.1"
+                  min="0"
+                  placeholder="0.0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Dimensiones (opcional)
+                </label>
+                <input
+                  type="text"
+                  name="dimensions"
+                  value={formData.dimensions}
+                  onChange={handleChange}
+                  placeholder="Ej: 12 x 15 x 18 in"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Contenido del Paquete
+                </label>
+                <input
+                  type="text"
+                  name="packageContents"
+                  value={formData.packageContents}
+                  onChange={handleChange}
+                  placeholder="Ej: Documentos, electrónica, ropa"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 6 — ACCOUNT CREATION */}
+          <div className="bg-blue-50 rounded-lg p-4 border-b pb-8">
             <label className="flex items-center mb-4">
               <input
                 type="checkbox"
@@ -386,9 +459,7 @@ export default function RecogerPage() {
             {formData.createAccount && (
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Contraseña
-                  </label>
+                  <label className="block text-gray-700 font-semibold mb-2">Contraseña</label>
                   <input
                     type="password"
                     name="password"
@@ -399,9 +470,7 @@ export default function RecogerPage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Confirmar Contraseña
-                  </label>
+                  <label className="block text-gray-700 font-semibold mb-2">Confirmar Contraseña</label>
                   <input
                     type="password"
                     name="confirmPassword"
@@ -415,7 +484,7 @@ export default function RecogerPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
               {error}
             </div>
           )}
