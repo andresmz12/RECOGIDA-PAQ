@@ -1,61 +1,44 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-const publicRoutes = ["/", "/login", "/registro", "/recoger", "/rastreo"];
+export async function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
 
-export default withAuth(
-  function middleware(req: NextRequest & { nextauth: any }) {
-    const pathname = req.nextUrl.pathname;
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
-    // Check if route is public
-    if (publicRoutes.some((route) => pathname.startsWith(route))) {
-      return NextResponse.next();
+  // Dashboard routes - require ADMIN, DISPATCHER, or COURIER
+  if (pathname.startsWith("/dashboard")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-
-    const token = req.nextauth.token;
-
-    // Dashboard routes - require ADMIN, DISPATCHER, or COURIER
-    if (pathname.startsWith("/dashboard")) {
-      if (!["ADMIN", "DISPATCHER", "COURIER"].includes(token?.role)) {
-        return NextResponse.redirect(new URL("/login", req.url));
-      }
-
-      // Admin only routes
-      if (
-        pathname.startsWith("/dashboard/usuarios") &&
-        token?.role !== "ADMIN"
-      ) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      }
-
-      // Courier only routes
-      if (
-        pathname.startsWith("/dashboard/mis-recogidas") &&
-        token?.role !== "COURIER"
-      ) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      }
+    const role = token.role as string;
+    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-
-    // Customer routes
-    if (pathname.startsWith("/mi-cuenta")) {
-      if (token?.role !== "CUSTOMER") {
-        return NextResponse.redirect(new URL("/login", req.url));
-      }
+    if (pathname.startsWith("/dashboard/usuarios") && role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
+    if (pathname.startsWith("/dashboard/mis-recogidas") && role !== "COURIER") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
   }
-);
+
+  // Customer account routes
+  if (pathname.startsWith("/mi-cuenta")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if ((token.role as string) !== "CUSTOMER") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: [
-    "/dashboard/:path*",
-    "/mi-cuenta/:path*",
-  ],
+  matcher: ["/dashboard/:path*", "/mi-cuenta/:path*"],
 };

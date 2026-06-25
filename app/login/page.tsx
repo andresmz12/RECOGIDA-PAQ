@@ -31,7 +31,12 @@ export default function LoginPage() {
       }
 
       if (result.error) {
-        setError("Email o contraseña inválidos");
+        // Show the actual error code to help diagnose issues
+        if (result.error === "CredentialsSignin") {
+          setError("Email o contraseña inválidos");
+        } else {
+          setError(`Error: ${result.error}`);
+        }
         setIsLoading(false);
         return;
       }
@@ -41,7 +46,7 @@ export default function LoginPage() {
         return;
       }
 
-      setError("Error desconocido. Intenta de nuevo.");
+      setError(`Estado inesperado: ok=${result.ok} status=${result.status}`);
       setIsLoading(false);
     } catch (err) {
       setError("Error: " + (err as Error).message);
