@@ -2,26 +2,15 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Show error from URL (e.g. ?error=CredentialsSignin when NextAuth redirects back)
-  useEffect(() => {
-    const urlError = searchParams.get("error");
-    if (urlError) {
-      setError("Email o contraseña inválidos");
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,11 +26,13 @@ function LoginForm() {
 
       if (!result) {
         setError("Sin respuesta del servidor. Intenta de nuevo.");
+        setIsLoading(false);
         return;
       }
 
       if (result.error) {
         setError("Email o contraseña inválidos");
+        setIsLoading(false);
         return;
       }
 
@@ -51,9 +42,9 @@ function LoginForm() {
       }
 
       setError("Error desconocido. Intenta de nuevo.");
+      setIsLoading(false);
     } catch (err) {
       setError("Error: " + (err as Error).message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -61,7 +52,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold text-indigo-600 mb-8">O'Globo Cargo</h1>
+        <h1 className="text-3xl font-bold text-indigo-600 mb-8">O&#39;Globo Cargo</h1>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -104,11 +95,11 @@ function LoginForm() {
         </form>
 
         <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm">
-          <p className="font-semibold text-gray-700 mb-2">Usuarios de prueba:</p>
-          <p className="text-gray-600">admin@example.com / password123</p>
-          <p className="text-gray-600">dispatcher@example.com / password123</p>
-          <p className="text-gray-600">courier@example.com / password123</p>
-          <p className="text-gray-600">customer@example.com / password123</p>
+          <p className="font-semibold text-gray-700 mb-2">Usuarios de prueba (contraseña: password123):</p>
+          <p className="text-gray-600">admin@example.com</p>
+          <p className="text-gray-600">dispatcher@example.com</p>
+          <p className="text-gray-600">courier@example.com</p>
+          <p className="text-gray-600">customer@example.com</p>
         </div>
 
         <p className="text-center text-gray-600 mt-6">
@@ -131,13 +122,5 @@ function LoginForm() {
         </p>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
-      <LoginForm />
-    </Suspense>
   );
 }
