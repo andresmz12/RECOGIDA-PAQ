@@ -168,27 +168,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Test credentials */}
-          <div className="mt-6 bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/20">
-            <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">Cuentas de prueba · contraseña: password123</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {[
-                { email: "admin@example.com", role: "ADMIN", color: "text-violet-300" },
-                { email: "dispatcher@example.com", role: "DISPATCHER", color: "text-blue-300" },
-                { email: "courier@example.com", role: "COURIER", color: "text-amber-300" },
-                { email: "customer@example.com", role: "CUSTOMER", color: "text-emerald-300" },
-              ].map(u => (
-                <button
-                  key={u.email}
-                  onClick={() => setEmail(u.email)}
-                  className="text-left bg-white/10 hover:bg-white/20 transition-colors rounded-lg px-3 py-2 cursor-pointer"
-                >
-                  <p className={`font-bold ${u.color}`}>{u.role}</p>
-                  <p className="text-white/50 truncate">{u.email}</p>
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
