@@ -139,7 +139,7 @@ export default function UsuariosPage() {
         </Card>
 
         {/* Table */}
-        <Card variant="default" padding="none" className="overflow-hidden shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
@@ -216,7 +216,7 @@ export default function UsuariosPage() {
               </table>
             </div>
           )}
-        </Card>
+        </div>
       </div>
 
       {showModal && (
