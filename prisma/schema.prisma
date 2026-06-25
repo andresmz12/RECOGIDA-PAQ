@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  DISPATCHER
+  COURIER
+}
+
+enum PickupStatus {
+  PENDING
+  ASSIGNED
+  SCHEDULED
+  PICKED_UP
+  CANCELLED
+}
+
+model User {
+  id                 String          @id @default(cuid())
+  email              String          @unique
+  password           String?
+  name               String
+  phone              String?
+  role               Role            @default(CUSTOMER)
+  pickupRequests     PickupRequest[] @relation("CustomerRequests")
+  courierAssignments PickupRequest[] @relation("CourierAssignments")
+  createdAt          DateTime        @default(now())
+}
+
+model PickupRequest {
+  id                  String          @id @default(cuid())
+  trackingCode        String          @unique
+  userId              String?
+  user                User?           @relation("CustomerRequests", fields: [userId], references: [id])
+  contactName         String
+  contactPhone        String
+  contactEmail        String?
+  pickupAddress       String
+  pickupCity          String
+  pickupCountry       String
+  destinationCountry  String
+  packageType         String
+  estimatedWeight     Float?
+  dimensions          String?
+  preferredDate       DateTime
+  preferredTimeWindow String
+  specialInstructions String?
+  status              PickupStatus    @default(PENDING)
+  assignedCourierId   String?
+  assignedCourier     User?           @relation("CourierAssignments", fields: [assignedCourierId], references: [id])
+  statusHistory       StatusHistory[]
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+}
+
+model StatusHistory {
+  id              String         @id @default(cuid())
+  pickupRequestId String
+  pickupRequest   PickupRequest  @relation(fields: [pickupRequestId], references: [id])
+  fromStatus      PickupStatus?
+  toStatus        PickupStatus
+  changedById     String?
+  notes           String?
+  createdAt       DateTime       @default(now())
+}
