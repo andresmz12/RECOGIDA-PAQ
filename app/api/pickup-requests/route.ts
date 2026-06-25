@@ -198,6 +198,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const courierId = searchParams.get("courierId");
     const date = searchParams.get("date");
+    const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
@@ -209,6 +210,15 @@ export async function GET(request: NextRequest) {
 
     if (courierId) {
       where.assignedCourierId = courierId;
+    }
+
+    if (search) {
+      where.OR = [
+        { contactName: { contains: search, mode: "insensitive" } },
+        { trackingCode: { contains: search, mode: "insensitive" } },
+        { contactPhone: { contains: search, mode: "insensitive" } },
+        { recipientName: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     if (date) {

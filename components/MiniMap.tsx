@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-function FlyTo({ lat, lng }: { lat: number; lng: number }) {
+function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo([lat, lng], 7, { duration: 1.2 });
-  }, [lat, lng, map]);
+    map.flyTo([lat, lng], zoom, { duration: 1.2 });
+  }, [lat, lng, zoom, map]);
   return null;
 }
 
@@ -16,13 +16,14 @@ interface Props {
   lat: number;
   lng: number;
   label: string;
+  zoom?: number;
 }
 
-export default function MiniMap({ lat, lng, label }: Props) {
+export default function MiniMap({ lat, lng, label, zoom = 7 }: Props) {
   return (
     <MapContainer
       center={[lat, lng]}
-      zoom={7}
+      zoom={zoom}
       style={{ height: "100%", width: "100%", borderRadius: "inherit" }}
       zoomControl={false}
       scrollWheelZoom={false}
@@ -33,7 +34,7 @@ export default function MiniMap({ lat, lng, label }: Props) {
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
-      <FlyTo lat={lat} lng={lng} />
+      <FlyTo lat={lat} lng={lng} zoom={zoom} />
       <CircleMarker
         center={[lat, lng]}
         radius={10}

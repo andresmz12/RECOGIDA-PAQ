@@ -99,7 +99,7 @@ export default function SolicitudDetailPage() {
     const load = async () => {
       const [pickupRes, couriersRes] = await Promise.all([
         fetch(`/api/pickup-requests/${id}`),
-        role === "ADMIN"
+        ["ADMIN", "DISPATCHER"].includes(role)
           ? fetch("/api/couriers")
           : Promise.resolve(null),
       ]);
@@ -355,7 +355,7 @@ export default function SolicitudDetailPage() {
 
           {/* Sidebar: actions */}
           <div>
-            {role === "ADMIN" && (
+            {["ADMIN", "DISPATCHER"].includes(role) && (
               <Card variant="default" padding="lg" className="sticky top-8">
                 <h2 className="font-bold text-slate-900 mb-6">Actualizar solicitud</h2>
                 <form onSubmit={handleUpdate} className="space-y-5">
