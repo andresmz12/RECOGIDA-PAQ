@@ -18,28 +18,27 @@ async function main() {
   // Auto-resolve any failed migrations so deploy can proceed
   console.log("🔍 Checking for failed migrations...");
   try {
-    const { Client } = require("pg");
-    const client = new Client({ connectionString: process.env.DATABASE_URL });
-    await client.connect();
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
     try {
       // Check if the migrations table exists first
-      const tableCheck = await client.query(
-        `SELECT EXISTS (
-           SELECT FROM information_schema.tables
-           WHERE table_name = '_prisma_migrations'
-         ) AS exists`
-      );
+      const tableCheck = await prisma.$queryRaw`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_name = '_prisma_migrations'
+        ) AS exists
+      `;
 
-      if (tableCheck.rows[0].exists) {
-        const res = await client.query(
-          `UPDATE "_prisma_migrations"
-           SET "rolled_back_at" = NOW()
-           WHERE "finished_at" IS NULL
-             AND "rolled_back_at" IS NULL
-             AND "started_at" IS NOT NULL`
-        );
-        if (res.rowCount > 0) {
-          console.log(`⚠️  Marked ${res.rowCount} failed migration(s) as rolled back — will retry them now.`);
+      if (tableCheck[0] && tableCheck[0].exists) {
+        const rowCount = await prisma.$executeRaw`
+          UPDATE "_prisma_migrations"
+          SET "rolled_back_at" = NOW()
+          WHERE "finished_at" IS NULL
+            AND "rolled_back_at" IS NULL
+            AND "started_at" IS NOT NULL
+        `;
+        if (rowCount > 0) {
+          console.log(`⚠️  Marked ${rowCount} failed migration(s) as rolled back — will retry them now.`);
         } else {
           console.log("✓ No failed migrations found.\n");
         }
@@ -47,7 +46,7 @@ async function main() {
         console.log("✓ Migrations table not yet created (first run).\n");
       }
     } finally {
-      await client.end();
+      await prisma.$disconnect();
     }
   } catch (e) {
     console.log("⚠️  Could not check migration state:", e.message, "— continuing anyway.\n");
