@@ -170,6 +170,7 @@ export default function RecogerPage() {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  placeholder="+1 (555) 123-4567"
                 />
               </div>
             </div>
@@ -234,7 +235,7 @@ export default function RecogerPage() {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Colombia"
+                  placeholder="United States"
                 />
               </div>
             </div>
@@ -295,7 +296,7 @@ export default function RecogerPage() {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Ejemplo: España"
+                  placeholder="Ejemplo: México, Canada, China"
                 />
               </div>
 
@@ -309,7 +310,7 @@ export default function RecogerPage() {
                   value={formData.dimensions}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Ej: 20x30x40 cm"
+                  placeholder="Ej: 12x15x18 pulgadas o 30x38x45 cm"
                 />
               </div>
             </div>
@@ -363,7 +364,7 @@ export default function RecogerPage() {
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                placeholder="Ej: Llamar antes de llegar, puerta lateral..."
+                placeholder="Ej: Llamar antes, puerta lateral, apto. 5B..."
               />
             </div>
           </div>
