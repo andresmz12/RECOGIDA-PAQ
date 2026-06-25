@@ -172,7 +172,11 @@ export default function MapaPage() {
 
   const optimizeRoute = () => {
     if (!currentLocation || pickups.length === 0) return;
-    const active = pickups.filter((p) => p.status !== "PICKED_UP" && p.status !== "CANCELLED");
+    const active = pickups.filter(
+      (p): p is Pickup & { lat: number; lng: number } =>
+        p.status !== "PICKED_UP" && p.status !== "CANCELLED" &&
+        p.lat !== undefined && p.lng !== undefined
+    );
     const route = nearestNeighbor(currentLocation, active);
     setOptimizedRoute(route);
     setIsOptimized(true);
