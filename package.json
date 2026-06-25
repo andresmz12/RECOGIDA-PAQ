@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
+    "pg": "^8.11.3",
     "@sendgrid/mail": "^8.1.0",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20.10.0",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.11.0",
     "eslint": "^8.55.0",
     "eslint-config-next": "^14.2.0"
   }
