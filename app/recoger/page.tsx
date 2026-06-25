@@ -5,8 +5,80 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import AddressFields from "@/components/AddressFields";
-import { requiresState, requiresPostalCode } from "@/lib/countries";
+import Button from "@/components/Button";
+import Input from "@/components/Form/Input";
+import Select from "@/components/Form/Select";
+import Textarea from "@/components/Form/Textarea";
+import Alert from "@/components/Alert";
+import Container from "@/components/Container";
+import Card from "@/components/Card";
+
+const US_STATES = [
+  { value: "AL", label: "Alabama" },
+  { value: "AK", label: "Alaska" },
+  { value: "AZ", label: "Arizona" },
+  { value: "AR", label: "Arkansas" },
+  { value: "CA", label: "California" },
+  { value: "CO", label: "Colorado" },
+  { value: "CT", label: "Connecticut" },
+  { value: "DE", label: "Delaware" },
+  { value: "FL", label: "Florida" },
+  { value: "GA", label: "Georgia" },
+  { value: "HI", label: "Hawaii" },
+  { value: "ID", label: "Idaho" },
+  { value: "IL", label: "Illinois" },
+  { value: "IN", label: "Indiana" },
+  { value: "IA", label: "Iowa" },
+  { value: "KS", label: "Kansas" },
+  { value: "KY", label: "Kentucky" },
+  { value: "LA", label: "Louisiana" },
+  { value: "ME", label: "Maine" },
+  { value: "MD", label: "Maryland" },
+  { value: "MA", label: "Massachusetts" },
+  { value: "MI", label: "Michigan" },
+  { value: "MN", label: "Minnesota" },
+  { value: "MS", label: "Mississippi" },
+  { value: "MO", label: "Missouri" },
+  { value: "MT", label: "Montana" },
+  { value: "NE", label: "Nebraska" },
+  { value: "NV", label: "Nevada" },
+  { value: "NH", label: "New Hampshire" },
+  { value: "NJ", label: "New Jersey" },
+  { value: "NM", label: "New Mexico" },
+  { value: "NY", label: "New York" },
+  { value: "NC", label: "North Carolina" },
+  { value: "ND", label: "North Dakota" },
+  { value: "OH", label: "Ohio" },
+  { value: "OK", label: "Oklahoma" },
+  { value: "OR", label: "Oregon" },
+  { value: "PA", label: "Pennsylvania" },
+  { value: "RI", label: "Rhode Island" },
+  { value: "SC", label: "South Carolina" },
+  { value: "SD", label: "South Dakota" },
+  { value: "TN", label: "Tennessee" },
+  { value: "TX", label: "Texas" },
+  { value: "UT", label: "Utah" },
+  { value: "VT", label: "Vermont" },
+  { value: "VA", label: "Virginia" },
+  { value: "WA", label: "Washington" },
+  { value: "WV", label: "West Virginia" },
+  { value: "WI", label: "Wisconsin" },
+  { value: "WY", label: "Wyoming" },
+];
+
+const PACKAGE_TYPES = [
+  { value: "document", label: "Documento" },
+  { value: "small", label: "Paquete pequeño (< 5kg)" },
+  { value: "medium", label: "Paquete mediano (5-20kg)" },
+  { value: "large", label: "Paquete grande (> 20kg)" },
+  { value: "other", label: "Otro" },
+];
+
+const TIME_WINDOWS = [
+  { value: "08:00-12:00", label: "Mañana (8:00 - 12:00)" },
+  { value: "12:00-17:00", label: "Tarde (12:00 - 17:00)" },
+  { value: "17:00-20:00", label: "Noche (17:00 - 20:00)" },
+];
 
 export default function RecogerPage() {
   const router = useRouter();
@@ -16,53 +88,29 @@ export default function RecogerPage() {
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    // Sender info
     contactName: "",
     contactPhone: "",
     contactEmail: "",
-
-    // Pickup address (always US)
     pickupAddress: "",
     pickupCity: "",
-    pickupState: "",
+    pickupState: "CA",
     pickupPostalCode: "",
     pickupCountry: "US",
-
-    // Recipient info
-    recipientName: "",
-    recipientEmail: "",
-    recipientPhone: "",
-    recipientPhoneSecondary: "",
-    recipientAddress: "",
-    recipientCity: "",
-    recipientState: "",
-    recipientPostalCode: "",
-    recipientCountry: "US",
-
-    // Package info
-    packageType: "",
+    packageType: "medium",
     estimatedWeight: "",
     dimensions: "",
     packageContents: "",
-
-    // Pickup preferences
     preferredDate: "",
     preferredTimeWindow: "08:00-12:00",
     specialInstructions: "",
-    notes: "",
-
-    // Account creation
-    createAccount: false,
-    password: "",
-    confirmPassword: "",
+    destinationCountry: "CO",
   });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,433 +119,270 @@ export default function RecogerPage() {
     setIsLoading(true);
 
     try {
-      if (formData.createAccount) {
-        if (!formData.password || !formData.confirmPassword) {
-          setError("La contraseña es requerida si deseas crear cuenta");
-          setIsLoading(false);
-          return;
-        }
-        if (formData.password !== formData.confirmPassword) {
-          setError("Las contraseñas no coinciden");
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      if (!formData.pickupState) {
-        setError("El estado de recogida es requerido");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!formData.pickupPostalCode) {
-        setError("El código postal de recogida es requerido");
-        setIsLoading(false);
-        return;
-      }
-
-      if (requiresState(formData.recipientCountry) && !formData.recipientState) {
-        setError("El estado del destinatario es requerido para Estados Unidos");
-        setIsLoading(false);
-        return;
-      }
-
-      if (requiresPostalCode(formData.recipientCountry) && !formData.recipientPostalCode) {
-        setError("El código postal del destinatario es requerido para Estados Unidos");
-        setIsLoading(false);
-        return;
-      }
-
-      const payload: any = {
-        ...formData,
-        preferredDate: new Date(formData.preferredDate).toISOString(),
-      };
-
-      if (!formData.createAccount) {
-        delete payload.password;
-        delete payload.confirmPassword;
-      }
-
       const res = await fetch("/api/pickup-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
+        const data = await res.json();
         setError(data.error || "Error al crear la solicitud");
         setIsLoading(false);
         return;
       }
 
+      const data = await res.json();
       setTrackingCode(data.trackingCode);
       setStep("success");
     } catch (err) {
-      setError("Ocurrió un error. Intenta de nuevo.");
-    } finally {
+      setError("Error de conexión. Intenta de nuevo.");
       setIsLoading(false);
     }
   };
 
   if (step === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
-          <div className="text-5xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">¡Solicitud Confirmada!</h1>
-
-          <div className="bg-gray-100 p-6 rounded-lg mb-6">
-            <p className="text-sm text-gray-600 mb-2">Tu código de seguimiento</p>
-            <p className="text-3xl font-bold text-indigo-600">{trackingCode}</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+        <Container>
+          <div className="py-24 text-center">
+            <div className="mb-6 text-6xl animate-bounce">✓</div>
+            <h1 className="text-4xl font-black text-slate-900 mb-3">¡Solicitud creada!</h1>
+            <p className="text-xl text-slate-600 mb-8">
+              Tu código de seguimiento es:
+            </p>
+            <Card variant="elevated" padding="lg" className="max-w-md mx-auto mb-8">
+              <code className="text-3xl font-mono font-bold text-indigo-600">
+                {trackingCode}
+              </code>
+              <p className="text-slate-600 text-sm mt-4">
+                Guarda este código para rastrear tu recogida
+              </p>
+            </Card>
+            <p className="text-slate-600 mb-8">
+              Te enviaremos un email de confirmación a tu dirección de correo.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/">
+                <Button variant="outline">← Volver al inicio</Button>
+              </Link>
+              <Link href={`/rastreo/${trackingCode}`}>
+                <Button variant="primary">Rastrear mi paquete →</Button>
+              </Link>
+            </div>
           </div>
-
-          <p className="text-gray-600 mb-4">
-            Hemos enviado una confirmación a tu email. Guarda tu código para rastrear tu solicitud.
-          </p>
-
-          <div className="space-y-3">
-            <Link
-              href={`/rastreo/${trackingCode}`}
-              className="block bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700"
-            >
-              Ver Seguimiento
-            </Link>
-            <Link
-              href="/"
-              className="block bg-gray-200 text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-300"
-            >
-              Volver al Inicio
-            </Link>
-          </div>
-        </div>
+        </Container>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="max-w-4xl mx-auto px-4 bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-indigo-600 mb-8">Solicitar Recogida de Paquete</h1>
+    <div className="min-h-screen bg-white py-12">
+      <Container size="md">
+        {/* Header */}
+        <div className="mb-12">
+          <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mb-4 inline-block">
+            ← Volver
+          </Link>
+          <h1 className="text-4xl font-black text-slate-900 mb-2">
+            Solicitar Recogida
+          </h1>
+          <p className="text-lg text-slate-600">
+            Completa el formulario para solicitar la recogida de tu paquete
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        {error && (
+          <div className="mb-8">
+            <Alert
+              type="error"
+              title="Error al crear la solicitud"
+              message={error}
+              dismissible
+              onDismiss={() => setError("")}
+            />
+          </div>
+        )}
 
-          {/* 1 — SENDER INFO */}
-          <div className="border-b pb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Información del Remitente
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Nombre Completo *</label>
-                <input
-                  type="text"
-                  name="contactName"
-                  value={formData.contactName}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Teléfono *</label>
-                <input
-                  type="tel"
-                  name="contactPhone"
-                  value={formData.contactPhone}
-                  onChange={handleChange}
-                  required
-                  placeholder="+1 (555) 123-4567"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-gray-700 font-semibold mb-2">
-                Email (para recibir actualizaciones)
-              </label>
-              <input
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {/* Información del Remitente */}
+          <Card variant="default" padding="lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Tu información</h2>
+            <div className="grid sm:grid-cols-2 gap-6">
+              <Input
+                label="Nombre completo"
+                name="contactName"
+                value={formData.contactName}
+                onChange={handleChange}
+                required
+                placeholder="Juan Pérez"
+              />
+              <Input
+                label="Email"
                 type="email"
                 name="contactEmail"
                 value={formData.contactEmail}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                required
+                placeholder="tu@email.com"
               />
-            </div>
-          </div>
-
-          {/* 2 — PICKUP ADDRESS (US only) */}
-          <div className="border-b pb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Dirección de Recogida
-              <span className="ml-2 text-sm font-normal text-gray-500">🇺🇸 United States</span>
-            </h2>
-            <AddressFields
-              prefix="pickup"
-              formData={formData}
-              onChange={handleChange}
-              lockedCountry="US"
-            />
-          </div>
-
-          {/* 3 — PICKUP PREFERENCES */}
-          <div className="border-b pb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Preferencias de Recogida
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Fecha Preferida *</label>
-                <input
-                  type="date"
-                  name="preferredDate"
-                  value={formData.preferredDate}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Rango Horario *</label>
-                <select
-                  name="preferredTimeWindow"
-                  value={formData.preferredTimeWindow}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                >
-                  <option value="08:00-12:00">8:00 AM – 12:00 PM</option>
-                  <option value="12:00-16:00">12:00 PM – 4:00 PM</option>
-                  <option value="16:00-20:00">4:00 PM – 8:00 PM</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-gray-700 font-semibold mb-2">
-                Instrucciones Especiales
-              </label>
-              <textarea
-                name="specialInstructions"
-                value={formData.specialInstructions}
+              <Input
+                label="Teléfono"
+                name="contactPhone"
+                value={formData.contactPhone}
                 onChange={handleChange}
-                rows={2}
-                placeholder="Ej: Llamar antes de llegar, usar puerta lateral..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                required
+                placeholder="+1 (555) 123-4567"
               />
             </div>
-          </div>
+          </Card>
 
-          {/* 4 — RECIPIENT INFO */}
-          <div className="border-b pb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Información del Destinatario
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Nombre Completo *</label>
-                <input
-                  type="text"
-                  name="recipientName"
-                  value={formData.recipientName}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Email</label>
-                <input
-                  type="email"
-                  name="recipientEmail"
-                  value={formData.recipientEmail}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Teléfono *</label>
-                <input
-                  type="tel"
-                  name="recipientPhone"
-                  value={formData.recipientPhone}
-                  onChange={handleChange}
-                  required
-                  placeholder="+1 (555) 123-4567"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              {formData.recipientCountry !== "US" && (
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    Segundo Teléfono (opcional)
-                  </label>
-                  <input
-                    type="tel"
-                    name="recipientPhoneSecondary"
-                    value={formData.recipientPhoneSecondary}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  />
-                </div>
-              )}
-            </div>
-
-            <AddressFields prefix="recipient" formData={formData} onChange={handleChange} />
-
-            {/* Notes field */}
-            <div className="mt-4">
-              <label className="block text-gray-700 font-semibold mb-2">
-                Notas para el Destinatario (opcional)
-              </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
+          {/* Dirección de Recogida */}
+          <Card variant="default" padding="lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Dirección de recogida</h2>
+            <div className="space-y-6">
+              <Input
+                label="Dirección"
+                name="pickupAddress"
+                value={formData.pickupAddress}
                 onChange={handleChange}
-                rows={2}
-                placeholder="Información adicional sobre la entrega al destinatario..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                required
+                placeholder="123 Main St"
               />
-            </div>
-          </div>
-
-          {/* 5 — PACKAGE DETAILS */}
-          <div className="border-b pb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Detalles del Paquete
-            </h2>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Tipo de Paquete *</label>
-                <select
-                  name="packageType"
-                  value={formData.packageType}
+              <div className="grid sm:grid-cols-3 gap-4">
+                <Input
+                  label="Ciudad"
+                  name="pickupCity"
+                  value={formData.pickupCity}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                >
-                  <option value="">Selecciona un tipo</option>
-                  <option value="DOCUMENTO">Documento</option>
-                  <option value="CAJA">Caja</option>
-                </select>
+                  placeholder="Miami"
+                />
+                <Select
+                  label="Estado"
+                  name="pickupState"
+                  value={formData.pickupState}
+                  onChange={handleChange}
+                  options={US_STATES}
+                  required
+                />
+                <Input
+                  label="Código postal"
+                  name="pickupPostalCode"
+                  value={formData.pickupPostalCode}
+                  onChange={handleChange}
+                  required
+                  placeholder="33101"
+                />
               </div>
+            </div>
+          </Card>
 
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Peso Estimado (lbs)
-                </label>
-                <input
+          {/* Información del Paquete */}
+          <Card variant="default" padding="lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Información del paquete</h2>
+            <div className="space-y-6">
+              <Select
+                label="Tipo de paquete"
+                name="packageType"
+                value={formData.packageType}
+                onChange={handleChange}
+                options={PACKAGE_TYPES}
+                required
+              />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Input
+                  label="Peso estimado (kg)"
                   type="number"
                   name="estimatedWeight"
                   value={formData.estimatedWeight}
                   onChange={handleChange}
-                  step="0.1"
-                  min="0"
-                  placeholder="0.0"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  placeholder="2.5"
                 />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Dimensiones (opcional)
-                </label>
-                <input
-                  type="text"
+                <Input
+                  label="Dimensiones (L x A x P)"
                   name="dimensions"
                   value={formData.dimensions}
                   onChange={handleChange}
-                  placeholder="Ej: 12 x 15 x 18 in"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  placeholder="30 x 20 x 10 cm"
                 />
               </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Contenido del Paquete
-                </label>
-                <input
-                  type="text"
-                  name="packageContents"
-                  value={formData.packageContents}
-                  onChange={handleChange}
-                  placeholder="Ej: Documentos, electrónica, ropa"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 6 — ACCOUNT CREATION */}
-          <div className="bg-blue-50 rounded-lg p-4 border-b pb-8">
-            <label className="flex items-center mb-4">
-              <input
-                type="checkbox"
-                name="createAccount"
-                checked={formData.createAccount}
+              <Input
+                label="Contenido del paquete"
+                name="packageContents"
+                value={formData.packageContents}
                 onChange={handleChange}
-                className="mr-3 w-5 h-5"
+                placeholder="Ropa, accesorios, etc."
               />
-              <span className="text-gray-700 font-semibold">
-                Deseo crear una cuenta para rastrear mis solicitudes
-              </span>
-            </label>
-
-            {formData.createAccount && (
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Contraseña</label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Confirmar Contraseña</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+              <Select
+                label="País destino"
+                name="destinationCountry"
+                value={formData.destinationCountry}
+                onChange={handleChange}
+                options={[
+                  { value: "CO", label: "Colombia" },
+                  { value: "AR", label: "Argentina" },
+                  { value: "BR", label: "Brasil" },
+                  { value: "CL", label: "Chile" },
+                  { value: "PE", label: "Perú" },
+                  { value: "MX", label: "México" },
+                  { value: "ES", label: "España" },
+                  { value: "OTHER", label: "Otro país" },
+                ]}
+                required
+              />
             </div>
-          )}
+          </Card>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {isLoading ? "Procesando..." : "Solicitar Recogida"}
-          </button>
+          {/* Preferencias de Recogida */}
+          <Card variant="default" padding="lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Preferencias de recogida</h2>
+            <div className="space-y-6">
+              <Input
+                label="Fecha preferida de recogida"
+                type="date"
+                name="preferredDate"
+                value={formData.preferredDate}
+                onChange={handleChange}
+                required
+              />
+              <Select
+                label="Rango horario"
+                name="preferredTimeWindow"
+                value={formData.preferredTimeWindow}
+                onChange={handleChange}
+                options={TIME_WINDOWS}
+              />
+              <Textarea
+                label="Instrucciones especiales"
+                name="specialInstructions"
+                value={formData.specialInstructions}
+                onChange={handleChange}
+                placeholder="Ej: Llamar antes de llegar, puerta de atrás, etc."
+              />
+            </div>
+          </Card>
+
+          {/* Submit */}
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={isLoading}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              {isLoading ? "Creando solicitud..." : "Crear solicitud de recogida"}
+            </Button>
+            <Link href="/">
+              <Button variant="outline" size="lg">
+                Cancelar
+              </Button>
+            </Link>
+          </div>
         </form>
-      </div>
+      </Container>
     </div>
   );
 }
