@@ -20,20 +20,40 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      console.log("Attempting login with:", email);
+
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
-      if (result?.error) {
-        setError("Email o contraseña inválidos");
-      } else if (result?.ok) {
-        router.push("/dashboard");
+      console.log("Login result:", result);
+
+      if (!result) {
+        setError("No response from server. Please try again.");
+        setIsLoading(false);
+        return;
       }
+
+      if (result.error) {
+        console.error("Login error:", result.error);
+        setError("Email o contraseña inválidos");
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.ok) {
+        console.log("Login successful, redirecting...");
+        router.push("/dashboard");
+        return;
+      }
+
+      setError("Unknown error. Please try again.");
+      setIsLoading(false);
     } catch (err) {
-      setError("Ocurrió un error. Intenta de nuevo.");
-    } finally {
+      console.error("Login exception:", err);
+      setError("Error: " + (err as Error).message);
       setIsLoading(false);
     }
   };
