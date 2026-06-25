@@ -99,13 +99,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm">
-          <p className="font-semibold text-gray-700 mb-2">Usuarios de prueba (contraseña: password123):</p>
-          <p className="text-gray-600">admin@example.com</p>
-          <p className="text-gray-600">dispatcher@example.com</p>
-          <p className="text-gray-600">courier@example.com</p>
-          <p className="text-gray-600">customer@example.com</p>
-        </div>
 
         <p className="text-center text-gray-600 mt-6">
           ¿No tienes cuenta?{" "}
