@@ -6,46 +6,47 @@ const path = require("path");
 
 console.log("🚀 Starting build process...\n");
 
-// Step 1: Create .env if DATABASE_URL is not set
+const envPath = path.join(__dirname, "..", ".env.local");
+let createdDummyEnv = false;
+
+// Step 1: Pass dummy DATABASE_URL inline for prisma generate only
 if (!process.env.DATABASE_URL) {
-  console.log("⚠️  DATABASE_URL not set, creating dummy for build...");
-  const envPath = path.join(__dirname, "..", ".env.local");
-  fs.writeFileSync(
-    envPath,
-    "DATABASE_URL=postgresql://dummy:dummy@localhost/dummy\n"
-  );
-  console.log("✓ Created .env.local with dummy DATABASE_URL\n");
-} else {
-  console.log("✓ DATABASE_URL is set\n");
+  console.log("⚠️  DATABASE_URL not set, using dummy for prisma generate...\n");
+  createdDummyEnv = true;
 }
 
-// Step 2: Generate Prisma Client
+// Step 2: Generate Prisma Client (pass dummy DATABASE_URL as env var inline)
 console.log("📦 Generating Prisma Client...");
 try {
-  execSync("npx prisma generate", { stdio: "inherit" });
+  const env = { ...process.env };
+  if (!env.DATABASE_URL) {
+    env.DATABASE_URL = "postgresql://dummy:dummy@localhost/dummy";
+  }
+  execSync("npx prisma generate", { stdio: "inherit", env });
   console.log("✓ Prisma Client generated\n");
 } catch (error) {
   console.error("❌ Failed to generate Prisma Client");
   process.exit(1);
 }
 
-// Step 3: Build Next.js
+// Step 3: Build Next.js (also needs DATABASE_URL for schema validation)
 console.log("🔨 Building Next.js application...");
 try {
-  execSync("next build", { stdio: "inherit" });
+  const env = { ...process.env };
+  if (!env.DATABASE_URL) {
+    env.DATABASE_URL = "postgresql://dummy:dummy@localhost/dummy";
+  }
+  execSync("next build", { stdio: "inherit", env });
   console.log("✓ Next.js build completed\n");
 } catch (error) {
   console.error("❌ Failed to build Next.js");
   process.exit(1);
 }
 
-// Step 4: Info about migrations
-if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("dummy")) {
-  console.log("ℹ️  DATABASE_URL is set for real database");
-  console.log("✓ Migrations will run during Railway release phase\n");
-} else {
-  console.log("ℹ️  DATABASE_URL not set or is dummy");
-  console.log("✓ Real migrations will run during Railway release phase\n");
+// Clean up any leftover .env.local to avoid overriding runtime DATABASE_URL
+if (fs.existsSync(envPath)) {
+  fs.unlinkSync(envPath);
+  console.log("✓ Cleaned up temporary .env.local\n");
 }
 
 console.log("✅ Build completed successfully!");
