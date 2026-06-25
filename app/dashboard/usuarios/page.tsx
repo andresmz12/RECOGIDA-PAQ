@@ -221,7 +221,7 @@ export default function UsuariosPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <Card variant="elevated" padding="none" className="w-full max-w-md shadow-2xl">
+          <div className="bg-white border border-slate-200 shadow-2xl rounded-xl w-full max-w-md">
             {/* Header */}
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">
@@ -323,7 +323,7 @@ export default function UsuariosPage() {
                 {saving ? "Guardando..." : "Guardar"}
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </DashboardLayout>
