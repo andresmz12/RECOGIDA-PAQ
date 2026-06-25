@@ -22,13 +22,15 @@ interface User {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Administrador", COURIER: "Mensajero", CUSTOMER: "Cliente",
+  ADMIN: "Administrador", DISPATCHER: "Despachador", COURIER: "Mensajero", CUSTOMER: "Cliente",
 };
 const ROLE_COLORS: Record<string, string> = {
   ADMIN: "bg-violet-100 text-violet-700",
-  COURIER: "bg-amber-100 text-amber-700", CUSTOMER: "bg-emerald-100 text-emerald-700",
+  DISPATCHER: "bg-blue-100 text-blue-700",
+  COURIER: "bg-amber-100 text-amber-700",
+  CUSTOMER: "bg-emerald-100 text-emerald-700",
 };
-const EMPTY = { email: "", password: "", name: "", phone: "", role: "COURIER" };
+const EMPTY = { email: "", password: "", name: "", phone: "", role: "CUSTOMER" };
 
 export default function UsuariosPage() {
   const { data: session, status } = useSession();
@@ -130,9 +132,10 @@ export default function UsuariosPage() {
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
               >
                 <option value="">Todos los roles</option>
-                <option value="ADMIN">Administrador</option>
-                <option value="COURIER">Mensajero</option>
                 <option value="CUSTOMER">Cliente</option>
+                <option value="COURIER">Mensajero</option>
+                <option value="DISPATCHER">Despachador</option>
+                <option value="ADMIN">Administrador</option>
               </select>
             </div>
           </div>
@@ -265,15 +268,15 @@ export default function UsuariosPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Contraseña
-                  {editUser && <span className="text-slate-500 font-normal ml-2">(dejar vacío para no cambiar)</span>}
+                  {editUser ? "Nueva contraseña" : "Contraseña"}
+                  {editUser && <span className="text-slate-400 font-normal ml-2 text-xs">— dejar vacío para no cambiar</span>}
                 </label>
                 <input
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="••••••••"
+                  placeholder={editUser ? "Nueva contraseña (opcional)" : "Mínimo 6 caracteres"}
                 />
               </div>
 
@@ -295,8 +298,10 @@ export default function UsuariosPage() {
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
                 >
-                  <option value="ADMIN">Administrador</option>
+                  <option value="CUSTOMER">Cliente</option>
                   <option value="COURIER">Mensajero / Courier</option>
+                  <option value="DISPATCHER">Despachador</option>
+                  <option value="ADMIN">Administrador</option>
                 </select>
               </div>
 
