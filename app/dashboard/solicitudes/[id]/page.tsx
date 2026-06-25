@@ -86,6 +86,8 @@ export default function SolicitudDetailPage() {
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState("");
   const [newCourierId, setNewCourierId] = useState("");
+  const [newDate, setNewDate] = useState("");
+  const [newTimeWindow, setNewTimeWindow] = useState("");
   const [notes, setNotes] = useState("");
   const [updating, setUpdating] = useState(false);
   const [toast, setToast] = useState("");
@@ -106,6 +108,8 @@ export default function SolicitudDetailPage() {
       setPickup(data);
       setNewStatus(data.status);
       setNewCourierId(data.assignedCourier?.id ?? "");
+      setNewDate(data.preferredDate ? new Date(data.preferredDate).toISOString().split("T")[0] : "");
+      setNewTimeWindow(data.preferredTimeWindow ?? "");
 
       if (couriersRes) {
         const ud = await couriersRes.json();
@@ -124,6 +128,8 @@ export default function SolicitudDetailPage() {
       const body: any = { status: newStatus };
       if (notes) body.notes = notes;
       if (newCourierId) body.assignedCourierId = newCourierId;
+      if (newDate) body.preferredDate = newDate;
+      if (newTimeWindow) body.preferredTimeWindow = newTimeWindow;
       const res = await fetch(`/api/pickup-requests/${pickup.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -383,6 +389,31 @@ export default function SolicitudDetailPage() {
                       </select>
                     </div>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha de recogida</label>
+                    <input
+                      type="date"
+                      value={newDate}
+                      onChange={(e) => setNewDate(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Rango horario</label>
+                    <select
+                      value={newTimeWindow}
+                      onChange={(e) => setNewTimeWindow(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
+                    >
+                      <option value="">Sin cambiar</option>
+                      <option value="Mañana (8am - 12pm)">Mañana (8am - 12pm)</option>
+                      <option value="Tarde (12pm - 5pm)">Tarde (12pm - 5pm)</option>
+                      <option value="Noche (5pm - 9pm)">Noche (5pm - 9pm)</option>
+                      <option value="Todo el día (8am - 9pm)">Todo el día (8am - 9pm)</option>
+                    </select>
+                  </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">Notas</label>

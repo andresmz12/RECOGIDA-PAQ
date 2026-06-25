@@ -77,7 +77,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, assignedCourierId, notes } = body;
+    const { status, assignedCourierId, notes, preferredDate, preferredTimeWindow } = body;
 
     const pickupRequest = await prisma.pickupRequest.findUnique({
       where: { id: params.id },
@@ -127,6 +127,8 @@ export async function PATCH(
       data: {
         ...(status && { status }),
         ...(assignedCourierId && { assignedCourierId }),
+        ...(preferredDate && { preferredDate: new Date(preferredDate) }),
+        ...(preferredTimeWindow && { preferredTimeWindow }),
       },
     });
 

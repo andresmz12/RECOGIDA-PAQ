@@ -197,6 +197,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const courierId = searchParams.get("courierId");
+    const date = searchParams.get("date");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
@@ -208,6 +209,14 @@ export async function GET(request: NextRequest) {
 
     if (courierId) {
       where.assignedCourierId = courierId;
+    }
+
+    if (date) {
+      const d = new Date(date);
+      where.preferredDate = {
+        gte: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
+        lt:  new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1),
+      };
     }
 
     // Couriers only see their own pickups

@@ -25,6 +25,9 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/dashboard/usuarios") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
+    if (pathname.startsWith("/dashboard/rutas") && role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
     if (pathname.startsWith("/dashboard/mis-recogidas") && role !== "COURIER") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }

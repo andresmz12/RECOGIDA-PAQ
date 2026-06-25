@@ -15,12 +15,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const counts = await prisma.pickupRequest.groupBy({
-      by: ["status"],
-      _count: { id: true },
-    });
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-    const result = { total: 0, pending: 0, assigned: 0, scheduled: 0, pickedUp: 0, cancelled: 0 };
+    const [counts, todayTotal, todayCompleted] = await Promise.all([
+      prisma.pickupRequest.groupBy({
+        by: ["status"],
+        _count: { id: true },
+      }),
+      prisma.pickupRequest.count({
+        where: {
+          preferredDate: { gte: startOfDay, lt: endOfDay },
+          status: { not: "CANCELLED" },
+        },
+      }),
+      prisma.pickupRequest.count({
+        where: {
+          preferredDate: { gte: startOfDay, lt: endOfDay },
+          status: "PICKED_UP",
+        },
+      }),
+    ]);
+
+    const result = { total: 0, pending: 0, assigned: 0, scheduled: 0, pickedUp: 0, cancelled: 0, todayTotal, todayCompleted };
     for (const c of counts) {
       const count = c._count.id;
       switch (c.status) {
