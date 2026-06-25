@@ -1,216 +1,605 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Button from "@/components/Button";
-import Container from "@/components/Container";
 
-export default function Home() {
+/* ─── Hooks ─────────────────────────────────────────────────────── */
+
+function useInView(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+}
+
+function useCounter(target: number, active: boolean, duration = 1600) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(eased * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, target, duration]);
+  return val;
+}
+
+/* ─── Reusable reveal wrapper ────────────────────────────────────── */
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  from = "bottom",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+  from?: "bottom" | "left" | "right";
+}) {
+  const { ref, inView } = useInView();
+  const translate =
+    from === "left" ? "translateX(-20px)"
+    : from === "right" ? "translateX(20px)"
+    : "translateY(20px)";
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <Container>
-          <div className="h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-black text-sm">OG</span>
-              </div>
-              <span className="font-bold text-lg text-slate-900 font-display">O&apos;Globo Cargo</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/login" className="text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors">
-                Iniciar sesión
-              </Link>
-              <Link href="/recoger">
-                <Button variant="primary" size="md">
-                  Solicitar Recogida
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </Container>
-      </nav>
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? "none" : translate,
+        transition: `opacity 0.55s ease ${delay}ms, transform 0.55s ease ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
-      {/* Hero Section */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-50" />
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl" />
+/* ─── Animated stat counter ─────────────────────────────────────── */
+
+function StatCounter({
+  value,
+  suffix = "",
+  label,
+}: {
+  value: number;
+  suffix?: string;
+  label: string;
+}) {
+  const { ref, inView } = useInView(0.3);
+  const count = useCounter(value, inView);
+  return (
+    <div ref={ref} className="text-center">
+      <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent mb-1.5 tabular-nums">
+        {count}{suffix}
+      </p>
+      <p className="text-slate-400 text-sm">{label}</p>
+    </div>
+  );
+}
+
+/* ─── Feature icons ──────────────────────────────────────────────── */
+
+const IconBolt = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+);
+const IconMap = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+const IconGlobe = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+    <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+  </svg>
+);
+const IconShield = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+const IconBell = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+);
+const IconChat = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
+
+const FEATURES = [
+  {
+    icon: <IconBolt />,
+    color: "from-amber-500 to-orange-500",
+    bg: "bg-amber-50",
+    title: "Solicitud en 2 minutos",
+    desc: "Formulario simple. Sin cuentas obligatorias. Recibes tu código de seguimiento al instante.",
+  },
+  {
+    icon: <IconMap />,
+    color: "from-indigo-500 to-violet-500",
+    bg: "bg-indigo-50",
+    title: "Rastreo en tiempo real",
+    desc: "Sigue cada paso de tu recogida con actualizaciones automáticas por email.",
+  },
+  {
+    icon: <IconGlobe />,
+    color: "from-emerald-500 to-teal-500",
+    bg: "bg-emerald-50",
+    title: "Cobertura internacional",
+    desc: "Enviamos a más de 50 países. Couriers verificados y seguros en cada destino.",
+  },
+  {
+    icon: <IconShield />,
+    color: "from-blue-500 to-cyan-500",
+    bg: "bg-blue-50",
+    title: "100% Seguro",
+    desc: "Todos los envíos están asegurados. Manejo profesional garantizado.",
+  },
+  {
+    icon: <IconBell />,
+    color: "from-violet-500 to-purple-500",
+    bg: "bg-violet-50",
+    title: "Notificaciones automáticas",
+    desc: "Recibe actualizaciones por email en cada cambio de estado de tu recogida.",
+  },
+  {
+    icon: <IconChat />,
+    color: "from-rose-500 to-pink-500",
+    bg: "bg-rose-50",
+    title: "Soporte dedicado",
+    desc: "Nuestro equipo está disponible para ayudarte en cada paso del proceso.",
+  },
+];
+
+/* ─── Hero mockup card ───────────────────────────────────────────── */
+
+function TrackingMockup() {
+  return (
+    <div className="relative select-none">
+      {/* Main tracking card */}
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-6 relative z-10 border border-slate-100"
+        style={{ animation: "floatCard 6s ease-in-out infinite" }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <span className="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-3 py-1.5 rounded-lg tracking-wide">
+            OGC-A7B3K9
+          </span>
+          <span className="text-xs text-slate-400">Hace 2 horas</span>
         </div>
 
-        <Container>
-          <div className="relative z-10 text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-indigo-100 border border-indigo-200 text-indigo-700 px-4 py-2 rounded-full text-sm font-semibold mb-8">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-              Logística internacional simplificada
-            </div>
-
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 leading-tight">
-              Recogemos tu paquete{" "}
-              <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                donde estés
-              </span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Solicita la recogida de tus envíos internacionales en segundos. Seguimiento en tiempo real, notificaciones automáticas y couriers verificados.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/recoger">
-                <Button variant="primary" size="lg">
-                  Solicitar Recogida Gratis →
-                </Button>
-              </Link>
-              <Link href="/rastreo/demo">
-                <Button variant="outline" size="lg">
-                  Rastrear Envío
-                </Button>
-              </Link>
-            </div>
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-11 h-11 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
           </div>
-        </Container>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 md:py-20 bg-slate-900 text-white">
-        <Container>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            {[
-              { value: "10K+", label: "Paquetes recogidos" },
-              { value: "50+", label: "Ciudades" },
-              { value: "99.2%", label: "Tasa de éxito" },
-              { value: "< 24h", label: "Tiempo de respuesta" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent mb-2">
-                  {stat.value}
-                </p>
-                <p className="text-slate-400 text-sm md:text-base">{stat.label}</p>
-              </div>
-            ))}
+          <div>
+            <p className="font-semibold text-slate-900 text-sm">Envío Internacional</p>
+            <p className="text-xs text-slate-500 mt-0.5">Miami, FL → Bogotá, Colombia</p>
           </div>
-        </Container>
-      </section>
+        </div>
 
-      {/* Features Section */}
-      <section className="py-24 md:py-32">
-        <Container>
-          <div className="text-center mb-16">
-            <p className="text-indigo-600 text-sm font-semibold uppercase tracking-widest mb-4">Por qué elegirnos</p>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900">
-              Todo lo que necesitas para enviar
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "🚀",
-                title: "Solicitud en 2 minutos",
-                desc: "Formulario simple. Sin cuentas obligatorias. Recibe tu código de seguimiento al instante.",
-              },
-              {
-                icon: "📍",
-                title: "Rastreo en tiempo real",
-                desc: "Sigue cada paso de tu recogida con actualizaciones automáticas por email.",
-              },
-              {
-                icon: "🌍",
-                title: "Cobertura internacional",
-                desc: "Enviamos a más de 50 países. Couriers verificados y seguros en cada destino.",
-              },
-              {
-                icon: "⚡",
-                title: "Asignación automática",
-                desc: "Nuestro sistema asigna el courier más cercano disponible automáticamente.",
-              },
-              {
-                icon: "🔒",
-                title: "100% Seguro",
-                desc: "Todos los envíos están asegurados. Manejo profesional garantizado.",
-              },
-              {
-                icon: "💬",
-                title: "Soporte 24/7",
-                desc: "Nuestro equipo está disponible en todo momento para ayudarte.",
-              },
-            ].map((feature) => (
+        {/* Progress bar */}
+        <div className="flex items-center gap-1 mb-4">
+          {["Pendiente", "Asignado", "Programado", "Recogido"].map((s, i) => (
+            <div key={s} className="flex-1 flex flex-col items-center gap-1">
               <div
-                key={feature.title}
-                className="p-8 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 bg-white"
-              >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
+                className={`h-1.5 w-full rounded-full ${i < 3 ? "bg-indigo-500" : "bg-slate-200"}`}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 mb-5">
+          <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
+          <p className="text-sm font-semibold text-slate-700">Programado — Mañana 10:00–13:00</p>
+        </div>
 
-      {/* How it works */}
-      <section className="py-24 md:py-32 bg-slate-50">
-        <Container>
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">¿Cómo funciona?</h2>
-            <p className="text-lg text-slate-600">Tres pasos simples para enviar tu paquete</p>
+        <div className="pt-4 border-t border-slate-100 flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+            JP
           </div>
-
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { step: "01", title: "Solicita", desc: "Completa el formulario con los datos de tu paquete y dirección de recogida." },
-              { step: "02", title: "Confirmamos", desc: "Recibes tu código de rastreo por email y asignamos un courier." },
-              { step: "03", title: "Recogemos", desc: "El courier llega a tu puerta en la fecha y hora programada." },
-            ].map((item) => (
-              <div key={item.step} className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center text-2xl font-black text-white mb-6 shadow-lg">
-                  {item.step}
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">{item.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
+          <div>
+            <p className="text-xs font-semibold text-slate-700">Juan Pérez · Courier asignado</p>
+            <p className="text-xs text-slate-400">+1 (305) 555-0192</p>
           </div>
-        </Container>
-      </section>
+        </div>
+      </div>
 
-      {/* CTA Section */}
-      <section className="py-24 md:py-32">
-        <Container size="md">
-          <div className="text-center">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">
-              ¿Listo para enviar?
-            </h2>
-            <p className="text-xl text-slate-600 mb-10">
-              Sin registro. Sin complicaciones. Solo envía.
-            </p>
-            <Link href="/recoger">
-              <Button variant="primary" size="lg">
-                Solicitar mi primera recogida →
-              </Button>
+      {/* Notification badge — top right */}
+      <div
+        className="absolute -top-4 -right-4 bg-emerald-500 rounded-xl shadow-xl px-3.5 py-2.5 flex items-center gap-2 z-20 border border-emerald-400"
+        style={{ animation: "floatBadge 7s ease-in-out infinite", animationDelay: "1.2s" }}
+      >
+        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-white font-semibold text-xs leading-tight">Recogida confirmada</p>
+          <p className="text-emerald-100 text-xs">OGC-F2D5M1 · hace 5 min</p>
+        </div>
+      </div>
+
+      {/* Mini status card — bottom left */}
+      <div
+        className="absolute -bottom-3 -left-6 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-2.5 z-20 border border-slate-100"
+        style={{ animation: "floatBadge 8s ease-in-out infinite", animationDelay: "0.6s" }}
+      >
+        <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-slate-800">3 recogidas hoy</p>
+          <p className="text-xs text-slate-400">1 pendiente de asignar</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────── */
+
+export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Keyframes injected via style tag */}
+      <style>{`
+        @keyframes floatCard {
+          0%, 100% { transform: translateY(0px) rotate(-0.3deg); }
+          50% { transform: translateY(-10px) rotate(0.3deg); }
+        }
+        @keyframes floatBadge {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes orbMove {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
+          33% { transform: translate(40px, -30px) scale(1.08); opacity: 0.5; }
+          66% { transform: translate(-15px, 20px) scale(0.95); opacity: 0.4; }
+        }
+        @keyframes orbMove2 {
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+          50% { transform: translate(-35px, 25px) scale(1.12); opacity: 0.45; }
+        }
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .gradient-text-animated {
+          background: linear-gradient(135deg, #818cf8, #c084fc, #818cf8);
+          background-size: 200% 200%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: gradientShift 4s ease infinite;
+        }
+      `}</style>
+
+      {/* ── Navbar ───────────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-200">
+              <span className="text-white font-black text-xs">OG</span>
+            </div>
+            <span className="font-bold text-base text-slate-900">O&apos;Globo Cargo</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">Características</a>
+            <a href="#how" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">Cómo funciona</a>
+            <Link href="/rastreo/demo" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">Rastrear</Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors">
+              Iniciar sesión
+            </Link>
+            <Link
+              href="/recoger"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-all shadow-sm shadow-indigo-200 hover:shadow-md hover:shadow-indigo-300"
+            >
+              Solicitar recogida
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           </div>
-        </Container>
-      </section>
+        </div>
+      </nav>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <Container>
-          <div className="py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-600 text-sm">
-              &copy; 2025 O&apos;Globo Cargo. Todos los derechos reservados.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link href="/login" className="text-slate-600 hover:text-slate-900 text-sm transition-colors">
-                Panel de Control
-              </Link>
-              <Link href="/recoger" className="text-slate-600 hover:text-slate-900 text-sm transition-colors">
-                Solicitar Recogida
-              </Link>
+      {/* ── Hero ─────────────────────────────────────────────────── */}
+      <section
+        className="relative overflow-hidden py-24 md:py-32"
+        style={{ background: "linear-gradient(135deg, #0a0520 0%, #1a0a3d 50%, #0d1b3e 100%)" }}
+      >
+        {/* Animated orbs */}
+        <div
+          className="absolute top-20 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%)",
+            animation: "orbMove 20s ease-in-out infinite",
+          }}
+        />
+        <div
+          className="absolute bottom-10 right-1/4 w-80 h-80 rounded-full blur-3xl pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 70%)",
+            animation: "orbMove2 25s ease-in-out infinite",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left: copy */}
+            <div
+              style={{
+                opacity: mounted ? 1 : 0,
+                transform: mounted ? "none" : "translateY(16px)",
+                transition: "opacity 0.7s ease, transform 0.7s ease",
+              }}
+            >
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 px-4 py-1.5 rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Logística internacional simplificada
+              </div>
+
+              <h1 className="text-5xl md:text-6xl lg:text-6xl font-black text-white mb-6 leading-[1.08]">
+                Recogemos tu<br />
+                paquete{" "}
+                <span className="gradient-text-animated">donde estés</span>
+              </h1>
+
+              <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-lg">
+                Solicita la recogida de tus envíos internacionales en segundos. Seguimiento en tiempo real, notificaciones automáticas y couriers verificados.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 mb-12">
+                <Link
+                  href="/recoger"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/40 hover:shadow-xl hover:shadow-indigo-900/50 text-sm"
+                >
+                  Solicitar recogida gratis
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link
+                  href="/rastreo/demo"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl transition-all backdrop-blur-sm text-sm"
+                >
+                  Rastrear envío
+                </Link>
+              </div>
+
+              {/* Trust row */}
+              <div className="flex items-center gap-6 text-white/40 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-white/60">Sin tarjeta de crédito</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-white/60">Código de rastreo inmediato</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-white/60">Cobertura en 50+ países</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: floating mockup */}
+            <div
+              className="hidden lg:flex justify-center items-center"
+              style={{
+                opacity: mounted ? 1 : 0,
+                transform: mounted ? "none" : "translateX(16px)",
+                transition: "opacity 0.7s ease 200ms, transform 0.7s ease 200ms",
+              }}
+            >
+              <TrackingMockup />
             </div>
           </div>
-        </Container>
+        </div>
+      </section>
+
+      {/* ── Stats ────────────────────────────────────────────────── */}
+      <section className="py-16 md:py-20 bg-slate-900">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            <StatCounter value={10000} suffix="+" label="Paquetes recogidos" />
+            <StatCounter value={50} suffix="+" label="Ciudades activas" />
+            <StatCounter value={99} suffix=".2%" label="Tasa de éxito" />
+            <StatCounter value={24} suffix="h" label="Tiempo máx. de respuesta" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features ─────────────────────────────────────────────── */}
+      <section id="features" className="py-24 md:py-32">
+        <div className="max-w-7xl mx-auto px-6">
+          <Reveal className="text-center mb-16">
+            <p className="text-indigo-600 text-xs font-bold uppercase tracking-widest mb-4">Por qué elegirnos</p>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
+              Todo lo que necesitas para enviar
+            </h2>
+            <p className="text-lg text-slate-600 max-w-xl mx-auto">
+              Tecnología de logistics enterprise, ahora accesible para todos.
+            </p>
+          </Reveal>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.title} delay={i * 80}>
+                <div className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50 rounded-2xl p-6 transition-all duration-300 h-full">
+                  <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${f.color} text-white mb-5 shadow-sm`}>
+                    {f.icon}
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 mb-2">{f.title}</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ─────────────────────────────────────────── */}
+      <section id="how" className="py-24 md:py-32 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <Reveal className="text-center mb-16">
+            <p className="text-indigo-600 text-xs font-bold uppercase tracking-widest mb-4">Proceso</p>
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">¿Cómo funciona?</h2>
+            <p className="text-lg text-slate-600">Tres pasos, menos de 2 minutos</p>
+          </Reveal>
+
+          <div className="relative grid md:grid-cols-3 gap-8 md:gap-12">
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-px border-t-2 border-dashed border-slate-300" style={{ left: "16.67%", right: "16.67%" }} />
+
+            {[
+              {
+                step: "01",
+                title: "Solicita",
+                desc: "Completa el formulario con los datos de tu paquete y dirección de recogida. Sin cuenta obligatoria.",
+                color: "from-indigo-600 to-violet-600",
+              },
+              {
+                step: "02",
+                title: "Confirmamos",
+                desc: "Recibes tu código de rastreo por email y te asignamos el courier más cercano disponible.",
+                color: "from-violet-600 to-purple-600",
+              },
+              {
+                step: "03",
+                title: "Recogemos",
+                desc: "El courier llega a tu puerta en la fecha y hora programada. Seguimiento en tiempo real.",
+                color: "from-purple-600 to-indigo-600",
+              },
+            ].map((item, i) => (
+              <Reveal key={item.step} delay={i * 120}>
+                <div className="flex flex-col items-center text-center relative">
+                  <div className={`w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center text-xl font-black text-white mb-6 shadow-lg relative z-10`}>
+                    {item.step}
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed max-w-xs">{item.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Social proof strip ───────────────────────────────────── */}
+      <section className="py-14 border-y border-slate-200 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <Reveal>
+            <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">
+              Confiado por empresas que envían internacionalmente
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-12">
+              {["Global Express", "CargoPro", "ShipFast", "BoxRoute", "PackHub", "MiloFreight"].map((name) => (
+                <span key={name} className="text-slate-400 font-bold text-sm tracking-wide opacity-60 hover:opacity-100 transition-opacity cursor-default">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <Reveal>
+            <div
+              className="rounded-3xl p-12 relative overflow-hidden"
+              style={{ background: "linear-gradient(135deg, #1a0a3d, #0d1b3e)" }}
+            >
+              <div
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(99,102,241,0.5) 0%, transparent 70%)" }}
+              />
+              <div className="relative z-10">
+                <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+                  ¿Listo para enviar?
+                </h2>
+                <p className="text-white/60 text-lg mb-8">
+                  Sin registro. Sin complicaciones. Solo envía.
+                </p>
+                <Link
+                  href="/recoger"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-900/50 text-sm"
+                >
+                  Solicitar mi primera recogida
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-200 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
+              <span className="text-white font-black text-xs">OG</span>
+            </div>
+            <p className="text-slate-500 text-sm">&copy; 2025 O&apos;Globo Cargo</p>
+          </div>
+          <div className="flex items-center gap-6">
+            <Link href="/login" className="text-slate-500 hover:text-slate-900 text-sm transition-colors">
+              Panel de Control
+            </Link>
+            <Link href="/recoger" className="text-slate-500 hover:text-slate-900 text-sm transition-colors">
+              Solicitar Recogida
+            </Link>
+            <Link href="/rastreo/demo" className="text-slate-500 hover:text-slate-900 text-sm transition-colors">
+              Rastrear Envío
+            </Link>
+          </div>
+        </div>
       </footer>
     </div>
   );
