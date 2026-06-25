@@ -5,19 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const DESTINATION_COUNTRIES = [
-  { value: "HN", label: "Honduras" },
-  { value: "GT", label: "Guatemala" },
-  { value: "SV", label: "El Salvador" },
-  { value: "NI", label: "Nicaragua" },
-  { value: "DO", label: "República Dominicana" },
-  { value: "PA", label: "Panamá" },
-  { value: "CR", label: "Costa Rica" },
-  { value: "VE", label: "Venezuela" },
-  { value: "MX", label: "México" },
-  { value: "CO", label: "Colombia" },
-];
+import LocationPicker from "@/components/LocationPicker";
 
 const BOX_SIZES = [
   { value: "Caja 18x18x18", label: "Caja 18×18×18 in", dimensions: "18x18x18 in", desc: "Pequeña" },
@@ -60,6 +48,7 @@ const EMPTY = {
   recipientAddress: "",
   recipientCity: "",
   recipientCountry: "HN",
+  recipientState: "",
   // Package
   packageType: "Caja 20x20x20",
   estimatedWeight: "",
@@ -110,6 +99,7 @@ export default function RecogerPage() {
       dimensions: selectedBox?.dimensions || "",
       destinationCountry: form.recipientCountry,
       estimatedWeight: form.estimatedWeight ? parseFloat(form.estimatedWeight) : null,
+      recipientState: form.recipientState || null,
     };
 
     try {
@@ -266,33 +256,45 @@ export default function RecogerPage() {
               </div>
               <h2 className="font-bold text-slate-900">Información del destinatario</h2>
             </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Nombre del destinatario" required>
                 <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="María López" required />
               </Field>
-              <Field label="País destino" required>
-                <select className={inputCls + " bg-white"} value={form.recipientCountry} onChange={e => set("recipientCountry", e.target.value)} required>
-                  {DESTINATION_COUNTRIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </Field>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Teléfono principal" required>
                 <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
               </Field>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Teléfono secundario" hint="Opcional">
                 <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} placeholder="+504 8888-8888" />
               </Field>
+              <Field label="Email del destinatario" hint="Opcional">
+                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="destinatario@email.com" />
+              </Field>
             </div>
-            <Field label="Email del destinatario" hint="Opcional — para notificaciones">
-              <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="destinatario@email.com" />
-            </Field>
+
             <Field label="Dirección de entrega" required>
               <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} placeholder="Col. Centro, Calle Principal #12" required />
             </Field>
-            <Field label="Ciudad de entrega" required>
-              <input className={inputCls} value={form.recipientCity} onChange={e => set("recipientCity", e.target.value)} placeholder="Tegucigalpa" required />
-            </Field>
+
+            {/* Location picker: country → department → city + mini map */}
+            <LocationPicker
+              value={{
+                country: form.recipientCountry,
+                department: form.recipientState,
+                city: form.recipientCity,
+              }}
+              onChange={({ country, department, city }) => {
+                setForm(prev => ({
+                  ...prev,
+                  recipientCountry: country,
+                  recipientState: department,
+                  recipientCity: city,
+                }));
+              }}
+            />
           </section>
 
           {/* ── Paquete ── */}
