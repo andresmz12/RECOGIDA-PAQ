@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "bash scripts/build.sh",
+    "build": "node scripts/build.js",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
