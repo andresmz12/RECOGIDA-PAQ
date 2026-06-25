@@ -6,6 +6,10 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import Container from "@/components/Container";
+import StatusBadge from "@/components/StatusBadge";
 
 interface PickupRequest {
   id: string;
@@ -26,7 +30,6 @@ export default function MiCuentaPage() {
   const router = useRouter();
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [loading, setLoading] = useState(true);
-
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -56,135 +59,116 @@ export default function MiCuentaPage() {
     fetchPickups();
   }, [status]);
 
-  const statusLabels: Record<string, string> = {
-    PENDING: "Pendiente",
-    ASSIGNED: "Asignada",
-    SCHEDULED: "Programada",
-    PICKED_UP: "Recogida",
-    CANCELLED: "Cancelada",
-  };
-
-  const statusColors: Record<string, string> = {
-    PENDING: "bg-yellow-100 text-yellow-800",
-    ASSIGNED: "bg-blue-100 text-blue-800",
-    SCHEDULED: "bg-purple-100 text-purple-800",
-    PICKED_UP: "bg-green-100 text-green-800",
-    CANCELLED: "bg-red-100 text-red-800",
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-800 font-semibold">
-            ← Inicio
-          </Link>
-          <h1 className="text-2xl font-bold text-indigo-600">Mi Cuenta</h1>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="text-red-600 hover:text-red-800 font-semibold"
-          >
-            Cerrar Sesión
-          </button>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Mis Solicitudes de Recogida</h2>
-
-          <div className="mb-6">
-            <Link
-              href="/recoger"
-              className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-semibold"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <Container size="lg">
+          <div className="py-4 flex items-center justify-between">
+            <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-2">
+              ← Volver
+            </Link>
+            <h1 className="text-2xl font-black text-slate-900">Mi Cuenta</h1>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="text-red-600 hover:text-red-700 font-semibold transition-colors"
             >
-              + Nueva Solicitud
+              Cerrar sesión
+            </button>
+          </div>
+        </Container>
+      </div>
+
+      <Container size="lg">
+        <div className="py-12">
+          {/* Title & CTA */}
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-3xl">📦</div>
+              <h2 className="text-3xl font-black text-slate-900">Mis Solicitudes de Recogida</h2>
+            </div>
+            <p className="text-slate-600 mb-6">Gestiona y rastrea todas tus solicitudes de recogida</p>
+
+            <Link href="/recoger">
+              <Button variant="primary" size="lg">
+                + Crear Nueva Solicitud
+              </Button>
             </Link>
           </div>
-        </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          </div>
-        ) : (
-          <>
-            {pickups.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <p className="text-gray-600 mb-4">Aún no tienes solicitudes</p>
-                <Link
-                  href="/recoger"
-                  className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-semibold"
-                >
-                  Crear tu Primera Solicitud
-                </Link>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {pickups.map((pickup) => (
-                  <div key={pickup.id} className="bg-white p-6 rounded-lg shadow hover:shadow-lg">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-600">Código de Seguimiento</p>
-                        <p className="text-2xl font-bold text-indigo-600 mb-2">{pickup.trackingCode}</p>
+          {/* Content */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
+              <p className="text-slate-600 font-medium">Cargando tus solicitudes...</p>
+            </div>
+          ) : pickups.length === 0 ? (
+            <Card variant="elevated" padding="lg" className="text-center">
+              <div className="text-5xl mb-4 opacity-50">📭</div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Aún no tienes solicitudes</h3>
+              <p className="text-slate-600 mb-8">Crea tu primera solicitud de recogida para comenzar</p>
+              <Link href="/recoger">
+                <Button variant="primary">Crear Primera Solicitud</Button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="grid gap-5">
+              {pickups.map((pickup) => (
+                <Card key={pickup.id} variant="default" padding="lg" className="hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1 min-w-0">
+                      {/* Tracking Code */}
+                      <div className="mb-5">
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Código de Seguimiento</p>
+                        <p className="text-2xl font-bold text-indigo-600 font-mono">{pickup.trackingCode}</p>
+                      </div>
 
-                        <div className="space-y-4 mt-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm text-gray-600">De (Remitente)</p>
-                              <p className="font-semibold">{pickup.contactName}</p>
-                              <p className="text-sm text-gray-500">{pickup.pickupCity}, {pickup.pickupCountry}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-600">Para (Destinatario)</p>
-                              <p className="font-semibold">{pickup.recipientName}</p>
-                              <p className="text-sm text-gray-500">{pickup.recipientCity}, {pickup.recipientCountry}</p>
-                            </div>
-                          </div>
-
-                          <div className="grid md:grid-cols-3 gap-4">
-                            <div>
-                              <p className="text-sm text-gray-600">Estado</p>
-                              <span
-                                className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                                  statusColors[pickup.status]
-                                }`}
-                              >
-                                {statusLabels[pickup.status]}
-                              </span>
-                            </div>
-
-                            <div>
-                              <p className="text-sm text-gray-600">Fecha Preferida</p>
-                              <p className="font-semibold">
-                                {new Date(pickup.preferredDate).toLocaleDateString("es-ES")}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="text-sm text-gray-600">Creada</p>
-                              <p className="font-semibold">
-                                {new Date(pickup.createdAt).toLocaleDateString("es-ES")}
-                              </p>
-                            </div>
+                      {/* Location & Details Grid */}
+                      <div className="grid md:grid-cols-3 gap-6 mb-5">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Origen (Remitente)</p>
+                          <p className="font-semibold text-slate-900">{pickup.contactName}</p>
+                          <p className="text-sm text-slate-600 mt-1">{pickup.pickupCity}, {pickup.pickupCountry}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Destino</p>
+                          <p className="font-semibold text-slate-900">{pickup.recipientName}</p>
+                          <p className="text-sm text-slate-600 mt-1">{pickup.recipientCity}, {pickup.recipientCountry}</p>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Estado</p>
+                            <StatusBadge status={pickup.status} />
                           </div>
                         </div>
                       </div>
 
-                      <Link
-                        href={`/rastreo/${pickup.trackingCode}`}
-                        className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-semibold whitespace-nowrap"
-                      >
-                        Rastrear
+                      {/* Dates */}
+                      <div className="grid sm:grid-cols-2 gap-4 pt-5 border-t border-slate-100">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Fecha Preferida</p>
+                          <p className="font-semibold text-slate-900">{new Date(pickup.preferredDate).toLocaleDateString("es-ES")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Creada el</p>
+                          <p className="font-semibold text-slate-900">{new Date(pickup.createdAt).toLocaleDateString("es-ES")}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="flex-shrink-0">
+                      <Link href={`/rastreo/${pickup.trackingCode}`}>
+                        <Button variant="primary">Rastrear →</Button>
                       </Link>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </Container>
     </div>
   );
 }

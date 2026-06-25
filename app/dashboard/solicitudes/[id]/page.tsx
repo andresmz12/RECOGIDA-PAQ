@@ -8,6 +8,9 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/StatusBadge";
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import Alert from "@/components/Alert";
 
 interface Courier {
   id: string;
@@ -141,24 +144,30 @@ export default function SolicitudDetailPage() {
       <div className="p-8">
         {/* Toast */}
         {toast && (
-          <div className="fixed top-6 right-6 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-in slide-in-from-top-2">
-            ✓ {toast}
+          <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-2">
+            <Alert
+              type="success"
+              title="Éxito"
+              message={toast}
+            />
           </div>
         )}
 
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <Link href="/dashboard/solicitudes" className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1 mb-3 w-fit">
-              ← Solicitudes
-            </Link>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-slate-900 font-mono">{pickup.trackingCode}</h1>
-              <StatusBadge status={pickup.status} />
+        <div className="mb-8">
+          <Link href="/dashboard/solicitudes" className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 mb-4 w-fit">
+            ← Volver a solicitudes
+          </Link>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-black text-slate-900 font-mono">{pickup.trackingCode}</h1>
+                <StatusBadge status={pickup.status} />
+              </div>
+              <p className="text-slate-600">
+                Creado el {new Date(pickup.statusHistory[pickup.statusHistory.length - 1]?.createdAt ?? "").toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              </p>
             </div>
-            <p className="text-slate-500 mt-1 text-sm">
-              Creado el {new Date(pickup.statusHistory[pickup.statusHistory.length - 1]?.createdAt ?? "").toLocaleDateString("es-ES")}
-            </p>
           </div>
         </div>
 
@@ -166,12 +175,12 @@ export default function SolicitudDetailPage() {
           {/* Main info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Contact */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center text-sm">👤</span>
+                <span className="text-xl">👤</span>
                 Información de Contacto
               </h2>
-              <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid sm:grid-cols-2 gap-6">
                 <InfoRow label="Nombre" value={pickup.contactName} />
                 <InfoRow label="Teléfono" value={pickup.contactPhone} />
                 <InfoRow label="Email" value={pickup.contactEmail} />
@@ -179,15 +188,15 @@ export default function SolicitudDetailPage() {
                   <InfoRow label="Courier asignado" value={pickup.assignedCourier.name} />
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Address */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="w-7 h-7 bg-violet-100 rounded-lg flex items-center justify-center text-sm">📍</span>
+                <span className="text-xl">📍</span>
                 Dirección de Recogida
               </h2>
-              <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid sm:grid-cols-2 gap-6">
                 <div className="sm:col-span-2">
                   <InfoRow label="Dirección" value={pickup.pickupAddress} />
                 </div>
@@ -195,15 +204,15 @@ export default function SolicitudDetailPage() {
                 <InfoRow label="País de origen" value={pickup.pickupCountry} />
                 <InfoRow label="País destino" value={pickup.destinationCountry} />
               </div>
-            </div>
+            </Card>
 
             {/* Package */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center text-sm">📦</span>
+                <span className="text-xl">📦</span>
                 Detalles del Paquete
               </h2>
-              <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid sm:grid-cols-2 gap-6">
                 <InfoRow label="Tipo" value={pickup.packageType} />
                 <InfoRow label="Peso estimado" value={pickup.estimatedWeight ? `${pickup.estimatedWeight} kg` : null} />
                 <InfoRow label="Dimensiones" value={pickup.dimensions} />
@@ -211,27 +220,27 @@ export default function SolicitudDetailPage() {
                 <InfoRow label="Rango horario" value={pickup.preferredTimeWindow} />
               </div>
               {pickup.specialInstructions && (
-                <div className="mt-5 pt-5 border-t border-slate-100">
+                <div className="mt-6 pt-6 border-t border-slate-100">
                   <InfoRow label="Instrucciones especiales" value={pickup.specialInstructions} />
                 </div>
               )}
-            </div>
+            </Card>
 
             {/* Status history */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center text-sm">📋</span>
+            <Card variant="default" padding="lg">
+              <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <span className="text-xl">📋</span>
                 Historial de estados
               </h2>
               <div className="relative">
                 <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
-                <div className="space-y-5">
+                <div className="space-y-6">
                   {[...pickup.statusHistory].reverse().map((entry, i) => (
                     <div key={entry.id} className="flex gap-4 pl-10 relative">
                       <div className="absolute left-0 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full flex items-center justify-center shrink-0">
                         <div className="w-2 h-2 bg-indigo-500 rounded-full" />
                       </div>
-                      <div className="flex-1 pb-2">
+                      <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           {entry.fromStatus && (
                             <>
@@ -241,35 +250,35 @@ export default function SolicitudDetailPage() {
                           )}
                           <StatusBadge status={entry.toStatus} />
                         </div>
-                        <p className="text-xs text-slate-400 mt-1.5">
+                        <p className="text-xs text-slate-500 mt-2 font-medium">
                           {new Date(entry.createdAt).toLocaleDateString("es-ES", {
                             year: "numeric", month: "long", day: "numeric",
                             hour: "2-digit", minute: "2-digit",
                           })}
                         </p>
                         {entry.notes && (
-                          <p className="text-sm text-slate-600 mt-2 bg-slate-50 px-3 py-2 rounded-lg">{entry.notes}</p>
+                          <p className="text-sm text-slate-700 mt-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">{entry.notes}</p>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Sidebar: actions */}
           {role === "ADMIN" && (
             <div>
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-8">
-                <h2 className="font-bold text-slate-900 mb-5">Actualizar solicitud</h2>
-                <form onSubmit={handleUpdate} className="space-y-4">
+              <Card variant="default" padding="lg" className="sticky top-8">
+                <h2 className="font-bold text-slate-900 mb-6">Actualizar solicitud</h2>
+                <form onSubmit={handleUpdate} className="space-y-5">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Estado</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Estado</label>
                     <select
                       value={newStatus}
                       onChange={(e) => setNewStatus(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
                     >
                       <option value="PENDING">Pendiente</option>
                       <option value="ASSIGNED">Asignado</option>
@@ -281,11 +290,11 @@ export default function SolicitudDetailPage() {
 
                   {couriers.length > 0 && (
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Asignar Courier</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Asignar Courier</label>
                       <select
                         value={newCourierId}
                         onChange={(e) => setNewCourierId(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
                       >
                         <option value="">Sin asignar</option>
                         {couriers.map((c) => (
@@ -296,25 +305,28 @@ export default function SolicitudDetailPage() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Notas</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Notas</label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       rows={3}
                       placeholder="Observaciones opcionales..."
-                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none transition-colors"
                     />
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
+                    variant="primary"
+                    size="lg"
+                    loading={updating}
                     disabled={updating}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold text-sm transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
+                    className="w-full"
                   >
                     {updating ? "Guardando..." : "Guardar cambios"}
-                  </button>
+                  </Button>
                 </form>
-              </div>
+              </Card>
             </div>
           )}
         </div>
