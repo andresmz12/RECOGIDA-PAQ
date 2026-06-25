@@ -70,7 +70,11 @@ export default function MisRecogidazPage() {
 
   const today = new Date().toDateString();
   const todayPickups = pickups.filter(p => new Date(p.preferredDate).toDateString() === today);
-  const otherPickups = pickups.filter(p => new Date(p.preferredDate).toDateString() !== today);
+  const otherPickups = pickups.filter(p =>
+    new Date(p.preferredDate).toDateString() !== today &&
+    p.status !== "PICKED_UP" &&
+    p.status !== "CANCELLED"
+  );
 
   return (
     <DashboardLayout>
