@@ -82,13 +82,22 @@ export default function RecogerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
 
-  const set = (field: string, value: string) =>
+  const LOCATION_FIELDS = ["recipientAddress", "recipientCountry", "recipientState", "recipientCity"];
+
+  const set = (field: string, value: string) => {
+    if (LOCATION_FIELDS.includes(field)) setLocationConfirmed(false);
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!locationConfirmed) {
+      setError("Por favor confirma la ubicación de entrega en el mapa antes de continuar.");
+      return;
+    }
     setLoading(true);
 
     const selectedBox = BOX_SIZES.find((b) => b.value === form.packageType);
@@ -277,14 +286,18 @@ export default function RecogerPage() {
               <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} placeholder="Col. Centro, Calle Principal #12" required />
             </Field>
 
-            {/* Location picker: country → department → city + mini map */}
+            {/* Location picker: country → department → city + geocoded mini map */}
             <LocationPicker
               value={{
                 country: form.recipientCountry,
                 department: form.recipientState,
                 city: form.recipientCity,
               }}
+              address={form.recipientAddress}
+              confirmed={locationConfirmed}
+              onConfirm={() => setLocationConfirmed(true)}
               onChange={({ country, department, city }) => {
+                setLocationConfirmed(false);
                 setForm(prev => ({
                   ...prev,
                   recipientCountry: country,
