@@ -35,7 +35,6 @@ export default function MapView({ points, center = [4.711, -74.0721] }: MapViewP
 
     const init = async () => {
       L = (await import("leaflet")).default;
-      await import("leaflet/dist/leaflet.css");
 
       if (mapRef.current) return;
 
