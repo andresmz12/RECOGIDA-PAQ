@@ -69,6 +69,7 @@ declare module "@prisma/client" {
       findUnique(query: any): Promise<User | null>;
       findFirst(query?: any): Promise<User | null>;
       findMany(query?: any): Promise<User[]>;
+      count(query?: any): Promise<number>;
       update(query: any): Promise<User>;
       delete(query: any): Promise<User>;
     };
