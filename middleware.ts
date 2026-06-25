@@ -4,9 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
+  // secureCookies must match what the auth handler uses (based on NEXTAUTH_URL protocol)
+  const secureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") ?? false;
+
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
+    secureCookies,
   });
 
   // Dashboard routes - require ADMIN, DISPATCHER, or COURIER
