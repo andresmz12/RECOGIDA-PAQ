@@ -1,31 +1,40 @@
--- Remove DISPATCHER from Role enum
--- AlterEnum
-ALTER TYPE "Role" RENAME VALUE 'DISPATCHER' TO 'DISPATCHER_REMOVED';
+-- ============================================================
+-- Step 1: Remove DISPATCHER from Role enum (correct PostgreSQL method)
+-- PostgreSQL does not support dropping enum values directly.
+-- We must: update data → create new type → alter column → drop old type
+-- ============================================================
 
--- DropEnum
+-- Move any existing DISPATCHER users to ADMIN so no data is lost
+UPDATE "User" SET "role" = 'ADMIN' WHERE "role" = 'DISPATCHER';
+
+-- Create replacement enum without DISPATCHER
+CREATE TYPE "Role_new" AS ENUM ('CUSTOMER', 'ADMIN', 'COURIER');
+
+-- Migrate the column to use the new type
+ALTER TABLE "User"
+  ALTER COLUMN "role" TYPE "Role_new"
+  USING "role"::text::"Role_new";
+
+-- Drop the old type and rename the new one
 DROP TYPE "Role";
+ALTER TYPE "Role_new" RENAME TO "Role";
 
--- CreateEnum
-CREATE TYPE "Role" AS ENUM ('CUSTOMER', 'ADMIN', 'COURIER');
+-- ============================================================
+-- Step 2: Add new columns to PickupRequest
+-- Using IF NOT EXISTS so the migration is idempotent
+-- ============================================================
 
--- AlterTable PickupRequest - Add new fields for recipient info
-ALTER TABLE "PickupRequest" ADD COLUMN "pickupState" TEXT,
-ADD COLUMN "pickupPostalCode" TEXT,
-ADD COLUMN "recipientName" TEXT NOT NULL DEFAULT 'Unknown',
-ADD COLUMN "recipientEmail" TEXT,
-ADD COLUMN "recipientPhone" TEXT NOT NULL DEFAULT '+1 000-000-0000',
-ADD COLUMN "recipientPhoneSecondary" TEXT,
-ADD COLUMN "recipientAddress" TEXT NOT NULL DEFAULT 'Unknown',
-ADD COLUMN "recipientCity" TEXT NOT NULL DEFAULT 'Unknown',
-ADD COLUMN "recipientState" TEXT,
-ADD COLUMN "recipientPostalCode" TEXT,
-ADD COLUMN "recipientCountry" TEXT NOT NULL DEFAULT 'United States',
-ADD COLUMN "packageContents" TEXT,
-ADD COLUMN "notes" TEXT;
-
--- Make defaults consistent by updating any NULLs (should not exist but just in case)
-UPDATE "PickupRequest" SET "recipientName" = 'Unknown' WHERE "recipientName" IS NULL;
-UPDATE "PickupRequest" SET "recipientPhone" = '+1 000-000-0000' WHERE "recipientPhone" IS NULL;
-UPDATE "PickupRequest" SET "recipientAddress" = 'Unknown' WHERE "recipientAddress" IS NULL;
-UPDATE "PickupRequest" SET "recipientCity" = 'Unknown' WHERE "recipientCity" IS NULL;
-UPDATE "PickupRequest" SET "recipientCountry" = 'United States' WHERE "recipientCountry" IS NULL;
+ALTER TABLE "PickupRequest"
+  ADD COLUMN IF NOT EXISTS "pickupState"             TEXT,
+  ADD COLUMN IF NOT EXISTS "pickupPostalCode"        TEXT,
+  ADD COLUMN IF NOT EXISTS "recipientName"           TEXT NOT NULL DEFAULT 'Unknown',
+  ADD COLUMN IF NOT EXISTS "recipientEmail"          TEXT,
+  ADD COLUMN IF NOT EXISTS "recipientPhone"          TEXT NOT NULL DEFAULT '+1 000-000-0000',
+  ADD COLUMN IF NOT EXISTS "recipientPhoneSecondary" TEXT,
+  ADD COLUMN IF NOT EXISTS "recipientAddress"        TEXT NOT NULL DEFAULT 'Unknown',
+  ADD COLUMN IF NOT EXISTS "recipientCity"           TEXT NOT NULL DEFAULT 'Unknown',
+  ADD COLUMN IF NOT EXISTS "recipientState"          TEXT,
+  ADD COLUMN IF NOT EXISTS "recipientPostalCode"     TEXT,
+  ADD COLUMN IF NOT EXISTS "recipientCountry"        TEXT NOT NULL DEFAULT 'United States',
+  ADD COLUMN IF NOT EXISTS "packageContents"         TEXT,
+  ADD COLUMN IF NOT EXISTS "notes"                   TEXT;
