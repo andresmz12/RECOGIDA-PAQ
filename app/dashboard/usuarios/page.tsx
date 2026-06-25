@@ -11,10 +11,6 @@ export default function UsuariosPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Don't render anything on server during build
-  if (!session && typeof window === "undefined") {
-    return null;
-  }
 
   useEffect(() => {
     if (status === "unauthenticated") {
