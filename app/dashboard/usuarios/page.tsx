@@ -297,7 +297,6 @@ export default function UsuariosPage() {
                 >
                   <option value="ADMIN">Administrador</option>
                   <option value="COURIER">Mensajero / Courier</option>
-                  <option value="DISPATCHER">Despachador</option>
                 </select>
               </div>
 

@@ -20,19 +20,33 @@ interface Courier {
 interface PickupDetail {
   id: string;
   trackingCode: string;
+  createdAt: string;
   contactName: string;
   contactPhone: string;
   contactEmail: string;
   pickupAddress: string;
   pickupCity: string;
+  pickupState: string | null;
+  pickupPostalCode: string | null;
   pickupCountry: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientPhoneSecondary: string | null;
+  recipientEmail: string | null;
+  recipientAddress: string;
+  recipientCity: string;
+  recipientState: string | null;
+  recipientPostalCode: string | null;
+  recipientCountry: string;
   destinationCountry: string;
   packageType: string;
   estimatedWeight: number | null;
   dimensions: string | null;
+  packageContents: string | null;
   preferredDate: string;
   preferredTimeWindow: string;
   specialInstructions: string | null;
+  notes: string | null;
   status: string;
   assignedCourier?: { id: string; name: string } | null;
   statusHistory: Array<{
@@ -127,6 +141,30 @@ export default function SolicitudDetailPage() {
     }
   };
 
+  const handleCourierAction = async (newStatusValue: string) => {
+    if (!pickup) return;
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/pickup-requests/${pickup.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatusValue }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setPickup(updated);
+        setNewStatus(updated.status);
+        const msg = newStatusValue === "SCHEDULED"
+          ? "Cliente notificado. Estás en camino."
+          : "¡Recogida confirmada! Cliente notificado.";
+        setToast(msg);
+        setTimeout(() => setToast(""), 3500);
+      }
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -138,6 +176,8 @@ export default function SolicitudDetailPage() {
   }
 
   if (!pickup) return null;
+
+  const isCompleted = pickup.status === "PICKED_UP" || pickup.status === "CANCELLED";
 
   return (
     <DashboardLayout>
@@ -165,7 +205,7 @@ export default function SolicitudDetailPage() {
                 <StatusBadge status={pickup.status} />
               </div>
               <p className="text-slate-600">
-                Creado el {new Date(pickup.statusHistory[pickup.statusHistory.length - 1]?.createdAt ?? "").toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                Creado el {new Date(pickup.createdAt).toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </p>
             </div>
           </div>
@@ -178,7 +218,7 @@ export default function SolicitudDetailPage() {
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
                 <span className="text-xl">👤</span>
-                Información de Contacto
+                Información de Contacto (Remitente)
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
                 <InfoRow label="Nombre" value={pickup.contactName} />
@@ -187,6 +227,35 @@ export default function SolicitudDetailPage() {
                 {pickup.assignedCourier && (
                   <InfoRow label="Courier asignado" value={pickup.assignedCourier.name} />
                 )}
+              </div>
+            </Card>
+
+            {/* Recipient */}
+            <Card variant="default" padding="lg">
+              <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
+                <span className="text-xl">🏠</span>
+                Información del Destinatario
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <InfoRow label="Nombre" value={pickup.recipientName} />
+                <InfoRow label="Teléfono" value={pickup.recipientPhone} />
+                {pickup.recipientPhoneSecondary && (
+                  <InfoRow label="Teléfono secundario" value={pickup.recipientPhoneSecondary} />
+                )}
+                {pickup.recipientEmail && (
+                  <InfoRow label="Email" value={pickup.recipientEmail} />
+                )}
+                <div className="sm:col-span-2">
+                  <InfoRow label="Dirección de destino" value={pickup.recipientAddress} />
+                </div>
+                <InfoRow label="Ciudad" value={pickup.recipientCity} />
+                {pickup.recipientState && (
+                  <InfoRow label="Estado/Provincia" value={pickup.recipientState} />
+                )}
+                {pickup.recipientPostalCode && (
+                  <InfoRow label="Código postal" value={pickup.recipientPostalCode} />
+                )}
+                <InfoRow label="País" value={pickup.recipientCountry} />
               </div>
             </Card>
 
@@ -201,6 +270,12 @@ export default function SolicitudDetailPage() {
                   <InfoRow label="Dirección" value={pickup.pickupAddress} />
                 </div>
                 <InfoRow label="Ciudad" value={pickup.pickupCity} />
+                {pickup.pickupState && (
+                  <InfoRow label="Estado" value={pickup.pickupState} />
+                )}
+                {pickup.pickupPostalCode && (
+                  <InfoRow label="Código postal" value={pickup.pickupPostalCode} />
+                )}
                 <InfoRow label="País de origen" value={pickup.pickupCountry} />
                 <InfoRow label="País destino" value={pickup.destinationCountry} />
               </div>
@@ -219,6 +294,11 @@ export default function SolicitudDetailPage() {
                 <InfoRow label="Fecha preferida" value={new Date(pickup.preferredDate).toLocaleDateString("es-ES")} />
                 <InfoRow label="Rango horario" value={pickup.preferredTimeWindow} />
               </div>
+              {pickup.packageContents && (
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                  <InfoRow label="Contenido del paquete" value={pickup.packageContents} />
+                </div>
+              )}
               {pickup.specialInstructions && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <InfoRow label="Instrucciones especiales" value={pickup.specialInstructions} />
@@ -268,8 +348,8 @@ export default function SolicitudDetailPage() {
           </div>
 
           {/* Sidebar: actions */}
-          {role === "ADMIN" && (
-            <div>
+          <div>
+            {role === "ADMIN" && (
               <Card variant="default" padding="lg" className="sticky top-8">
                 <h2 className="font-bold text-slate-900 mb-6">Actualizar solicitud</h2>
                 <form onSubmit={handleUpdate} className="space-y-5">
@@ -327,8 +407,76 @@ export default function SolicitudDetailPage() {
                   </Button>
                 </form>
               </Card>
-            </div>
-          )}
+            )}
+
+            {role === "COURIER" && !isCompleted && (
+              <Card variant="default" padding="lg" className="sticky top-8">
+                <h2 className="font-bold text-slate-900 mb-6">Acciones</h2>
+
+                {pickup.status === "ASSIGNED" && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600">Confirma que vas en camino hacia la dirección de recogida.</p>
+                    <button
+                      onClick={() => handleCourierAction("SCHEDULED")}
+                      disabled={updating}
+                      className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-200 text-sm"
+                    >
+                      {updating ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : "🚗 Voy en camino — Notificar cliente"}
+                    </button>
+                  </div>
+                )}
+
+                {pickup.status === "SCHEDULED" && (
+                  <div className="space-y-3">
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
+                      <p className="text-xs font-bold text-indigo-700 mb-1">EN CAMINO</p>
+                      <p className="text-sm text-indigo-600">El cliente ya fue notificado de que vas en camino.</p>
+                    </div>
+                    <p className="text-sm text-slate-600">Confirma cuando tengas el paquete en tus manos.</p>
+                    <button
+                      onClick={() => handleCourierAction("PICKED_UP")}
+                      disabled={updating}
+                      className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-200 text-sm"
+                    >
+                      {updating ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : "✅ Confirmar recogida"}
+                    </button>
+                  </div>
+                )}
+
+                {pickup.status === "PENDING" && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                    <p className="text-sm text-amber-800 font-medium">Esta solicitud aún no te ha sido asignada formalmente. Contacta al administrador.</p>
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {role === "COURIER" && isCompleted && (
+              <Card variant="default" padding="lg" className="sticky top-8">
+                {pickup.status === "PICKED_UP" ? (
+                  <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-bold text-emerald-900 text-sm">Recogida completada</p>
+                      <p className="text-emerald-700 text-xs">El cliente fue notificado por email</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                    <p className="font-bold text-slate-700 text-sm">Solicitud cancelada</p>
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout>

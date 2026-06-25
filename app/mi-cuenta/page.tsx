@@ -30,6 +30,7 @@ export default function MiCuentaPage() {
   const router = useRouter();
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -41,23 +42,39 @@ export default function MiCuentaPage() {
     }
   }, [status, session, router]);
 
+  const fetchPickups = async () => {
+    try {
+      const res = await fetch(`/api/my-pickups`);
+      const data = await res.json();
+      setPickups(data.data || []);
+    } catch (err) {
+      console.error("Error fetching pickups:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (status !== "authenticated") return;
-
-    const fetchPickups = async () => {
-      try {
-        const res = await fetch(`/api/my-pickups`);
-        const data = await res.json();
-        setPickups(data.data || []);
-      } catch (err) {
-        console.error("Error fetching pickups:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPickups();
   }, [status]);
+
+  const handleCancel = async (pickup: PickupRequest) => {
+    if (!confirm(`¿Cancelar la solicitud ${pickup.trackingCode}? Esta acción no se puede deshacer.`)) return;
+    setCancelling(pickup.id);
+    try {
+      const res = await fetch(`/api/pickup-requests/${pickup.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELLED" }),
+      });
+      if (res.ok) {
+        await fetchPickups();
+      }
+    } finally {
+      setCancelling(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
@@ -156,11 +173,22 @@ export default function MiCuentaPage() {
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <div className="flex-shrink-0">
+                    {/* Action Buttons */}
+                    <div className="flex-shrink-0 flex flex-col gap-3">
                       <Link href={`/rastreo/${pickup.trackingCode}`}>
                         <Button variant="primary">Rastrear →</Button>
                       </Link>
+                      {pickup.status === "PENDING" && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleCancel(pickup)}
+                          loading={cancelling === pickup.id}
+                          disabled={cancelling === pickup.id}
+                          className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                        >
+                          Cancelar
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>

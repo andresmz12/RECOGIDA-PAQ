@@ -30,24 +30,9 @@ export default function DashboardPage() {
 
     const load = async () => {
       try {
-        const statuses = [
-          { key: "PENDING", field: "pending" },
-          { key: "ASSIGNED", field: "assigned" },
-          { key: "SCHEDULED", field: "scheduled" },
-          { key: "PICKED_UP", field: "pickedUp" },
-          { key: "CANCELLED", field: "cancelled" },
-        ];
-        const s: any = { total: 0, pending: 0, assigned: 0, scheduled: 0, pickedUp: 0, cancelled: 0 };
-        await Promise.all(
-          statuses.map(async ({ key, field }) => {
-            const res = await fetch(`/api/pickup-requests?status=${key}&limit=1`);
-            const data = await res.json();
-            const count = data.pagination?.total ?? 0;
-            s[field] = count;
-            if (key !== "CANCELLED") s.total += count;
-          })
-        );
-        setStats(s);
+        const res = await fetch("/api/stats");
+        const data = await res.json();
+        setStats(data);
       } finally {
         setLoading(false);
       }

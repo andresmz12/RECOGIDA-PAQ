@@ -72,7 +72,7 @@ export async function PATCH(
     const role = (session.user as any).role;
     const userId = (session.user as any).id;
 
-    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+    if (!["ADMIN", "DISPATCHER", "COURIER", "CUSTOMER"].includes(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -88,6 +88,25 @@ export async function PATCH(
         { error: "Pickup request not found" },
         { status: 404 }
       );
+    }
+
+    // Customers can only cancel their own pending requests
+    if (role === "CUSTOMER") {
+      if (pickupRequest.userId !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      if (pickupRequest.status !== "PENDING") {
+        return NextResponse.json(
+          { error: "Solo puedes cancelar solicitudes en estado Pendiente" },
+          { status: 400 }
+        );
+      }
+      if (status !== "CANCELLED") {
+        return NextResponse.json(
+          { error: "Los clientes solo pueden cancelar solicitudes" },
+          { status: 403 }
+        );
+      }
     }
 
     // Couriers can only update pickups assigned to them

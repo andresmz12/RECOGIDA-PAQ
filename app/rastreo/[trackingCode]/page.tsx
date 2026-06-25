@@ -8,8 +8,14 @@ import { useParams } from "next/navigation";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Container from "@/components/Container";
-import Alert from "@/components/Alert";
 import StatusBadge from "@/components/StatusBadge";
+
+interface StatusHistoryEntry {
+  fromStatus: string | null;
+  toStatus: string;
+  notes: string | null;
+  createdAt: string;
+}
 
 interface TrackingData {
   trackingCode: string;
@@ -17,12 +23,13 @@ interface TrackingData {
   estimatedPickupDate: string;
   preferredTimeWindow: string;
   lastUpdated: string;
+  statusHistory: StatusHistoryEntry[];
 }
 
 const statusMessages: Record<string, string> = {
   PENDING: "Solicitud Pendiente",
   ASSIGNED: "Courier Asignado",
-  SCHEDULED: "Recogida Programada",
+  SCHEDULED: "Recogida en Camino",
   PICKED_UP: "Paquete Recogido",
   CANCELLED: "Solicitud Cancelada",
 };
@@ -30,10 +37,16 @@ const statusMessages: Record<string, string> = {
 const statusDescriptions: Record<string, string> = {
   PENDING: "Tu solicitud está registrada y en espera de ser asignada a un courier.",
   ASSIGNED: "Se ha asignado un courier para tu recogida. Pronto se confirmará la fecha y hora.",
-  SCHEDULED: "Tu recogida está programada. El courier llegará en el rango horario indicado.",
+  SCHEDULED: "Tu courier está en camino. Estará en tu dirección en el rango horario indicado.",
   PICKED_UP: "¡Tu paquete ha sido recogido exitosamente!",
   CANCELLED: "Esta solicitud ha sido cancelada.",
 };
+
+const STEPS = ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"];
+
+function stepIndex(status: string) {
+  return STEPS.indexOf(status);
+}
 
 export default function RastreoPage() {
   const params = useParams();
@@ -98,17 +111,15 @@ export default function RastreoPage() {
     );
   }
 
-  if (!tracking) {
-    return null;
-  }
+  if (!tracking) return null;
 
-  const estimatedDate = new Date(tracking.estimatedPickupDate);
-  const formattedDate = estimatedDate.toLocaleDateString("es-ES", {
+  const isCancelled = tracking.status === "CANCELLED";
+  const currentStep = stepIndex(tracking.status);
+  const formattedDate = new Date(tracking.estimatedPickupDate).toLocaleDateString("es-ES", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-
   const lastUpdateDate = new Date(tracking.lastUpdated).toLocaleDateString("es-ES", {
     year: "numeric",
     month: "long",
@@ -155,67 +166,97 @@ export default function RastreoPage() {
           </div>
 
           {/* Progress indicator */}
-          <div className="mt-8 pt-8 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mb-2 ${
-                  ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-                }`}>
-                  1
-                </div>
-                <p className="text-xs font-semibold text-slate-600">Solicitado</p>
-              </div>
-              <div className={`flex-1 h-1 mx-2 ${
-                ["ASSIGNED", "SCHEDULED", "PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-              }`} />
-              <div className={`flex flex-col items-center`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mb-2 ${
-                  ["ASSIGNED", "SCHEDULED", "PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-                }`}>
-                  2
-                </div>
-                <p className="text-xs font-semibold text-slate-600">Asignado</p>
-              </div>
-              <div className={`flex-1 h-1 mx-2 ${
-                ["SCHEDULED", "PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-              }`} />
-              <div className={`flex flex-col items-center`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mb-2 ${
-                  ["SCHEDULED", "PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-                }`}>
-                  3
-                </div>
-                <p className="text-xs font-semibold text-slate-600">Programado</p>
-              </div>
-              <div className={`flex-1 h-1 mx-2 ${
-                ["PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-              }`} />
-              <div className={`flex flex-col items-center`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mb-2 ${
-                  ["PICKED_UP"].includes(tracking.status) ? "bg-indigo-600" : "bg-slate-300"
-                }`}>
-                  4
-                </div>
-                <p className="text-xs font-semibold text-slate-600">Recogido</p>
+          {!isCancelled && (
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                {["Solicitado", "Asignado", "En camino", "Recogido"].map((label, i) => (
+                  <div key={label} className="flex flex-col items-center flex-1">
+                    <div className="flex items-center w-full">
+                      {i > 0 && (
+                        <div className={`flex-1 h-1 ${i <= currentStep ? "bg-indigo-600" : "bg-slate-200"}`} />
+                      )}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0 ${
+                        i <= currentStep ? "bg-indigo-600" : "bg-slate-200 text-slate-400"
+                      }`}>
+                        {i < currentStep ? (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span>{i + 1}</span>
+                        )}
+                      </div>
+                      {i < 3 && (
+                        <div className={`flex-1 h-1 ${i < currentStep ? "bg-indigo-600" : "bg-slate-200"}`} />
+                      )}
+                    </div>
+                    <p className="text-xs font-semibold text-slate-600 mt-2 text-center">{label}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
         </Card>
 
         {/* Details Grid */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card variant="default" padding="lg">
-            <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 Fecha Estimada</h3>
-            <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
-            <p className="text-xs text-slate-500 mt-2">Fecha programada para la recogida</p>
-          </Card>
+        {!isCancelled && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <Card variant="default" padding="lg">
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 Fecha Estimada</h3>
+              <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
+              <p className="text-xs text-slate-500 mt-2">Fecha programada para la recogida</p>
+            </Card>
 
-          <Card variant="default" padding="lg">
-            <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ Rango Horario</h3>
-            <p className="text-2xl font-bold text-slate-900">{tracking.preferredTimeWindow}</p>
-            <p className="text-xs text-slate-500 mt-2">Ventana de tiempo para la recogida</p>
+            <Card variant="default" padding="lg">
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ Rango Horario</h3>
+              <p className="text-2xl font-bold text-slate-900">{tracking.preferredTimeWindow}</p>
+              <p className="text-xs text-slate-500 mt-2">Ventana de tiempo para la recogida</p>
+            </Card>
+          </div>
+        )}
+
+        {/* Status History Timeline */}
+        {tracking.statusHistory.length > 0 && (
+          <Card variant="default" padding="lg" className="mb-8">
+            <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <span>📋</span> Historial de actualizaciones
+            </h3>
+            <div className="relative">
+              <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
+              <div className="space-y-6">
+                {[...tracking.statusHistory].reverse().map((entry, i) => (
+                  <div key={i} className="flex gap-4 pl-10 relative">
+                    <div className="absolute left-0 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full flex items-center justify-center shrink-0">
+                      <div className="w-2 h-2 bg-indigo-500 rounded-full" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {entry.fromStatus && (
+                          <>
+                            <StatusBadge status={entry.fromStatus} />
+                            <span className="text-slate-300 text-sm">→</span>
+                          </>
+                        )}
+                        <StatusBadge status={entry.toStatus} />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1.5 font-medium">
+                        {new Date(entry.createdAt).toLocaleDateString("es-ES", {
+                          year: "numeric", month: "long", day: "numeric",
+                          hour: "2-digit", minute: "2-digit",
+                        })}
+                      </p>
+                      {entry.notes && (
+                        <p className="text-sm text-slate-700 mt-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                          {entry.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </Card>
-        </div>
+        )}
 
         {/* Last Update */}
         <Card variant="filled" padding="lg" className="mb-8 bg-slate-50 border-slate-200">

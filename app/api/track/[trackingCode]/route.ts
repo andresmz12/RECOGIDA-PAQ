@@ -16,11 +16,12 @@ export async function GET(
         updatedAt: true,
         statusHistory: {
           select: {
+            fromStatus: true,
             toStatus: true,
+            notes: true,
             createdAt: true,
           },
-          orderBy: { createdAt: "desc" },
-          take: 1,
+          orderBy: { createdAt: "asc" },
         },
       },
     });
@@ -32,12 +33,15 @@ export async function GET(
       );
     }
 
+    const lastHistory = pickupRequest.statusHistory[pickupRequest.statusHistory.length - 1];
+
     return NextResponse.json({
       trackingCode: pickupRequest.trackingCode,
       status: pickupRequest.status,
       estimatedPickupDate: pickupRequest.preferredDate,
       preferredTimeWindow: pickupRequest.preferredTimeWindow,
-      lastUpdated: pickupRequest.statusHistory[0]?.createdAt || pickupRequest.updatedAt,
+      lastUpdated: lastHistory?.createdAt || pickupRequest.updatedAt,
+      statusHistory: pickupRequest.statusHistory,
     });
   } catch (error) {
     console.error("Error tracking pickup request:", error);
