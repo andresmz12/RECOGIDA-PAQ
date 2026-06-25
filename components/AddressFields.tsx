@@ -4,41 +4,42 @@ interface AddressFieldsProps {
   prefix: "pickup" | "recipient";
   formData: any;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  lockedCountry?: string;
 }
 
-export default function AddressFields({ prefix, formData, onChange }: AddressFieldsProps) {
+export default function AddressFields({ prefix, formData, onChange, lockedCountry }: AddressFieldsProps) {
   const countryKey = `${prefix}Country`;
   const stateKey = `${prefix}State`;
   const postalKey = `${prefix}PostalCode`;
   const cityKey = `${prefix}City`;
   const addressKey = `${prefix}Address`;
 
-  const selectedCountry = formData[countryKey];
+  const selectedCountry = lockedCountry ?? formData[countryKey];
   const showState = requiresState(selectedCountry);
   const showPostal = requiresPostalCode(selectedCountry);
 
-  const label = prefix === "pickup" ? "Dirección de Recogida" : "Dirección de Entrega";
-
   return (
     <div className="space-y-4">
-      {/* Country */}
-      <div>
-        <label className="block text-gray-700 font-semibold mb-2">País *</label>
-        <select
-          name={countryKey}
-          value={selectedCountry}
-          onChange={onChange}
-          required
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-        >
-          <option value="">Selecciona un país</option>
-          {COUNTRIES.map((country) => (
-            <option key={country.code} value={country.code}>
-              {country.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Country — hidden when locked */}
+      {!lockedCountry && (
+        <div>
+          <label className="block text-gray-700 font-semibold mb-2">País *</label>
+          <select
+            name={countryKey}
+            value={selectedCountry}
+            onChange={onChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+          >
+            <option value="">Selecciona un país</option>
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Address */}
       <div>
@@ -52,7 +53,7 @@ export default function AddressFields({ prefix, formData, onChange }: AddressFie
           onChange={onChange}
           required
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-          placeholder="Calle, número, apto/suite"
+          placeholder="Street address, apt/suite"
         />
       </div>
 
@@ -66,11 +67,11 @@ export default function AddressFields({ prefix, formData, onChange }: AddressFie
           onChange={onChange}
           required
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-          placeholder="Ciudad"
+          placeholder="City"
         />
       </div>
 
-      {/* State (conditional for US/CA) */}
+      {/* State (always shown when US; conditional otherwise) */}
       {showState && (
         <div>
           <label className="block text-gray-700 font-semibold mb-2">
@@ -93,7 +94,7 @@ export default function AddressFields({ prefix, formData, onChange }: AddressFie
         </div>
       )}
 
-      {/* Postal Code (conditional for US/CA) */}
+      {/* Postal Code (always shown when US; conditional otherwise) */}
       {showPostal && (
         <div>
           <label className="block text-gray-700 font-semibold mb-2">
