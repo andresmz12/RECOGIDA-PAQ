@@ -14,6 +14,11 @@ interface PickupRequest {
   createdAt: string;
   preferredDate: string;
   contactName: string;
+  pickupCity: string;
+  pickupCountry: string;
+  recipientName: string;
+  recipientCity: string;
+  recipientCountry: string;
 }
 
 export default function MiCuentaPage() {
@@ -123,30 +128,45 @@ export default function MiCuentaPage() {
                         <p className="text-sm text-gray-600">Código de Seguimiento</p>
                         <p className="text-2xl font-bold text-indigo-600 mb-2">{pickup.trackingCode}</p>
 
-                        <div className="grid md:grid-cols-3 gap-4 mt-4">
-                          <div>
-                            <p className="text-sm text-gray-600">Estado</p>
-                            <span
-                              className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                                statusColors[pickup.status]
-                              }`}
-                            >
-                              {statusLabels[pickup.status]}
-                            </span>
+                        <div className="space-y-4 mt-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-600">De (Remitente)</p>
+                              <p className="font-semibold">{pickup.contactName}</p>
+                              <p className="text-sm text-gray-500">{pickup.pickupCity}, {pickup.pickupCountry}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600">Para (Destinatario)</p>
+                              <p className="font-semibold">{pickup.recipientName}</p>
+                              <p className="text-sm text-gray-500">{pickup.recipientCity}, {pickup.recipientCountry}</p>
+                            </div>
                           </div>
 
-                          <div>
-                            <p className="text-sm text-gray-600">Fecha Preferida</p>
-                            <p className="font-semibold">
-                              {new Date(pickup.preferredDate).toLocaleDateString("es-ES")}
-                            </p>
-                          </div>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-600">Estado</p>
+                              <span
+                                className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                                  statusColors[pickup.status]
+                                }`}
+                              >
+                                {statusLabels[pickup.status]}
+                              </span>
+                            </div>
 
-                          <div>
-                            <p className="text-sm text-gray-600">Creada</p>
-                            <p className="font-semibold">
-                              {new Date(pickup.createdAt).toLocaleDateString("es-ES")}
-                            </p>
+                            <div>
+                              <p className="text-sm text-gray-600">Fecha Preferida</p>
+                              <p className="font-semibold">
+                                {new Date(pickup.preferredDate).toLocaleDateString("es-ES")}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-sm text-gray-600">Creada</p>
+                              <p className="font-semibold">
+                                {new Date(pickup.createdAt).toLocaleDateString("es-ES")}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
