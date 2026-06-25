@@ -64,11 +64,12 @@ export default function RegistroPage() {
       });
 
       if (!signInResult || !signInResult.ok) {
-        setError("Cuenta creada pero no se pudo iniciar sesión automáticamente. Por favor ingresa manualmente.");
-        setIsLoading(false);
+        // Cuenta creada exitosamente pero auto-login falló — mandar al login
+        router.push("/login?registered=1");
         return;
       }
 
+      // CUSTOMER siempre va a /mi-cuenta
       router.push("/mi-cuenta");
     } catch (err) {
       setError("Ocurrió un error. Intenta de nuevo.");

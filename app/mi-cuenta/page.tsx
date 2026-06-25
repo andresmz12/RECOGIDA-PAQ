@@ -38,9 +38,9 @@ export default function MiCuentaPage() {
 
     const fetchPickups = async () => {
       try {
-        const res = await fetch(`/api/pickup-requests?limit=50`);
+        const res = await fetch(`/api/my-pickups`);
         const data = await res.json();
-        setPickups(data.data);
+        setPickups(data.data || []);
       } catch (err) {
         console.error("Error fetching pickups:", err);
       } finally {

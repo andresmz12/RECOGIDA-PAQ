@@ -2,19 +2,29 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("registered") === "1") {
+      setSuccess("¡Cuenta creada! Inicia sesión con tu email y contraseña.");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setIsLoading(true);
 
     try {
@@ -31,27 +41,33 @@ export default function LoginPage() {
       }
 
       if (result.error) {
-        // Show the actual error code to help diagnose issues
         if (result.error === "CredentialsSignin") {
-          setError("Email o contraseña inválidos. Verifica tus credenciales.");
-        } else if (result.error.includes("requeridos")) {
-          setError("Email y contraseña son requeridos");
+          setError("Email o contraseña inválidos.");
         } else {
-          setError(`Error: ${result.error}`);
+          setError("Error al iniciar sesión. Verifica tus credenciales.");
         }
         setIsLoading(false);
         return;
       }
 
       if (result.ok) {
-        window.location.href = "/dashboard";
+        // Obtener la sesión para saber el rol y redirigir correctamente
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
+        const role = session?.user?.role;
+
+        if (role === "CUSTOMER") {
+          window.location.href = "/mi-cuenta";
+        } else {
+          window.location.href = "/dashboard";
+        }
         return;
       }
 
-      setError(`Estado inesperado: ok=${result.ok} status=${result.status}`);
+      setError("Error inesperado. Intenta de nuevo.");
       setIsLoading(false);
     } catch (err) {
-      setError("Error: " + (err as Error).message);
+      setError("Error de conexión. Intenta de nuevo.");
       setIsLoading(false);
     }
   };
@@ -86,6 +102,12 @@ export default function LoginPage() {
             />
           </div>
 
+          {success && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+              {success}
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               {error}
@@ -101,7 +123,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-
         <p className="text-center text-gray-600 mt-6">
           ¿No tienes cuenta?{" "}
           <Link href="/registro" className="text-indigo-600 hover:text-indigo-800 font-semibold">
@@ -114,13 +135,15 @@ export default function LoginPage() {
             Solicitar recogida sin cuenta
           </Link>
         </p>
-
-        <p className="text-center text-gray-600 mt-4 text-sm">
-          <Link href="/setup" className="text-gray-500 hover:text-gray-700 underline">
-            Setup inicial (crear primer admin)
-          </Link>
-        </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
