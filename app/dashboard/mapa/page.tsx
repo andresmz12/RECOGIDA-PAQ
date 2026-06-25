@@ -4,11 +4,11 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/StatusBadge";
 
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false, loading: () => <div className="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div> });
+const MapView = dynamicImport(() => import("@/components/MapView"), { ssr: false, loading: () => <div className="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div> });
 
 // Approximate lat/lng for cities in Colombia and other countries
 const CITY_COORDS: Record<string, [number, number]> = {
