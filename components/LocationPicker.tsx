@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { GEO_DATA } from "@/lib/geo-data";
 
@@ -41,17 +41,16 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
   const departments = countryData?.departments ?? [];
   const selectedDept = departments.find((d) => d.name === value.department);
 
-  // geoCoords: best geocoded position (could be address-level or city-level)
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset geocoded coords when country or department changes
+  // Clear geocoded coords when country or department changes
   useEffect(() => {
     setGeoCoords(null);
   }, [value.country, value.department]);
 
-  // Geocode when address, city, dept, or country changes
+  // Geocode whenever address, city, dept, or country changes
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -67,16 +66,9 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
     debounceRef.current = setTimeout(async () => {
       setGeocoding(true);
       try {
-        // Try full address first (street + city + dept + country)
-        const parts: string[] = [];
-        if (hasAddress) parts.push(address!.trim());
-        if (hasCity) parts.push(value.city.trim());
-        parts.push(value.department, countryData.name);
-
-        const tryGeocode = async (query: string) => {
-          const q = encodeURIComponent(query);
+        const tryGeocode = async (q: string) => {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&addressdetails=0`,
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=0`,
             { headers: { "User-Agent": "OGloboCargo/1.0" } }
           );
           const data = await res.json();
@@ -85,15 +77,16 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
             : null;
         };
 
-        let coords = await tryGeocode(parts.join(", "));
+        // Try most specific query first, then fall back
+        let coords: { lat: number; lng: number } | null = null;
 
-        // Fallback: city + dept + country (drop street address)
-        if (!coords && hasAddress && hasCity) {
+        if (hasAddress && hasCity) {
+          coords = await tryGeocode(`${address}, ${value.city}, ${value.department}, ${countryData.name}`);
+        }
+        if (!coords && hasCity) {
           coords = await tryGeocode(`${value.city}, ${value.department}, ${countryData.name}`);
         }
-
-        // Fallback: dept + country only
-        if (!coords && hasCity) {
+        if (!coords) {
           coords = await tryGeocode(`${value.department}, ${countryData.name}`);
         }
 
@@ -114,18 +107,15 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
   const setDept = (department: string) => onChange({ ...value, department, city: "" });
   const setCity = (city: string) => onChange({ ...value, city });
 
-  // Coords to show on map: geocoded > dept fallback
+  // Use geocoded coords, else fall back to department center
   const deptCoords = selectedDept ? { lat: selectedDept.lat, lng: selectedDept.lng } : null;
   const mapCoords = geoCoords ?? deptCoords;
 
-  // Zoom level: address-level 15, city-level 13, dept-level 7
   const hasFullAddress = Boolean(address?.trim()) && Boolean(value.city.trim());
   const mapZoom = geoCoords ? (hasFullAddress ? 15 : 13) : 7;
 
-  // In editable mode (when we have geocoded coords), user can drag the map
+  // Map is interactive only when geocoding has a result and user hasn't confirmed yet
   const isEditable = Boolean(geoCoords) && !confirmed;
-
-  const badgeLabel = value.city || value.department;
 
   return (
     <div className="space-y-4">
@@ -194,25 +184,21 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
       {/* Map */}
       {mapCoords ? (
         <div>
-          {/* Instruction when in editable mode */}
+          {/* Instruction — only while editable */}
           {isEditable && (
-            <div className="mb-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
-              <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+            <div className="mb-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+              <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-xs text-indigo-700 font-medium">
-                Arrastra el mapa para ajustar la ubicación exacta, luego confirma.
+              <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                Verifica el punto en el mapa. Si no es exacto, <strong>arrastra el marcador azul</strong> al lugar correcto y luego confirma.
               </p>
             </div>
           )}
 
           <div
-            className={`overflow-hidden rounded-xl border-2 shadow-sm transition-all ${
-              confirmed
-                ? "border-emerald-300"
-                : isEditable
-                ? "border-indigo-300"
-                : "border-indigo-100"
+            className={`overflow-hidden rounded-xl border-2 shadow-sm transition-colors ${
+              confirmed ? "border-emerald-300" : isEditable ? "border-indigo-300" : "border-indigo-100"
             }`}
             style={{ height: 260 }}
           >
@@ -221,30 +207,13 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
                 lat={mapCoords.lat}
                 lng={mapCoords.lng}
                 zoom={mapZoom}
-                label={badgeLabel}
                 editable={isEditable}
               />
 
-              {/* Fixed center crosshair — only in editable mode */}
-              {isEditable && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  style={{ zIndex: 1000 }}
-                >
-                  <svg width="36" height="44" viewBox="0 0 36 44" fill="none">
-                    <path
-                      d="M18 0C9.163 0 2 7.163 2 16c0 9.941 14.019 26.056 15.225 27.426a1 1 0 001.55 0C20.981 42.056 35 25.941 35 16 35 7.163 27.837 0 18 0z"
-                      fill="#6366f1"
-                    />
-                    <circle cx="18" cy="16" r="6" fill="white" />
-                  </svg>
-                </div>
-              )}
-
-              {/* Info badge bottom-left */}
+              {/* Location info badge — bottom left */}
               <div className="absolute bottom-2 left-2 z-[1000] bg-white/90 backdrop-blur border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-sm pointer-events-none">
                 <p className="text-xs font-bold text-slate-800">
-                  {countryData?.flag} {badgeLabel}
+                  {countryData?.flag} {value.city || value.department}
                 </p>
                 <p className="text-xs text-slate-500">{countryData?.name}</p>
               </div>
@@ -254,11 +223,11 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
                 © OpenStreetMap
               </div>
 
-              {/* Confirm / confirmed button — top center of map */}
+              {/* Confirm / Confirmed — top center */}
               {geoCoords && (
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000]">
                   {confirmed ? (
-                    <div className="flex items-center gap-1.5 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                    <div className="flex items-center gap-1.5 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap">
                       <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
@@ -268,7 +237,7 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
                     <button
                       type="button"
                       onClick={onConfirm}
-                      className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transition-all"
+                      className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transition-all whitespace-nowrap"
                     >
                       <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

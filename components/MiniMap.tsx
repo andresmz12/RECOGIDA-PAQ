@@ -1,43 +1,98 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from "react-leaflet";
+import { useEffect, useRef, useCallback } from "react";
+import { MapContainer, TileLayer, CircleMarker, useMap } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+// Programmatically enables/disables dragging after MapContainer mounts
+function MapControls({ editable }: { editable: boolean }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo([lat, lng], zoom, { duration: 1.2 });
+    if (editable) {
+      map.dragging.enable();
+      map.scrollWheelZoom.enable();
+      map.touchZoom.enable();
+    } else {
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      map.touchZoom.disable();
+    }
+  }, [editable, map]);
+  return null;
+}
+
+// Flies to new coords whenever they change
+function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+  const map = useMap();
+  const prev = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
+  useEffect(() => {
+    const p = prev.current;
+    if (!p || p.lat !== lat || p.lng !== lng || p.zoom !== zoom) {
+      map.flyTo([lat, lng], zoom, { duration: 1.0 });
+      prev.current = { lat, lng, zoom };
+    }
   }, [lat, lng, zoom, map]);
   return null;
 }
 
-function MapCenterTracker({ onChange }: { onChange: (lat: number, lng: number) => void }) {
+// Native Leaflet draggable marker (avoids react-leaflet default icon issues)
+function DraggableMarker({
+  lat,
+  lng,
+  onDragEnd,
+}: {
+  lat: number;
+  lng: number;
+  onDragEnd: (lat: number, lng: number) => void;
+}) {
   const map = useMap();
+  const markerRef = useRef<L.Marker | null>(null);
+
   useEffect(() => {
-    const handler = () => {
-      const c = map.getCenter();
-      onChange(c.lat, c.lng);
+    const icon = L.divIcon({
+      html: `<div style="width:28px;height:28px;background:#6366f1;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);cursor:grab;"></div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      className: "",
+    });
+
+    const marker = L.marker([lat, lng], { icon, draggable: true }).addTo(map);
+    markerRef.current = marker;
+
+    marker.on("dragend", () => {
+      const pos = marker.getLatLng();
+      onDragEnd(pos.lat, pos.lng);
+    });
+
+    return () => {
+      marker.remove();
+      markerRef.current = null;
     };
-    map.on("moveend", handler);
-    return () => { map.off("moveend", handler); };
-  }, [map, onChange]);
+    // Only mount once; lat/lng synced below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync pin to new geocoded coords without unmounting
+  useEffect(() => {
+    markerRef.current?.setLatLng([lat, lng]);
+  }, [lat, lng]);
+
   return null;
 }
 
 interface Props {
   lat: number;
   lng: number;
-  label: string;
   zoom?: number;
   editable?: boolean;
-  onCenterChange?: (lat: number, lng: number) => void;
+  onPinMove?: (lat: number, lng: number) => void;
 }
 
-export default function MiniMap({ lat, lng, label, zoom = 7, editable = false, onCenterChange }: Props) {
-  const handleCenterChange = useCallback(
-    (newLat: number, newLng: number) => onCenterChange?.(newLat, newLng),
-    [onCenterChange]
+export default function MiniMap({ lat, lng, zoom = 7, editable = false, onPinMove }: Props) {
+  const handleDragEnd = useCallback(
+    (newLat: number, newLng: number) => onPinMove?.(newLat, newLng),
+    [onPinMove]
   );
 
   return (
@@ -45,24 +100,23 @@ export default function MiniMap({ lat, lng, label, zoom = 7, editable = false, o
       center={[lat, lng]}
       zoom={zoom}
       style={{ height: "100%", width: "100%", borderRadius: "inherit" }}
-      zoomControl={editable}
-      scrollWheelZoom={editable}
-      dragging={editable}
+      zoomControl={false}
+      scrollWheelZoom={false}
+      dragging={false}
       doubleClickZoom={false}
       attributionControl={false}
     >
       <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
       <FlyTo lat={lat} lng={lng} zoom={zoom} />
+      <MapControls editable={editable} />
       {editable ? (
-        <MapCenterTracker onChange={handleCenterChange} />
+        <DraggableMarker lat={lat} lng={lng} onDragEnd={handleDragEnd} />
       ) : (
         <CircleMarker
           center={[lat, lng]}
           radius={10}
           pathOptions={{ color: "#6366f1", fillColor: "#6366f1", fillOpacity: 0.9, weight: 3 }}
-        >
-          <Popup>{label}</Popup>
-        </CircleMarker>
+        />
       )}
     </MapContainer>
   );
