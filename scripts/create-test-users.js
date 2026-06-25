@@ -38,14 +38,17 @@ const TEST_USERS = [
 
 async function main() {
   try {
-    console.log("Creating/updating test users...");
+    console.log("Creating test users if not present...");
 
     for (const u of TEST_USERS) {
+      const existing = await prisma.user.findUnique({ where: { email: u.email } });
+      if (existing) {
+        console.log(`→ ${u.role}: ${u.email} (already exists, skipping)`);
+        continue;
+      }
       const hashed = await bcrypt.hash(u.password, 10);
-      await prisma.user.upsert({
-        where: { email: u.email },
-        update: { password: hashed, name: u.name, role: u.role },
-        create: {
+      await prisma.user.create({
+        data: {
           email: u.email,
           password: hashed,
           name: u.name,
@@ -53,10 +56,10 @@ async function main() {
           role: u.role,
         },
       });
-      console.log(`✓ ${u.role}: ${u.email}`);
+      console.log(`✓ ${u.role}: ${u.email} (created)`);
     }
 
-    console.log("\n✅ Test users ready. Password for all: password123");
+    console.log("\n✅ Test users ready.");
   } catch (error) {
     console.error("❌ Error creating users:", error);
     process.exit(1);
