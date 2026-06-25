@@ -127,11 +127,7 @@ export async function POST(request: NextRequest) {
           {
             step: "Verify Password Saved",
             result: "FAILED",
-            message: "⚠️ PASSWORD IS NULL! This is the bug!",
-            details: {
-              savedPassword: userFromDB.password,
-              expectedHash: hashedPassword.substring(0, 20) + "...",
-            },
+            message: `⚠️ PASSWORD IS NULL! This is the bug! (expected hash: ${hashedPassword.substring(0, 20)}...)`,
           },
         ],
       });

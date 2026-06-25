@@ -91,13 +91,7 @@ export async function POST(request: NextRequest) {
       steps.push({
         step: "Auth Result",
         result: "SUCCESS",
-        message: "User can login successfully",
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
+        message: `User can login successfully (id: ${user.id}, role: ${user.role})`,
       });
     }
 
