@@ -32,6 +32,7 @@
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "eslint": "^8.55.0",
     "eslint-config-next": "^14.2.0"
   }

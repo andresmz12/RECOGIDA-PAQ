@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { generateTrackingCode } from "@/lib/utils";
 import { sendPickupConfirmationEmail } from "@/lib/email";
@@ -74,7 +75,6 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const bcrypt = require("bcryptjs");
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await prisma.user.create({
