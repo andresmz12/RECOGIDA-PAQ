@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { GEO_DATA } from "@/lib/geo-data";
 
@@ -41,6 +41,7 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
   const departments = countryData?.departments ?? [];
   const selectedDept = departments.find((d) => d.name === value.department);
 
+  // geoCoords: best geocoded position (could be address-level or city-level)
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,20 +51,15 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
     setGeoCoords(null);
   }, [value.country, value.department]);
 
-  // Geocode when address, city, department, or country changes
+  // Geocode when address, city, dept, or country changes
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const hasCity = value.city.trim().length > 0;
     const hasDept = Boolean(value.department);
+    const hasCity = value.city.trim().length > 0;
+    const hasAddress = Boolean(address?.trim());
 
-    if (!hasDept || !countryData) {
-      setGeoCoords(null);
-      return;
-    }
-
-    // Need at least a city or an address to geocode
-    if (!hasCity && !address?.trim()) {
+    if (!hasDept || !countryData || (!hasCity && !hasAddress)) {
       setGeoCoords(null);
       return;
     }
@@ -71,36 +67,37 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
     debounceRef.current = setTimeout(async () => {
       setGeocoding(true);
       try {
-        // Use full address when available for street-level precision
+        // Try full address first (street + city + dept + country)
         const parts: string[] = [];
-        if (address?.trim()) parts.push(address.trim());
+        if (hasAddress) parts.push(address!.trim());
         if (hasCity) parts.push(value.city.trim());
         parts.push(value.department, countryData.name);
 
-        const q = encodeURIComponent(parts.join(", "));
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&addressdetails=0`,
-          { headers: { "User-Agent": "OGloboCargo/1.0" } }
-        );
-        const data = await res.json();
-        if (Array.isArray(data) && data[0]) {
-          setGeoCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
-        } else if (address?.trim() && hasCity) {
-          // Fallback: try without street address
-          const q2 = encodeURIComponent(`${value.city}, ${value.department}, ${countryData.name}`);
-          const res2 = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=1&addressdetails=0`,
+        const tryGeocode = async (query: string) => {
+          const q = encodeURIComponent(query);
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&addressdetails=0`,
             { headers: { "User-Agent": "OGloboCargo/1.0" } }
           );
-          const data2 = await res2.json();
-          if (Array.isArray(data2) && data2[0]) {
-            setGeoCoords({ lat: parseFloat(data2[0].lat), lng: parseFloat(data2[0].lon) });
-          } else {
-            setGeoCoords(null);
-          }
-        } else {
-          setGeoCoords(null);
+          const data = await res.json();
+          return Array.isArray(data) && data[0]
+            ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+            : null;
+        };
+
+        let coords = await tryGeocode(parts.join(", "));
+
+        // Fallback: city + dept + country (drop street address)
+        if (!coords && hasAddress && hasCity) {
+          coords = await tryGeocode(`${value.city}, ${value.department}, ${countryData.name}`);
         }
+
+        // Fallback: dept + country only
+        if (!coords && hasCity) {
+          coords = await tryGeocode(`${value.department}, ${countryData.name}`);
+        }
+
+        setGeoCoords(coords);
       } catch {
         setGeoCoords(null);
       } finally {
@@ -117,13 +114,18 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
   const setDept = (department: string) => onChange({ ...value, department, city: "" });
   const setCity = (city: string) => onChange({ ...value, city });
 
-  const mapCoords = geoCoords ?? (selectedDept ? { lat: selectedDept.lat, lng: selectedDept.lng } : null);
-  // Zoom: 15 for full address hit, 13 for city-only hit, 7 for dept fallback
-  const hasAddress = Boolean(address?.trim()) && Boolean(value.city.trim());
-  const mapZoom = geoCoords ? (hasAddress ? 15 : 13) : 7;
+  // Coords to show on map: geocoded > dept fallback
+  const deptCoords = selectedDept ? { lat: selectedDept.lat, lng: selectedDept.lng } : null;
+  const mapCoords = geoCoords ?? deptCoords;
 
-  const badgeCity = value.city || value.department;
-  const badgeCountry = countryData?.name ?? "";
+  // Zoom level: address-level 15, city-level 13, dept-level 7
+  const hasFullAddress = Boolean(address?.trim()) && Boolean(value.city.trim());
+  const mapZoom = geoCoords ? (hasFullAddress ? 15 : 13) : 7;
+
+  // In editable mode (when we have geocoded coords), user can drag the map
+  const isEditable = Boolean(geoCoords) && !confirmed;
+
+  const badgeLabel = value.city || value.department;
 
   return (
     <div className="space-y-4">
@@ -174,7 +176,7 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
           Ciudad <span className="text-red-500">*</span>
           {geocoding && (
             <span className="ml-2 text-indigo-500 text-xs font-normal animate-pulse">
-              buscando ubicación...
+              buscando en el mapa...
             </span>
           )}
         </label>
@@ -191,57 +193,97 @@ export default function LocationPicker({ value, onChange, address, confirmed, on
 
       {/* Map */}
       {mapCoords ? (
-        <div className="rounded-xl border-2 border-indigo-100 shadow-sm overflow-hidden" style={{ height: 240 }}>
-          <div className="relative h-full">
-            <MiniMap
-              lat={mapCoords.lat}
-              lng={mapCoords.lng}
-              zoom={mapZoom}
-              label={badgeCity}
-            />
-
-            {/* Info badge bottom-left */}
-            <div className="absolute bottom-2 left-2 z-[1000] bg-white/90 backdrop-blur border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-sm pointer-events-none">
-              <p className="text-xs font-bold text-slate-800">
-                {countryData?.flag} {badgeCity}
+        <div>
+          {/* Instruction when in editable mode */}
+          {isEditable && (
+            <div className="mb-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+              <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+              </svg>
+              <p className="text-xs text-indigo-700 font-medium">
+                Arrastra el mapa para ajustar la ubicación exacta, luego confirma.
               </p>
-              <p className="text-xs text-slate-500">{badgeCountry}</p>
             </div>
+          )}
 
-            {/* Attribution */}
-            <div className="absolute bottom-2 right-2 z-[1000] text-[10px] text-slate-400 pointer-events-none">
-              © OpenStreetMap
-            </div>
+          <div
+            className={`overflow-hidden rounded-xl border-2 shadow-sm transition-all ${
+              confirmed
+                ? "border-emerald-300"
+                : isEditable
+                ? "border-indigo-300"
+                : "border-indigo-100"
+            }`}
+            style={{ height: 260 }}
+          >
+            <div className="relative h-full">
+              <MiniMap
+                lat={mapCoords.lat}
+                lng={mapCoords.lng}
+                zoom={mapZoom}
+                label={badgeLabel}
+                editable={isEditable}
+              />
 
-            {/* Confirm overlay — top of map */}
-            {geoCoords && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000]">
-                {confirmed ? (
-                  <div className="flex items-center gap-1.5 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Ubicación confirmada
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={onConfirm}
-                    className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transition-all"
-                  >
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Confirmar ubicación
-                  </button>
-                )}
+              {/* Fixed center crosshair — only in editable mode */}
+              {isEditable && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  style={{ zIndex: 1000 }}
+                >
+                  <svg width="36" height="44" viewBox="0 0 36 44" fill="none">
+                    <path
+                      d="M18 0C9.163 0 2 7.163 2 16c0 9.941 14.019 26.056 15.225 27.426a1 1 0 001.55 0C20.981 42.056 35 25.941 35 16 35 7.163 27.837 0 18 0z"
+                      fill="#6366f1"
+                    />
+                    <circle cx="18" cy="16" r="6" fill="white" />
+                  </svg>
+                </div>
+              )}
+
+              {/* Info badge bottom-left */}
+              <div className="absolute bottom-2 left-2 z-[1000] bg-white/90 backdrop-blur border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-sm pointer-events-none">
+                <p className="text-xs font-bold text-slate-800">
+                  {countryData?.flag} {badgeLabel}
+                </p>
+                <p className="text-xs text-slate-500">{countryData?.name}</p>
               </div>
-            )}
+
+              {/* Attribution */}
+              <div className="absolute bottom-2 right-2 z-[1000] text-[10px] text-slate-400 pointer-events-none">
+                © OpenStreetMap
+              </div>
+
+              {/* Confirm / confirmed button — top center of map */}
+              {geoCoords && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000]">
+                  {confirmed ? (
+                    <div className="flex items-center gap-1.5 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Ubicación confirmada
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={onConfirm}
+                      className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transition-all"
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Confirmar ubicación
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ) : (
-        <div className="h-[240px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-400">
+        <div className="h-[260px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-2 text-slate-400">
           <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
               d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
