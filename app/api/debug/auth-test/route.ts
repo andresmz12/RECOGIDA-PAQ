@@ -84,12 +84,7 @@ export async function POST(request: NextRequest) {
       result: isPasswordValid ? "SUCCESS" : "FAILED",
       message: isPasswordValid
         ? "Password matches!"
-        : "Password does NOT match",
-      details: {
-        inputPassword: password,
-        storedHash: user.password.substring(0, 20) + "...",
-        bcryptComparison: isPasswordValid,
-      },
+        : `Password does NOT match (hash prefix: ${user.password.substring(0, 20)}...)`,
     });
 
     if (isPasswordValid) {
