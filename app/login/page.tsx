@@ -33,7 +33,9 @@ export default function LoginPage() {
       if (result.error) {
         // Show the actual error code to help diagnose issues
         if (result.error === "CredentialsSignin") {
-          setError("Email o contraseña inválidos");
+          setError("Email o contraseña inválidos. Verifica tus credenciales.");
+        } else if (result.error.includes("requeridos")) {
+          setError("Email y contraseña son requeridos");
         } else {
           setError(`Error: ${result.error}`);
         }

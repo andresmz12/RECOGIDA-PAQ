@@ -56,12 +56,18 @@ export default function RegistroPage() {
         return;
       }
 
-      // Auto-login
-      await signIn("credentials", {
+      // Auto-login - ESPERAR resultado y validar
+      const signInResult = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
+
+      if (!signInResult || !signInResult.ok) {
+        setError("Cuenta creada pero no se pudo iniciar sesión automáticamente. Por favor ingresa manualmente.");
+        setIsLoading(false);
+        return;
+      }
 
       router.push("/mi-cuenta");
     } catch (err) {
