@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import dynamicImport from "next/dynamic";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/StatusBadge";
+import Card from "@/components/Card";
 
 const MapView = dynamicImport(() => import("@/components/MapView"), { ssr: false, loading: () => <div className="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div> });
 
@@ -76,15 +77,20 @@ export default function MapaPage() {
     <DashboardLayout>
       <div className="flex flex-col h-screen">
         {/* Header */}
-        <div className="px-8 py-5 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+        <div className="px-8 py-6 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 shadow-sm">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Mapa de Rutas</h1>
-            <p className="text-slate-500 text-sm mt-0.5">{pickups.length} solicitudes en el mapa</p>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="text-2xl">🗺️</div>
+              <h1 className="text-2xl font-black text-slate-900">Mapa de Rutas</h1>
+            </div>
+            <p className="text-slate-600 text-sm">
+              <span className="font-bold">{pickups.length}</span> solicitudes visualizadas en el mapa
+            </p>
           </div>
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setLoading(true); }}
-            className="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors font-medium"
           >
             <option value="">Todos los estados</option>
             <option value="PENDING">Pendientes</option>
@@ -94,44 +100,57 @@ export default function MapaPage() {
           </select>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden bg-slate-50">
           {/* Map */}
           <div className="flex-1 p-4">
             {loading ? (
-              <div className="w-full h-full bg-slate-100 rounded-2xl flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600" />
-              </div>
+              <Card variant="elevated" className="w-full h-full flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
+                <p className="text-slate-600 font-medium">Cargando mapa...</p>
+              </Card>
             ) : (
               <MapView points={points} />
             )}
           </div>
 
           {/* Sidebar list */}
-          <div className="w-80 border-l border-slate-200 bg-white overflow-y-auto shrink-0">
-            <div className="p-4 border-b border-slate-100">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Lista de Recogidas</p>
+          <div className="w-80 border-l border-slate-200 bg-white overflow-y-auto shrink-0 flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-100 shrink-0">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Solicitudes ({pickups.length})</p>
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="flex-1 overflow-y-auto">
               {pickups.length === 0 ? (
-                <p className="text-center text-slate-400 py-12 text-sm">No hay recogidas</p>
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                  <div className="text-4xl mb-3 opacity-50">📭</div>
+                  <p className="text-slate-500 font-medium">Sin solicitudes</p>
+                  <p className="text-slate-400 text-xs mt-1">Intenta con otros filtros</p>
+                </div>
               ) : (
-                pickups.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelected(selected?.id === p.id ? null : p)}
-                    className={`w-full text-left p-4 hover:bg-slate-50 transition-colors ${selected?.id === p.id ? "bg-indigo-50 border-l-2 border-indigo-600" : ""}`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm truncate">{p.trackingCode}</p>
-                        <p className="text-slate-500 text-xs truncate mt-0.5">{p.contactName}</p>
-                        <p className="text-slate-400 text-xs mt-1">{p.pickupCity}, {p.pickupCountry}</p>
-                        {p.assignedCourier && <p className="text-indigo-500 text-xs mt-1">Courier: {p.assignedCourier.name}</p>}
+                <div className="divide-y divide-slate-100">
+                  {pickups.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelected(selected?.id === p.id ? null : p)}
+                      className={`w-full text-left px-4 py-4 hover:bg-slate-50 transition-all duration-150 ${
+                        selected?.id === p.id ? "bg-indigo-50 border-l-2 border-indigo-600" : "border-l-2 border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 text-sm font-mono">{p.trackingCode}</p>
+                          <p className="text-slate-700 text-xs font-medium mt-1 truncate">{p.contactName}</p>
+                          <p className="text-slate-500 text-xs mt-0.5">{p.pickupCity}, {p.pickupCountry}</p>
+                          {p.assignedCourier && (
+                            <p className="text-indigo-600 text-xs font-medium mt-1.5">🚗 {p.assignedCourier.name}</p>
+                          )}
+                        </div>
+                        <div className="shrink-0">
+                          <StatusBadge status={p.status} />
+                        </div>
                       </div>
-                      <StatusBadge status={p.status} />
-                    </div>
-                  </button>
-                ))
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </div>

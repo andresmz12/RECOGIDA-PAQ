@@ -6,6 +6,11 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import Alert from "@/components/Alert";
+import Input from "@/components/Form/Input";
+import Select from "@/components/Form/Select";
 
 interface User {
   id: string;
@@ -83,117 +88,242 @@ export default function UsuariosPage() {
   return (
     <DashboardLayout>
       <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Gestión de Usuarios</h1>
-            <p className="text-slate-500 mt-1">{users.length} usuarios registrados</p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="text-3xl">👥</div>
+              <h1 className="text-3xl font-black text-slate-900">Gestión de Usuarios</h1>
+            </div>
+            <p className="text-slate-600">
+              <span className="font-bold">{users.length}</span> usuarios registrados en el sistema
+            </p>
           </div>
-          <button onClick={openCreate} className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            Nuevo Usuario
-          </button>
+          <Button onClick={openCreate} variant="primary" size="lg">
+            + Nuevo Usuario
+          </Button>
         </div>
 
-        <div className="flex gap-3 mb-6">
-          <input type="text" placeholder="Buscar por nombre o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" />
-          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-            <option value="">Todos los roles</option>
-            <option value="ADMIN">Administrador</option>
-            <option value="COURIER">Mensajero</option>
-            <option value="CUSTOMER">Cliente</option>
-          </select>
-        </div>
+        {/* Filters */}
+        <Card variant="default" padding="lg" className="mb-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Buscar</label>
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Por nombre o email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                />
+              </div>
+            </div>
+            <div className="sm:min-w-48">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Rol</label>
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
+              >
+                <option value="">Todos los roles</option>
+                <option value="ADMIN">Administrador</option>
+                <option value="COURIER">Mensajero</option>
+                <option value="CUSTOMER">Cliente</option>
+              </select>
+            </div>
+          </div>
+        </Card>
 
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        {/* Table */}
+        <Card variant="default" padding="none" className="overflow-hidden shadow-sm">
           {loading ? (
-            <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
+              <p className="text-slate-600 font-medium">Cargando usuarios...</p>
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-slate-400">No se encontraron usuarios</div>
+            <div className="text-center py-24">
+              <div className="text-5xl mb-4 opacity-50">👤</div>
+              <p className="text-slate-700 font-semibold text-lg">No se encontraron usuarios</p>
+              <p className="text-slate-500 text-sm mt-1">Intenta con otros filtros de búsqueda</p>
+            </div>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-4">Usuario</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-4">Rol</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-4">Teléfono</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-6 py-4">Creado</th>
-                  <th className="px-6 py-4" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-sm font-bold shrink-0">{u.name[0]?.toUpperCase()}</div>
-                        <div><p className="font-semibold text-slate-900 text-sm">{u.name}</p><p className="text-slate-500 text-xs">{u.email}</p></div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4"><span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${ROLE_COLORS[u.role]}`}>{ROLE_LABELS[u.role] ?? u.role}</span></td>
-                    <td className="px-6 py-4 text-slate-600 text-sm">{u.phone || "—"}</td>
-                    <td className="px-6 py-4 text-slate-500 text-sm">{new Date(u.createdAt).toLocaleDateString("es-ES")}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 justify-end">
-                        <button onClick={() => openEdit(u)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                        <button onClick={() => handleDelete(u.id, u.name)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/50">
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wide px-6 py-4">Usuario</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wide px-6 py-4">Rol</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wide px-6 py-4">Teléfono</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wide px-6 py-4">Creado</th>
+                    <th className="text-right text-xs font-semibold text-slate-600 uppercase tracking-wide px-6 py-4">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors duration-150">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shrink-0">
+                            {u.name[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 text-sm">{u.name}</p>
+                            <p className="text-slate-500 text-xs">{u.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold ${ROLE_COLORS[u.role]}`}>
+                          {ROLE_LABELS[u.role] ?? u.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-700 text-sm font-medium">
+                        {u.phone || <span className="text-slate-400 italic">Sin teléfono</span>}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 text-sm">
+                        {new Date(u.createdAt).toLocaleDateString("es-ES")}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={() => openEdit(u)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Editar usuario"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u.id, u.name)}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Eliminar usuario"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <Card variant="elevated" padding="none" className="w-full max-w-md shadow-2xl">
+            {/* Header */}
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">{editUser ? "Editar Usuario" : "Nuevo Usuario"}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <h2 className="text-lg font-bold text-slate-900">
+                {editUser ? "Editar Usuario" : "Crear Nuevo Usuario"}
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
-            <div className="p-6 space-y-4">
+
+            {/* Content */}
+            <div className="p-6 space-y-5">
               {!editUser && (
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="correo@ejemplo.com" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    placeholder="correo@ejemplo.com"
+                  />
                 </div>
               )}
+
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nombre completo</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nombre Apellido" />
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre completo</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  placeholder="Nombre Apellido"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Contraseña{editUser && " (vacío = no cambiar)"}</label>
-                <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" />
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Contraseña
+                  {editUser && <span className="text-slate-500 font-normal ml-2">(dejar vacío para no cambiar)</span>}
+                </label>
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  placeholder="••••••••"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Teléfono</label>
-                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="+1 (555) 000-0000" />
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  placeholder="+1 (555) 000-0000"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Rol</label>
-                <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Rol</label>
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
+                >
                   <option value="ADMIN">Administrador</option>
                   <option value="COURIER">Mensajero / Courier</option>
+                  <option value="DISPATCHER">Despachador</option>
                 </select>
               </div>
-              {error && <p className="text-red-500 text-sm bg-red-50 px-4 py-2.5 rounded-xl">{error}</p>}
+
+              {error && (
+                <Alert type="error" title="Error" message={error} />
+              )}
             </div>
+
+            {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-medium">Cancelar</button>
-              <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">
+              <Button
+                variant="outline"
+                onClick={() => setShowModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                loading={saving}
+                disabled={saving}
+              >
                 {saving ? "Guardando..." : "Guardar"}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </DashboardLayout>

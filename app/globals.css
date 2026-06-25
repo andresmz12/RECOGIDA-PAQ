@@ -126,7 +126,7 @@ textarea::placeholder {
 }
 
 textarea {
-  @apply resize-vertical;
+  @apply resize-y;
   min-height: 100px;
 }
 
