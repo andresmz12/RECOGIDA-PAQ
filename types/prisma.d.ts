@@ -67,6 +67,7 @@ declare module "@prisma/client" {
     user: {
       create(data: any): Promise<User>;
       findUnique(query: any): Promise<User | null>;
+      findFirst(query?: any): Promise<User | null>;
       findMany(query?: any): Promise<User[]>;
       update(query: any): Promise<User>;
       delete(query: any): Promise<User>;
@@ -74,6 +75,7 @@ declare module "@prisma/client" {
     pickupRequest: {
       create(data: any): Promise<PickupRequest>;
       findUnique(query: any): Promise<PickupRequest | null>;
+      findFirst(query?: any): Promise<PickupRequest | null>;
       findMany(query?: any): Promise<PickupRequest[]>;
       count(query?: any): Promise<number>;
       update(query: any): Promise<PickupRequest>;
