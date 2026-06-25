@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import AddressFields from "@/components/AddressFields";
+import { requiresState, requiresPostalCode, COUNTRIES } from "@/lib/countries";
 
 export default function RecogerPage() {
   const router = useRouter();
@@ -14,19 +16,40 @@ export default function RecogerPage() {
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
+    // Sender/pickup info
     contactName: "",
     contactPhone: "",
     contactEmail: "",
     pickupAddress: "",
     pickupCity: "",
-    pickupCountry: "",
-    destinationCountry: "",
+    pickupState: "",
+    pickupPostalCode: "",
+    pickupCountry: "US",
+
+    // Recipient info (NEW)
+    recipientName: "",
+    recipientEmail: "",
+    recipientPhone: "",
+    recipientPhoneSecondary: "",
+    recipientAddress: "",
+    recipientCity: "",
+    recipientState: "",
+    recipientPostalCode: "",
+    recipientCountry: "US",
+
+    // Package info
     packageType: "",
     estimatedWeight: "",
     dimensions: "",
+    packageContents: "",
+
+    // Delivery preferences
     preferredDate: "",
     preferredTimeWindow: "08:00-12:00",
     specialInstructions: "",
+    notes: "",
+
+    // Account creation
     createAccount: false,
     password: "",
     confirmPassword: "",
@@ -62,6 +85,31 @@ export default function RecogerPage() {
           setIsLoading(false);
           return;
         }
+      }
+
+      // Validate required fields based on country
+      if (requiresState(formData.pickupCountry) && !formData.pickupState) {
+        setError("El estado es requerido para Estados Unidos");
+        setIsLoading(false);
+        return;
+      }
+
+      if (requiresPostalCode(formData.pickupCountry) && !formData.pickupPostalCode) {
+        setError("El código postal es requerido para Estados Unidos");
+        setIsLoading(false);
+        return;
+      }
+
+      if (requiresState(formData.recipientCountry) && !formData.recipientState) {
+        setError("El estado del destinatario es requerido para Estados Unidos");
+        setIsLoading(false);
+        return;
+      }
+
+      if (requiresPostalCode(formData.recipientCountry) && !formData.recipientPostalCode) {
+        setError("El código postal del destinatario es requerido para Estados Unidos");
+        setIsLoading(false);
+        return;
       }
 
       const payload: any = {
@@ -134,16 +182,15 @@ export default function RecogerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="max-w-2xl mx-auto px-4 bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-indigo-600 mb-8">Solicitar Recogida</h1>
+      <div className="max-w-4xl mx-auto px-4 bg-white rounded-lg shadow-lg p-8">
+        <h1 className="text-3xl font-bold text-indigo-600 mb-8">Solicitar Recogida de Paquete</h1>
 
-        <form onSubmit={handleSubmit}>
-          {/* Contact Info */}
-          <div className="mb-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* SENDER INFO */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Información de Contacto
+              📦 Información del Remitente
             </h2>
-
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
@@ -189,62 +236,88 @@ export default function RecogerPage() {
             </div>
           </div>
 
-          {/* Pickup Address */}
-          <div className="mb-8">
+          {/* PICKUP ADDRESS */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Dirección de Recogida
+              📍 Dirección de Recogida
             </h2>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Dirección Completa *
-              </label>
-              <input
-                type="text"
-                name="pickupAddress"
-                value={formData.pickupAddress}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-              />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Ciudad *
-                </label>
-                <input
-                  type="text"
-                  name="pickupCity"
-                  value={formData.pickupCity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  País de Recogida *
-                </label>
-                <input
-                  type="text"
-                  name="pickupCountry"
-                  value={formData.pickupCountry}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="United States"
-                />
-              </div>
-            </div>
+            <AddressFields prefix="pickup" formData={formData} onChange={handleChange} />
           </div>
 
-          {/* Package Info */}
-          <div className="mb-8">
+          {/* RECIPIENT INFO (NEW) */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Información del Paquete
+              🎯 Información del Destinatario
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Nombre Completo *
+                </label>
+                <input
+                  type="text"
+                  name="recipientName"
+                  value={formData.recipientName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="recipientEmail"
+                  value={formData.recipientEmail}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Teléfono *
+                </label>
+                <input
+                  type="tel"
+                  name="recipientPhone"
+                  value={formData.recipientPhone}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+
+              {formData.recipientCountry !== "US" && (
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Segundo Teléfono (opcional)
+                  </label>
+                  <input
+                    type="tel"
+                    name="recipientPhoneSecondary"
+                    value={formData.recipientPhoneSecondary}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+              )}
+            </div>
+
+            <AddressFields prefix="recipient" formData={formData} onChange={handleChange} />
+          </div>
+
+          {/* PACKAGE INFO */}
+          <div className="border-b pb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
+              📦 Detalles del Paquete
             </h2>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -287,21 +360,6 @@ export default function RecogerPage() {
             <div className="grid md:grid-cols-2 gap-4 mt-4">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  País de Destino *
-                </label>
-                <input
-                  type="text"
-                  name="destinationCountry"
-                  value={formData.destinationCountry}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Ejemplo: México, Canada, China"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
                   Dimensiones (opcional)
                 </label>
                 <input
@@ -310,16 +368,30 @@ export default function RecogerPage() {
                   value={formData.dimensions}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                  placeholder="Ej: 12x15x18 pulgadas o 30x38x45 cm"
+                  placeholder="Ej: 12x15x18 pulgadas"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Contenido del Paquete
+                </label>
+                <input
+                  type="text"
+                  name="packageContents"
+                  value={formData.packageContents}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                  placeholder="Ej: Documentos, electrónica, ropa"
                 />
               </div>
             </div>
           </div>
 
-          {/* Preferred Date/Time */}
-          <div className="mb-8">
+          {/* DELIVERY PREFERENCES */}
+          <div className="border-b pb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">
-              Preferencias de Recogida
+              🕒 Preferencias de Recogida
             </h2>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -362,15 +434,29 @@ export default function RecogerPage() {
                 name="specialInstructions"
                 value={formData.specialInstructions}
                 onChange={handleChange}
-                rows={3}
+                rows={2}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
-                placeholder="Ej: Llamar antes, puerta lateral, apto. 5B..."
+                placeholder="Ej: Llamar antes, puerta lateral..."
+              />
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Notas Adicionales
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={2}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+                placeholder="Cualquier información adicional para el courier..."
               />
             </div>
           </div>
 
-          {/* Account Creation Option */}
-          <div className="mb-8 p-4 bg-blue-50 rounded-lg">
+          {/* ACCOUNT CREATION */}
+          <div className="bg-blue-50 rounded-lg p-4 border-b pb-8">
             <label className="flex items-center mb-4">
               <input
                 type="checkbox"
@@ -416,7 +502,7 @@ export default function RecogerPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
               {error}
             </div>
           )}
