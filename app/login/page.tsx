@@ -25,7 +25,8 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false,
+        redirect: true,
+        callbackUrl: "/dashboard",
       });
 
       console.log("Login result:", result);
@@ -43,9 +44,14 @@ export default function LoginPage() {
         return;
       }
 
-      if (result.ok) {
-        console.log("Login successful, redirecting...");
-        router.push("/dashboard");
+      // If redirect:true, signIn will handle the redirect
+      // But just in case, also use router.push as fallback
+      if (result.ok || result.url) {
+        console.log("Login successful, waiting for redirect...");
+        // Give it a moment then redirect manually
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 500);
         return;
       }
 
