@@ -10,20 +10,28 @@ import StatusBadge from "@/components/StatusBadge";
 
 const MapView = dynamicImport(() => import("@/components/MapView"), { ssr: false, loading: () => <div className="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div> });
 
-// Approximate lat/lng for cities in Colombia and other countries
+// Approximate lat/lng for US cities and common international ones
 const CITY_COORDS: Record<string, [number, number]> = {
-  "bogota": [4.711, -74.0721], "medellín": [6.2518, -75.5636], "medellin": [6.2518, -75.5636],
-  "cali": [3.4516, -76.5319], "barranquilla": [10.9685, -74.7813], "cartagena": [10.3997, -75.5144],
-  "bucaramanga": [7.1193, -73.1227], "pereira": [4.8133, -75.6961], "manizales": [5.0703, -75.5138],
-  "santa marta": [11.2408, -74.1990], "cúcuta": [7.8939, -72.5078], "cucuta": [7.8939, -72.5078],
-  "ibagué": [4.4389, -75.2322], "ibague": [4.4389, -75.2322], "villavicencio": [4.1421, -73.6262],
-  "miami": [25.7617, -80.1918], "new york": [40.7128, -74.0060], "madrid": [40.4168, -3.7038],
-  "bogotá": [4.711, -74.0721],
+  // United States
+  "miami": [25.7617, -80.1918], "new york": [40.7128, -74.0060], "los angeles": [34.0522, -118.2437],
+  "chicago": [41.8781, -87.6298], "houston": [29.7604, -95.3698], "dallas": [32.7767, -96.7970],
+  "san francisco": [37.7749, -122.4194], "seattle": [47.6062, -122.3321], "boston": [42.3601, -71.0589],
+  "atlanta": [33.7490, -84.3880], "orlando": [28.5383, -81.3792], "las vegas": [36.1699, -115.1398],
+  "phoenix": [33.4484, -112.0740], "denver": [39.7392, -104.9903], "washington": [38.9072, -77.0369],
+  "washington dc": [38.9072, -77.0369], "philadelphia": [39.9526, -75.1652], "san diego": [32.7157, -117.1611],
+  "minneapolis": [44.9778, -93.2650], "detroit": [42.3314, -83.0458], "portland": [45.5051, -122.6750],
+  "charlotte": [35.2271, -80.8431], "tampa": [27.9506, -82.4572], "austin": [30.2672, -97.7431],
+  "san jose": [37.3382, -121.8863], "jacksonville": [30.3322, -81.6557], "fort lauderdale": [26.1224, -80.1373],
+  "new orleans": [29.9511, -90.0715], "memphis": [35.1495, -90.0490], "nashville": [36.1627, -86.7816],
+  // International
+  "madrid": [40.4168, -3.7038], "london": [51.5074, -0.1278], "toronto": [43.6532, -79.3832],
+  "mexico city": [19.4326, -99.1332], "cancun": [21.1619, -86.8515], "bogota": [4.711, -74.0721],
+  "bogotá": [4.711, -74.0721], "medellin": [6.2518, -75.5636], "medellín": [6.2518, -75.5636],
 };
 
 function coordsForCity(city: string): [number, number] {
   const key = city.toLowerCase().trim();
-  return CITY_COORDS[key] ?? [4.711 + Math.random() * 2 - 1, -74.072 + Math.random() * 2 - 1];
+  return CITY_COORDS[key] ?? [37.0902 + Math.random() * 4 - 2, -95.7129 + Math.random() * 10 - 5];
 }
 
 interface Pickup {

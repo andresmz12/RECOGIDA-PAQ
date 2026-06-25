@@ -81,7 +81,7 @@ export default function SolicitudDetailPage() {
       const [pickupRes, couriersRes] = await Promise.all([
         fetch(`/api/pickup-requests/${id}`),
         role === "ADMIN" || role === "DISPATCHER"
-          ? fetch("/api/admin/users")
+          ? fetch("/api/couriers")
           : Promise.resolve(null),
       ]);
       if (!pickupRes.ok) { router.push("/dashboard/solicitudes"); return; }
@@ -92,7 +92,7 @@ export default function SolicitudDetailPage() {
 
       if (couriersRes) {
         const ud = await couriersRes.json();
-        setCouriers((ud.users ?? []).filter((u: any) => u.role === "COURIER"));
+        setCouriers(ud.couriers ?? []);
       }
       setLoading(false);
     };

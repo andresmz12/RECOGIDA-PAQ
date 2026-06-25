@@ -177,7 +177,7 @@ export default function UsuariosPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Teléfono</label>
-                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="+57 300 000 0000" />
+                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="+1 (555) 000-0000" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Rol</label>
