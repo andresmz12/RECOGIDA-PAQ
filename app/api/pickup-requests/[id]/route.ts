@@ -72,7 +72,7 @@ export async function PATCH(
     const role = (session.user as any).role;
     const userId = (session.user as any).id;
 
-    if (role !== "ADMIN") {
+    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -88,6 +88,16 @@ export async function PATCH(
         { error: "Pickup request not found" },
         { status: 404 }
       );
+    }
+
+    // Couriers can only update pickups assigned to them
+    if (role === "COURIER" && pickupRequest.assignedCourierId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Couriers can only change status (not reassign couriers)
+    if (role === "COURIER" && assignedCourierId) {
+      return NextResponse.json({ error: "Couriers cannot reassign pickups" }, { status: 403 });
     }
 
     const oldStatus = pickupRequest.status;

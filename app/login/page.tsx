@@ -5,10 +5,6 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import Button from "@/components/Button";
-import Input from "@/components/Form/Input";
-import Alert from "@/components/Alert";
-import Card from "@/components/Card";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,188 +17,179 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (!result) {
-        setError("Sin respuesta del servidor. Intenta de nuevo.");
+      const result = await signIn("credentials", { email, password, redirect: false });
+      if (!result || result.error) {
+        setError("Email o contraseña incorrectos");
         setIsLoading(false);
         return;
       }
-
-      if (result.error) {
-        if (result.error === "CredentialsSignin") {
-          setError("Email o contraseña inválidos");
-        } else {
-          setError(`Error: ${result.error}`);
-        }
-        setIsLoading(false);
-        return;
-      }
-
       if (result.ok) {
         window.location.href = "/dashboard";
-        return;
       }
-
-      setError(`Estado inesperado: ok=${result.ok} status=${result.status}`);
-      setIsLoading(false);
-    } catch (err) {
-      setError("Error: " + (err as Error).message);
+    } catch {
+      setError("Error de conexión. Intenta de nuevo.");
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 flex items-center justify-center px-4 py-12">
-      {/* Background accent */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl" />
+    <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+      {/* Left panel – branding */}
+      <div className="hidden lg:flex flex-1 items-center justify-center p-16">
+        <div className="max-w-md text-white">
+          <div className="flex items-center gap-4 mb-12">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-2xl"
+              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              OG
+            </div>
+            <span className="text-2xl font-bold tracking-tight">O&apos;Globo Cargo</span>
+          </div>
+          <h1 className="text-5xl font-black mb-6 leading-tight">
+            Logística internacional<br />
+            <span style={{ background: "linear-gradient(90deg,#818cf8,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              simplificada.
+            </span>
+          </h1>
+          <p className="text-lg text-white/60 leading-relaxed">
+            Gestiona recogidas, rastrea envíos y coordina couriers desde un solo lugar.
+          </p>
+          <div className="mt-12 grid grid-cols-3 gap-6">
+            {[{ v: "10K+", l: "Recogidas" }, { v: "99.2%", l: "Éxito" }, { v: "< 24h", l: "Respuesta" }].map(s => (
+              <div key={s.l} className="text-center">
+                <p className="text-3xl font-black text-indigo-300">{s.v}</p>
+                <p className="text-sm text-white/50 mt-1">{s.l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg mb-4">
-            <span className="text-white font-black text-lg">OG</span>
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-1">O&apos;Globo Cargo</h1>
-          <p className="text-indigo-200 text-sm">Logística internacional simplificada</p>
-        </div>
-
-        {/* Main card */}
-        <Card variant="default" padding="lg" className="bg-white/95 backdrop-blur border-white/20 shadow-2xl">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Bienvenido</h2>
-            <p className="text-slate-600 text-sm mt-1">Inicia sesión en tu cuenta</p>
-          </div>
-
-          {error && (
-            <div className="mb-6">
-              <Alert
-                type="error"
-                title="Error de autenticación"
-                message={error}
-                dismissible
-                onDismiss={() => setError("")}
-              />
+      {/* Right panel – form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="flex items-center gap-3 mb-10 lg:hidden justify-center">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-lg"
+              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              <span className="text-white">OG</span>
             </div>
-          )}
+            <span className="text-xl font-bold text-white">O&apos;Globo Cargo</span>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Input
-              type="email"
-              label="Email"
-              placeholder="admin@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              icon={
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
+            <div className="mb-8">
+              <h2 className="text-3xl font-black text-slate-900">Iniciar sesión</h2>
+              <p className="text-slate-500 mt-2">Accede a tu panel de control</p>
+            </div>
+
+            {error && (
+              <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
+                <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-              }
-              iconPosition="left"
-            />
+                {error}
+              </div>
+            )}
 
-            <div>
-              <Input
-                type={showPassword ? "text" : "password"}
-                label="Contraseña"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                icon={
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  required
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    disabled={isLoading}
+                    className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
                   <button
                     type="button"
-                    tabIndex={-1}
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-slate-600 hover:text-slate-900 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
                   >
                     {showPassword ? (
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                       </svg>
                     )}
                   </button>
-                }
-                iconPosition="right"
-              />
-            </div>
+                </div>
+              </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              loading={isLoading}
-              className="w-full mt-6"
-            >
-              {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-            </Button>
-          </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{ background: isLoading ? "#818cf8" : "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Entrando...
+                  </>
+                ) : "Iniciar Sesión →"}
+              </button>
+            </form>
 
-          {/* Links */}
-          <div className="mt-6 pt-6 border-t border-slate-200 space-y-3 text-sm">
-            <p className="text-center text-slate-600">
-              ¿No tienes cuenta?{" "}
-              <Link href="/registro" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                Regístrate aquí
-              </Link>
-            </p>
-            <p className="text-center text-slate-600">
-              <Link href="/recoger" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                Solicitar recogida sin cuenta
-              </Link>
-            </p>
-          </div>
-        </Card>
-
-        {/* Test credentials */}
-        <Card variant="filled" padding="md" className="mt-6 border-indigo-200">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Usuarios de prueba (contraseña: password123)</p>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
-              <code className="text-indigo-600 font-mono">admin@example.com</code>
-              <span className="text-slate-500">ADMIN</span>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
-              <code className="text-amber-600 font-mono">dispatcher@example.com</code>
-              <span className="text-slate-500">DISPATCHER</span>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
-              <code className="text-blue-600 font-mono">courier@example.com</code>
-              <span className="text-slate-500">COURIER</span>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
-              <code className="text-green-600 font-mono">customer@example.com</code>
-              <span className="text-slate-500">CUSTOMER</span>
+            <div className="mt-8 pt-8 border-t border-slate-100 space-y-3 text-sm text-center">
+              <p className="text-slate-600">
+                ¿No tienes cuenta?{" "}
+                <Link href="/registro" className="font-bold text-indigo-600 hover:text-indigo-700">
+                  Regístrate aquí
+                </Link>
+              </p>
+              <p>
+                <Link href="/recoger" className="text-slate-500 hover:text-slate-700 font-medium">
+                  Solicitar recogida sin cuenta →
+                </Link>
+              </p>
             </div>
           </div>
-        </Card>
 
-        {/* Footer */}
-        <p className="text-center text-slate-400 text-xs mt-8">
-          <Link href="/setup" className="hover:text-slate-300 underline">
-            Setup inicial
-          </Link>
-          <span className="mx-2">•</span>
-          <span>© 2025 O&apos;Globo Cargo</span>
-        </p>
+          {/* Test credentials */}
+          <div className="mt-6 bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/20">
+            <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">Cuentas de prueba · contraseña: password123</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {[
+                { email: "admin@example.com", role: "ADMIN", color: "text-violet-300" },
+                { email: "dispatcher@example.com", role: "DISPATCHER", color: "text-blue-300" },
+                { email: "courier@example.com", role: "COURIER", color: "text-amber-300" },
+                { email: "customer@example.com", role: "CUSTOMER", color: "text-emerald-300" },
+              ].map(u => (
+                <button
+                  key={u.email}
+                  onClick={() => setEmail(u.email)}
+                  className="text-left bg-white/10 hover:bg-white/20 transition-colors rounded-lg px-3 py-2 cursor-pointer"
+                >
+                  <p className={`font-bold ${u.color}`}>{u.role}</p>
+                  <p className="text-white/50 truncate">{u.email}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
