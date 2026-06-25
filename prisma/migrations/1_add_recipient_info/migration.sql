@@ -1,7 +1,7 @@
 -- ============================================================
 -- Step 1: Remove DISPATCHER from Role enum (correct PostgreSQL method)
 -- PostgreSQL does not support dropping enum values directly.
--- We must: update data → create new type → alter column → drop old type
+-- We must: update data → create new type → drop default → alter column → drop old type → restore default
 -- ============================================================
 
 -- Move any existing DISPATCHER users to ADMIN so no data is lost
@@ -9,6 +9,10 @@ UPDATE "User" SET "role" = 'ADMIN' WHERE "role" = 'DISPATCHER';
 
 -- Create replacement enum without DISPATCHER
 CREATE TYPE "Role_new" AS ENUM ('CUSTOMER', 'ADMIN', 'COURIER');
+
+-- Drop the column default BEFORE changing the type
+-- (the default references the old enum type and blocks the ALTER)
+ALTER TABLE "User" ALTER COLUMN "role" DROP DEFAULT;
 
 -- Migrate the column to use the new type
 ALTER TABLE "User"
@@ -18,6 +22,9 @@ ALTER TABLE "User"
 -- Drop the old type and rename the new one
 DROP TYPE "Role";
 ALTER TYPE "Role_new" RENAME TO "Role";
+
+-- Restore the default now that the type is renamed
+ALTER TABLE "User" ALTER COLUMN "role" SET DEFAULT 'CUSTOMER'::"Role";
 
 -- ============================================================
 -- Step 2: Add new columns to PickupRequest
