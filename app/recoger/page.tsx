@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import Link from "next/link";
 import LocationPicker from "@/components/LocationPicker";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 const BOX_SIZES = [
   { value: "Caja 18x18x18", label: "Caja 18×18×18 in", dimensions: "18x18x18 in", desc: "Pequeña" },
@@ -236,7 +237,23 @@ export default function RecogerPage() {
               <h2 className="font-bold text-slate-900">Dirección de recogida (USA)</h2>
             </div>
             <Field label="Dirección" required>
-              <input className={inputCls} value={form.pickupAddress} onChange={e => set("pickupAddress", e.target.value)} placeholder="123 NW 7th St" required />
+              <AddressAutocomplete
+                value={form.pickupAddress}
+                onChange={(v) => set("pickupAddress", v)}
+                onSelect={(s) => {
+                  setForm(prev => ({
+                    ...prev,
+                    pickupAddress: s.address || s.label,
+                    pickupCity: s.city || prev.pickupCity,
+                    pickupState: s.state || prev.pickupState,
+                    pickupPostalCode: s.postcode || prev.pickupPostalCode,
+                  }));
+                }}
+                placeholder="123 NW 7th St, Miami..."
+                countryCode="us"
+                required
+                className={inputCls + " pr-9"}
+              />
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field label="Ciudad" required>

@@ -267,10 +267,39 @@ export default function SolicitudDetailPage() {
 
             {/* Address */}
             <Card variant="default" padding="lg">
-              <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="text-xl">📍</span>
-                Dirección de Recogida
-              </h2>
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <h2 className="font-bold text-slate-900 flex items-center gap-2">
+                  <span className="text-xl">📍</span>
+                  Dirección de Recogida
+                </h2>
+                {/* Navigation buttons */}
+                {pickup.pickupAddress && (
+                  <div className="flex gap-2 shrink-0">
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pickup.pickupAddress}, ${pickup.pickupCity}${pickup.pickupState ? ", " + pickup.pickupState : ""}`)}&travelmode=driving`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                      </svg>
+                      Google Maps
+                    </a>
+                    <a
+                      href={`https://waze.com/ul?q=${encodeURIComponent(`${pickup.pickupAddress}, ${pickup.pickupCity}${pickup.pickupState ? ", " + pickup.pickupState : ""}`)}&navigate=yes`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20.54 6.55C19.18 4.38 16.96 3 14.5 3c-3.7 0-6.8 2.77-7.42 6.35C4.73 10.15 3 12.13 3 14.5 3 17.54 5.46 20 8.5 20c.96 0 1.86-.27 2.63-.73.59.45 1.32.73 2.12.73 1.65 0 3.06-1.14 3.43-2.68.18.02.37.03.57.03 2.62 0 4.75-2.13 4.75-4.75 0-2.37-1.71-4.37-4-.98zM9 14.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25S10.25 12.31 10.25 13 9.69 14.25 9 14.25zm6 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
+                      </svg>
+                      Waze
+                    </a>
+                  </div>
+                )}
+              </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="sm:col-span-2">
                   <InfoRow label="Dirección" value={pickup.pickupAddress} />
