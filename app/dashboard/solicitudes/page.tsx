@@ -27,6 +27,11 @@ export default function SolicitudesPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
+  // Don't render anything on server during build
+  if (!session && typeof window === "undefined") {
+    return null;
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");

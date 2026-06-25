@@ -22,6 +22,11 @@ export default function MisRecogidaszPage() {
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Don't render anything on server during build
+  if (!session && typeof window === "undefined") {
+    return null;
+  }
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
