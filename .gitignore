@@ -29,6 +29,12 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# TypeScript
+*.tsbuildinfo
+
+# Prisma
+.env.*.local
+
 # IDE
 .vscode/
 .idea/
