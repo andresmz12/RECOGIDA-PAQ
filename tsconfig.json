@@ -17,6 +17,7 @@
     "allowJs": true,
     "jsx": "preserve",
     "incremental": true,
+    "tsBuildInfoFile": "/tmp/next-tsbuild.json",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "plugins": [
