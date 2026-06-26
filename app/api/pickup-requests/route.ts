@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/generated/client";
 import { generateTrackingCode } from "@/lib/utils";
 import { sendPickupConfirmationEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       recipientState,
       recipientPostalCode,
       recipientCountry,
+      destinationCountry,
       // Package
       packageType,
       estimatedWeight,
@@ -122,10 +124,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create pickup request
-    const pickupRequest = await prisma.pickupRequest.create({
-      data: {
-        trackingCode,
-        userId: linkUserId,
+    const createData: Prisma.PickupRequestUncheckedCreateInput = {
+      trackingCode,
+      userId: linkUserId,
         // Sender/pickup
         contactName,
         contactPhone,
@@ -145,6 +146,7 @@ export async function POST(request: NextRequest) {
         recipientState: recipientState || null,
         recipientPostalCode: recipientPostalCode || null,
         recipientCountry,
+        destinationCountry,
         // Package
         packageType,
         estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight) : null,
@@ -156,8 +158,8 @@ export async function POST(request: NextRequest) {
         specialInstructions: specialInstructions || null,
         notes: notes || null,
         status: "PENDING",
-      },
-    });
+    };
+    const pickupRequest = await prisma.pickupRequest.create({ data: createData });
 
     // Create initial status history entry
     await prisma.statusHistory.create({
