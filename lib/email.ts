@@ -1,5 +1,5 @@
 import sgMail from "@sendgrid/mail";
-import { PickupStatus } from "@prisma/client";
+import { PickupStatus } from "./generated/client";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 

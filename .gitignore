@@ -34,6 +34,7 @@ yarn-error.log*
 
 # Prisma
 .env.*.local
+/lib/generated/
 
 # IDE
 .vscode/
