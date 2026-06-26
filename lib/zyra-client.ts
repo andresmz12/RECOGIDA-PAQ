@@ -10,7 +10,7 @@ export async function getZyraToken(): Promise<string> {
   const res = await fetch(`${ZYRA_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: ZYRA_USERNAME, password: ZYRA_PASSWORD }),
+    body: JSON.stringify({ email: ZYRA_USERNAME, password: ZYRA_PASSWORD }),
   });
 
   if (!res.ok) {
