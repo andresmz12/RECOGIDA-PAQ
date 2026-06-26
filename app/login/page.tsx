@@ -4,9 +4,15 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLang, LangToggle } from "@/contexts/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { lang } = useLang();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,15 +26,25 @@ export default function LoginPage() {
     try {
       const result = await signIn("credentials", { email, password, redirect: false });
       if (!result || result.error) {
-        setError("Incorrect email or password.");
+        setError(t(lang, "login.error.invalid"));
         setIsLoading(false);
         return;
       }
       if (result.ok) {
-        window.location.href = "/dashboard";
+        // Fetch session to determine role-based redirect
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
+        const role = session?.user?.role;
+        if (role === "CUSTOMER") {
+          router.push("/mi-cuenta");
+        } else if (["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+          router.push("/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
       }
     } catch {
-      setError("Connection error. Please try again.");
+      setError(t(lang, "common.error.connection"));
       setIsLoading(false);
     }
   };
@@ -45,17 +61,21 @@ export default function LoginPage() {
             </div>
             <span className="text-2xl font-bold tracking-tight">O&apos;Globo Cargo</span>
           </div>
-          <h1 className="text-5xl font-black mb-6 leading-tight">
-            International logistics<br />
+          <h1 className="text-5xl font-black mb-6 leading-tight whitespace-pre-line">
+            {t(lang, "login.panel.headline").split("\n")[0]}<br />
             <span style={{ background: "linear-gradient(90deg,#818cf8,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              simplified.
+              {t(lang, "login.panel.headline").split("\n")[1]}
             </span>
           </h1>
           <p className="text-lg text-white/60 leading-relaxed">
-            Manage pickups, track shipments, and coordinate couriers — all in one place.
+            {t(lang, "login.panel.sub")}
           </p>
           <div className="mt-12 grid grid-cols-3 gap-6">
-            {[{ v: "10K+", l: "Pickups" }, { v: "99.2%", l: "Success" }, { v: "< 24h", l: "Response" }].map(s => (
+            {[
+              { v: "10K+", l: t(lang, "login.stats.pickups") },
+              { v: "99.2%", l: t(lang, "login.stats.success") },
+              { v: "< 24h", l: t(lang, "login.stats.response") },
+            ].map(s => (
               <div key={s.l} className="text-center">
                 <p className="text-3xl font-black text-indigo-300">{s.v}</p>
                 <p className="text-sm text-white/50 mt-1">{s.l}</p>
@@ -68,18 +88,27 @@ export default function LoginPage() {
       {/* Right panel – form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          <div className="flex items-center gap-3 mb-10 lg:hidden justify-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-lg"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-              <span className="text-white">OG</span>
+          {/* Mobile logo + lang toggle */}
+          <div className="flex items-center justify-between mb-10 lg:hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-lg"
+                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+                <span className="text-white">OG</span>
+              </div>
+              <span className="text-xl font-bold text-white">O&apos;Globo Cargo</span>
             </div>
-            <span className="text-xl font-bold text-white">O&apos;Globo Cargo</span>
+            <LangToggle className="border-white/20 text-white hover:bg-white/10" />
+          </div>
+
+          {/* Desktop lang toggle (top right of form) */}
+          <div className="hidden lg:flex justify-end mb-4">
+            <LangToggle className="border-white/20 text-white hover:bg-white/10" />
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
             <div className="mb-8">
-              <h2 className="text-3xl font-black text-slate-900">Sign in</h2>
-              <p className="text-slate-500 mt-2">Access your control panel</p>
+              <h2 className="text-3xl font-black text-slate-900">{t(lang, "login.title")}</h2>
+              <p className="text-slate-500 mt-2">{t(lang, "login.subtitle")}</p>
             </div>
 
             {error && (
@@ -93,12 +122,14 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  {t(lang, "common.email")}
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
+                  placeholder={t(lang, "login.placeholder.email")}
                   required
                   disabled={isLoading}
                   className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -107,9 +138,11 @@ export default function LoginPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-slate-700">Password</label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    {t(lang, "common.password")}
+                  </label>
                   <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">
-                    Forgot password?
+                    {t(lang, "login.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
@@ -117,7 +150,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t(lang, "login.placeholder.password")}
                     required
                     disabled={isLoading}
                     className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -145,21 +178,21 @@ export default function LoginPage() {
                 style={{ background: isLoading ? "#818cf8" : "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
               >
                 {isLoading ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
-                ) : "Sign In →"}
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t(lang, "login.submitting")}</>
+                ) : t(lang, "login.submit")}
               </button>
             </form>
 
             <div className="mt-8 pt-8 border-t border-slate-100 space-y-3 text-sm text-center">
               <p className="text-slate-600">
-                Don&apos;t have an account?{" "}
+                {t(lang, "login.noAccount")}{" "}
                 <Link href="/registro" className="font-bold text-indigo-600 hover:text-indigo-700">
-                  Sign up here
+                  {t(lang, "login.signUpHere")}
                 </Link>
               </p>
               <p>
                 <Link href="/recoger" className="text-slate-500 hover:text-slate-700 font-medium">
-                  Request a pickup without an account →
+                  {t(lang, "login.withoutAccount")}
                 </Link>
               </p>
             </div>

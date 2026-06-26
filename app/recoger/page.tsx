@@ -2,18 +2,29 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import LocationPicker from "@/components/Form/LocationPicker";
 import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
+import { useLang, LangToggle } from "@/contexts/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const BOX_SIZES = [
-  { value: "Caja 18x18x18", label: "Box 18×18×18 in", dimensions: "18x18x18 in", desc: "Small" },
-  { value: "Caja 20x20x20", label: "Box 20×20×20 in", dimensions: "20x20x20 in", desc: "Medium" },
-  { value: "Caja 22x22x22", label: "Box 22×22×22 in", dimensions: "22x22x22 in", desc: "Large" },
-  { value: "Caja 24x24x24", label: "Box 24×24×24 in", dimensions: "24x24x24 in", desc: "Extra Large" },
-  { value: "Documento",     label: "Document",         dimensions: "",             desc: "Envelope / letter" },
+  { value: "Caja 18x18x18", labelKey: "pickup.box.small" as const,  dimensions: "18x18x18 in", descKey: "pickup.box.small" as const },
+  { value: "Caja 20x20x20", labelKey: "pickup.box.medium" as const, dimensions: "20x20x20 in", descKey: "pickup.box.medium" as const },
+  { value: "Caja 22x22x22", labelKey: "pickup.box.large" as const,  dimensions: "22x22x22 in", descKey: "pickup.box.large" as const },
+  { value: "Caja 24x24x24", labelKey: "pickup.box.xlarge" as const, dimensions: "24x24x24 in", descKey: "pickup.box.xlarge" as const },
+  { value: "Documento",     labelKey: "pickup.box.doc" as const,    dimensions: "",             descKey: "pickup.box.doc" as const },
 ];
+
+const BOX_LABELS: Record<string, string> = {
+  "Caja 18x18x18": "Box 18×18×18 in",
+  "Caja 20x20x20": "Box 20×20×20 in",
+  "Caja 22x22x22": "Box 22×22×22 in",
+  "Caja 24x24x24": "Box 24×24×24 in",
+  "Documento": "Document",
+};
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA",
@@ -24,23 +35,20 @@ const US_STATES = [
 ];
 
 const TIME_WINDOWS = [
-  { value: "08:00-12:00", label: "Morning  8:00 am – 12:00 pm" },
-  { value: "12:00-17:00", label: "Afternoon  12:00 pm – 5:00 pm" },
-  { value: "17:00-20:00", label: "Evening  5:00 pm – 8:00 pm" },
+  { value: "08:00-12:00", key: "pickup.time.morning" as const },
+  { value: "12:00-17:00", key: "pickup.time.afternoon" as const },
+  { value: "17:00-20:00", key: "pickup.time.evening" as const },
 ];
 
 const EMPTY = {
-  // Sender
   contactName: "",
   contactPhone: "",
   contactEmail: "",
-  // Pickup address
   pickupAddress: "",
   pickupCity: "",
   pickupState: "FL",
   pickupPostalCode: "",
   pickupCountry: "US",
-  // Recipient
   recipientName: "",
   recipientPhone: "",
   recipientPhoneSecondary: "",
@@ -49,11 +57,9 @@ const EMPTY = {
   recipientCity: "",
   recipientCountry: "HN",
   recipientState: "",
-  // Package
   packageType: "Caja 20x20x20",
   estimatedWeight: "",
   packageContents: "",
-  // Schedule
   preferredDate: "",
   preferredTimeWindow: "08:00-12:00",
   specialInstructions: "",
@@ -76,15 +82,36 @@ function Field({
 }
 
 const inputCls =
-  "w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all";
+  "w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed";
 
 export default function RecogerPage() {
+  const { data: session, status } = useSession();
+  const { lang } = useLang();
+  const isLoggedIn = status === "authenticated";
+  const userName = session?.user?.name ?? "";
+  const userEmail = session?.user?.email ?? "";
+
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
+
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  // Pre-fill sender info from session once it loads
+  useEffect(() => {
+    if (isLoggedIn && !prefilled && userName) {
+      setForm(prev => ({
+        ...prev,
+        contactName: prev.contactName || userName,
+        contactEmail: prev.contactEmail || userEmail,
+        contactPhone: prev.contactPhone || (session?.user as any)?.phone || "",
+      }));
+      setPrefilled(true);
+    }
+  }, [isLoggedIn, prefilled, userName, userEmail, session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,13 +135,13 @@ export default function RecogerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to create request.");
+        setError(data.error || (lang === "en" ? "Failed to create request." : "Error al crear la solicitud."));
         setLoading(false);
         return;
       }
       setTrackingCode(data.trackingCode);
     } catch {
-      setError("Connection error. Please try again.");
+      setError(t(lang, "common.error.connection"));
       setLoading(false);
     }
   };
@@ -129,23 +156,34 @@ export default function RecogerPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">Request created!</h1>
-          <p className="text-white/60 mb-8">We will send you a confirmation email</p>
+          <h1 className="text-3xl font-black text-white mb-2">{t(lang, "pickup.success.title")}</h1>
+          <p className="text-white/60 mb-8">{t(lang, "pickup.success.subtitle")}</p>
 
           <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-8">
-            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">Tracking code</p>
+            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">
+              {t(lang, "pickup.success.trackingLabel")}
+            </p>
             <p className="text-3xl font-mono font-black text-indigo-300">{trackingCode}</p>
-            <p className="text-white/40 text-xs mt-3">Save this code to track your pickup</p>
+            <p className="text-white/40 text-xs mt-3">{t(lang, "pickup.success.trackingHint")}</p>
           </div>
+
+          {isLoggedIn && (
+            <div className="mb-4">
+              <Link href="/mi-cuenta"
+                className="block w-full py-3 rounded-xl border-2 border-indigo-400/50 text-indigo-300 font-semibold hover:bg-indigo-500/10 transition-all text-sm mb-3">
+                {t(lang, "pickup.goToAccount")} →
+              </Link>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/" className="flex-1 flex items-center justify-center py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-all text-sm">
-              ← Back to home
+              {t(lang, "pickup.success.backHome")}
             </Link>
             <Link href={`/rastreo/${trackingCode}`}
               className="flex-1 flex items-center justify-center py-3 rounded-xl font-semibold text-sm transition-all text-white"
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-              Track package →
+              {t(lang, "pickup.success.trackPackage")}
             </Link>
           </div>
         </div>
@@ -157,29 +195,67 @@ export default function RecogerPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 text-sm font-medium transition-colors">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 text-sm font-medium transition-colors shrink-0">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back
+            {t(lang, "common.back")}
           </Link>
+
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>OG</div>
-            <span className="font-bold text-slate-900 text-sm">O'Globo Cargo</span>
+            <span className="font-bold text-slate-900 text-sm hidden sm:block">O'Globo Cargo</span>
           </div>
-          <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
-            Sign in
-          </Link>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <LangToggle className="border-slate-200 text-slate-600 hover:bg-slate-50" />
+            {isLoggedIn ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 hidden sm:block">
+                  {t(lang, "pickup.loggedAs")} <span className="font-semibold text-slate-700">{userName}</span>
+                </span>
+                <Link
+                  href="/mi-cuenta"
+                  className="text-xs text-indigo-600 font-semibold hover:text-indigo-700 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors"
+                >
+                  {t(lang, "pickup.goToAccount")}
+                </Link>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  title={t(lang, "common.signOut")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
+                {t(lang, "common.signIn")}
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-1">Request a pickup</h1>
-          <p className="text-slate-500">Fill out the form and we will coordinate your pickup</p>
+          <h1 className="text-3xl font-black text-slate-900 mb-1">{t(lang, "pickup.pageTitle")}</h1>
+          <p className="text-slate-500">{t(lang, "pickup.pageSubtitle")}</p>
         </div>
+
+        {/* Pre-fill notice for logged-in users */}
+        {isLoggedIn && prefilled && (
+          <div className="mb-6 flex items-center gap-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl px-4 py-3 text-sm">
+            <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <span className="font-medium">{t(lang, "pickup.prefillBanner")}</span>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
@@ -192,7 +268,7 @@ export default function RecogerPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* ── Remitente ── */}
+          {/* ── Sender ── */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -200,22 +276,44 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Your information (Sender)</h2>
+              <h2 className="font-bold text-slate-900">{t(lang, "pickup.section.sender")}</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Full name" required>
-                <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} placeholder="Jane Doe" required />
+              <Field label={t(lang, "pickup.field.contactName")} required>
+                <input
+                  className={inputCls}
+                  value={form.contactName}
+                  onChange={e => set("contactName", e.target.value)}
+                  placeholder={lang === "en" ? "Jane Doe" : "María López"}
+                  required
+                  disabled={loading}
+                />
               </Field>
-              <Field label="Phone" required>
-                <input className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} placeholder="+1 (305) 555-0000" required />
+              <Field label={t(lang, "pickup.field.contactPhone")} required>
+                <input
+                  className={inputCls}
+                  value={form.contactPhone}
+                  onChange={e => set("contactPhone", e.target.value)}
+                  placeholder="+1 (305) 555-0000"
+                  required
+                  disabled={loading}
+                />
               </Field>
             </div>
-            <Field label="Email" required>
-              <input type="email" className={inputCls} value={form.contactEmail} onChange={e => set("contactEmail", e.target.value)} placeholder="you@email.com" required />
+            <Field label={t(lang, "pickup.field.contactEmail")} required>
+              <input
+                type="email"
+                className={inputCls}
+                value={form.contactEmail}
+                onChange={e => set("contactEmail", e.target.value)}
+                placeholder={lang === "en" ? "you@email.com" : "tu@correo.com"}
+                required
+                disabled={loading}
+              />
             </Field>
           </section>
 
-          {/* ── Dirección de recogida ── */}
+          {/* ── Pickup address ── */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -224,9 +322,9 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Pickup address (USA)</h2>
+              <h2 className="font-bold text-slate-900">{t(lang, "pickup.section.pickupAddress")}</h2>
             </div>
-            <Field label="Address" required>
+            <Field label={t(lang, "pickup.field.address")} required>
               <AddressAutocomplete
                 value={form.pickupAddress}
                 onChange={(v) => set("pickupAddress", v)}
@@ -243,24 +341,45 @@ export default function RecogerPage() {
                 countryCode="us"
                 required
                 className={inputCls + " pr-9"}
+                disabled={loading}
               />
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field label="City" required>
-                <input className={inputCls} value={form.pickupCity} onChange={e => set("pickupCity", e.target.value)} placeholder="Miami" required />
+              <Field label={t(lang, "common.city")} required>
+                <input
+                  className={inputCls}
+                  value={form.pickupCity}
+                  onChange={e => set("pickupCity", e.target.value)}
+                  placeholder="Miami"
+                  required
+                  disabled={loading}
+                />
               </Field>
-              <Field label="State" required>
-                <select className={inputCls + " bg-white"} value={form.pickupState} onChange={e => set("pickupState", e.target.value)} required>
+              <Field label={t(lang, "pickup.field.state")} required>
+                <select
+                  className={inputCls + " bg-white"}
+                  value={form.pickupState}
+                  onChange={e => set("pickupState", e.target.value)}
+                  required
+                  disabled={loading}
+                >
                   {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </Field>
-              <Field label="ZIP" required>
-                <input className={inputCls} value={form.pickupPostalCode} onChange={e => set("pickupPostalCode", e.target.value)} placeholder="33101" required />
+              <Field label={t(lang, "pickup.field.zip")} required>
+                <input
+                  className={inputCls}
+                  value={form.pickupPostalCode}
+                  onChange={e => set("pickupPostalCode", e.target.value)}
+                  placeholder="33101"
+                  required
+                  disabled={loading}
+                />
               </Field>
             </div>
           </section>
 
-          {/* ── Destinatario ── */}
+          {/* ── Recipient ── */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -268,29 +387,63 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Recipient information</h2>
+              <h2 className="font-bold text-slate-900">{t(lang, "pickup.section.recipient")}</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Recipient name" required>
-                <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="Maria Lopez" required />
+              <Field label={t(lang, "pickup.field.recipientName")} required>
+                <input
+                  className={inputCls}
+                  value={form.recipientName}
+                  onChange={e => set("recipientName", e.target.value)}
+                  placeholder={lang === "en" ? "Maria Lopez" : "María López"}
+                  required
+                  disabled={loading}
+                />
               </Field>
-              <Field label="Primary phone" required>
-                <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
+              <Field label={t(lang, "pickup.field.primaryPhone")} required>
+                <input
+                  className={inputCls}
+                  value={form.recipientPhone}
+                  onChange={e => set("recipientPhone", e.target.value)}
+                  placeholder="+504 9999-9999"
+                  required
+                  disabled={loading}
+                />
               </Field>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Secondary phone" hint="Optional">
-                <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} placeholder="+504 8888-8888" />
+              <Field label={t(lang, "pickup.field.secondaryPhone")} hint={t(lang, "common.optional")}>
+                <input
+                  className={inputCls}
+                  value={form.recipientPhoneSecondary}
+                  onChange={e => set("recipientPhoneSecondary", e.target.value)}
+                  placeholder="+504 8888-8888"
+                  disabled={loading}
+                />
               </Field>
-              <Field label="Recipient email" hint="Optional">
-                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="recipient@email.com" />
+              <Field label={t(lang, "pickup.field.recipientEmail")} hint={t(lang, "common.optional")}>
+                <input
+                  type="email"
+                  className={inputCls}
+                  value={form.recipientEmail}
+                  onChange={e => set("recipientEmail", e.target.value)}
+                  placeholder={lang === "en" ? "recipient@email.com" : "destinatario@correo.com"}
+                  disabled={loading}
+                />
               </Field>
             </div>
 
-            <Field label="Delivery address" required>
-              <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} placeholder="Col. Centro, Calle Principal #12" required />
+            <Field label={t(lang, "pickup.field.deliveryAddress")} required>
+              <input
+                className={inputCls}
+                value={form.recipientAddress}
+                onChange={e => set("recipientAddress", e.target.value)}
+                placeholder={lang === "en" ? "Col. Centro, Main St #12" : "Col. Centro, Calle Principal #12"}
+                required
+                disabled={loading}
+              />
             </Field>
 
             <LocationPicker
@@ -310,7 +463,7 @@ export default function RecogerPage() {
             />
           </section>
 
-          {/* ── Paquete ── */}
+          {/* ── Package ── */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -318,12 +471,13 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Your package</h2>
+              <h2 className="font-bold text-slate-900">{t(lang, "pickup.section.package")}</h2>
             </div>
 
-            {/* Box size selector */}
             <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2.5">Box size <span className="text-red-500">*</span></p>
+              <p className="text-sm font-semibold text-slate-700 mb-2.5">
+                {t(lang, "pickup.field.boxSize")} <span className="text-red-500">*</span>
+              </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {BOX_SIZES.map((box) => {
                   const active = form.packageType === box.value;
@@ -332,6 +486,7 @@ export default function RecogerPage() {
                       key={box.value}
                       type="button"
                       onClick={() => set("packageType", box.value)}
+                      disabled={loading}
                       className={`relative flex flex-col items-center py-3 px-2 rounded-xl border-2 transition-all text-center ${
                         active
                           ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100"
@@ -352,8 +507,12 @@ export default function RecogerPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         )}
                       </svg>
-                      <span className={`text-xs font-bold leading-tight ${active ? "text-indigo-700" : "text-slate-700"}`}>{box.label}</span>
-                      <span className={`text-xs mt-0.5 ${active ? "text-indigo-500" : "text-slate-400"}`}>{box.desc}</span>
+                      <span className={`text-xs font-bold leading-tight ${active ? "text-indigo-700" : "text-slate-700"}`}>
+                        {BOX_LABELS[box.value]}
+                      </span>
+                      <span className={`text-xs mt-0.5 ${active ? "text-indigo-500" : "text-slate-400"}`}>
+                        {t(lang, box.descKey)}
+                      </span>
                     </button>
                   );
                 })}
@@ -361,7 +520,7 @@ export default function RecogerPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Estimated weight (lbs)" hint="Content only, not the box">
+              <Field label={t(lang, "pickup.field.weight")} hint={t(lang, "pickup.field.weightHint")}>
                 <div className="relative">
                   <input
                     type="number"
@@ -371,23 +530,25 @@ export default function RecogerPage() {
                     value={form.estimatedWeight}
                     onChange={e => set("estimatedWeight", e.target.value)}
                     placeholder="15"
+                    disabled={loading}
                   />
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">lbs</span>
                 </div>
               </Field>
-              <Field label="Package contents" required>
+              <Field label={t(lang, "pickup.field.contents")} required>
                 <input
                   className={inputCls}
                   value={form.packageContents}
                   onChange={e => set("packageContents", e.target.value)}
-                  placeholder="Clothing, shoes, appliances..."
+                  placeholder={lang === "en" ? "Clothing, shoes, appliances..." : "Ropa, zapatos, electrodomésticos..."}
                   required
+                  disabled={loading}
                 />
               </Field>
             </div>
           </section>
 
-          {/* ── Fecha y hora ── */}
+          {/* ── Schedule ── */}
           <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 bg-violet-100 rounded-lg flex items-center justify-center">
@@ -395,10 +556,10 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Pickup date and time</h2>
+              <h2 className="font-bold text-slate-900">{t(lang, "pickup.section.schedule")}</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Preferred date" required>
+              <Field label={t(lang, "pickup.field.preferredDate")} required>
                 <input
                   type="date"
                   className={inputCls}
@@ -406,21 +567,31 @@ export default function RecogerPage() {
                   onChange={e => set("preferredDate", e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
                   required
+                  disabled={loading}
                 />
               </Field>
-              <Field label="Time window" required>
-                <select className={inputCls + " bg-white"} value={form.preferredTimeWindow} onChange={e => set("preferredTimeWindow", e.target.value)} required>
-                  {TIME_WINDOWS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              <Field label={t(lang, "pickup.field.timeWindow")} required>
+                <select
+                  className={inputCls + " bg-white"}
+                  value={form.preferredTimeWindow}
+                  onChange={e => set("preferredTimeWindow", e.target.value)}
+                  required
+                  disabled={loading}
+                >
+                  {TIME_WINDOWS.map(tw => (
+                    <option key={tw.value} value={tw.value}>{t(lang, tw.key)}</option>
+                  ))}
                 </select>
               </Field>
             </div>
-            <Field label="Special instructions" hint="Optional">
+            <Field label={t(lang, "pickup.field.instructions")} hint={t(lang, "common.optional")}>
               <textarea
                 className={inputCls + " resize-none"}
                 rows={3}
                 value={form.specialInstructions}
                 onChange={e => set("specialInstructions", e.target.value)}
-                placeholder="e.g. Call before arriving, back door, access code #1234..."
+                placeholder={t(lang, "pickup.field.instructionsPlaceholder")}
+                disabled={loading}
               />
             </Field>
           </section>
@@ -435,11 +606,11 @@ export default function RecogerPage() {
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Creating request...
+                {t(lang, "pickup.submitting")}
               </>
             ) : (
               <>
-                Request pickup
+                {t(lang, "pickup.submit")}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -447,11 +618,15 @@ export default function RecogerPage() {
             )}
           </button>
 
-          <p className="text-center text-xs text-slate-400 pb-4">
-            Already have an account?{" "}
-            <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">Sign in</Link>
-            {" "}to save your requests
-          </p>
+          {!isLoggedIn && (
+            <p className="text-center text-xs text-slate-400 pb-4">
+              {t(lang, "pickup.haveAccount")}{" "}
+              <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">
+                {t(lang, "common.signIn")}
+              </Link>
+              {" "}{t(lang, "pickup.saveRequests")}
+            </p>
+          )}
         </form>
       </div>
     </div>

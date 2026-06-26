@@ -3,8 +3,8 @@ import "./globals.css";
 import Providers from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "O'Globo Cargo - Solicitud de Recogida",
-  description: "Plataforma de solicitud de recogida de paquetes internacionales",
+  title: "O'Globo Cargo – Package Pickup / Recogida de Paquetes",
+  description: "International package pickup platform | Plataforma de recogida de paquetes internacionales",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="en">
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>

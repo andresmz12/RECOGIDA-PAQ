@@ -7,6 +7,8 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { useLang, LangToggle } from "@/contexts/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const COUNTRY_NAMES: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",
@@ -35,6 +37,7 @@ function formatDate(d: string) {
 
 export default function MiCuentaPage() {
   const { data: session, status } = useSession();
+  const { lang } = useLang();
   const router = useRouter();
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,15 +106,18 @@ export default function MiCuentaPage() {
                 style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>OG</div>
               <span className="text-white font-bold text-sm hidden sm:block">O&apos;Globo Cargo</span>
             </div>
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="text-white/60 hover:text-white text-sm font-medium transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign out
-            </button>
+            <div className="flex items-center gap-3">
+              <LangToggle className="border-white/20 text-white hover:bg-white/10" />
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="text-white/60 hover:text-white text-sm font-medium transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {t(lang, "common.signOut")}
+              </button>
+            </div>
           </div>
 
           {/* User info + stats */}
@@ -130,9 +136,9 @@ export default function MiCuentaPage() {
             {/* Stats */}
             <div className="flex gap-4 sm:gap-6">
               {[
-                { n: pickups.length, l: "Total" },
-                { n: active.length, l: "Active" },
-                { n: done.filter(p => p.status === "PICKED_UP").length, l: "Completed" },
+                { n: pickups.length, l: t(lang, "account.stats.total") },
+                { n: active.length, l: t(lang, "account.stats.active") },
+                { n: done.filter(p => p.status === "PICKED_UP").length, l: t(lang, "account.stats.completed") },
               ].map(s => (
                 <div key={s.l} className="text-center">
                   <p className="text-2xl font-black text-white">{s.n}</p>
@@ -146,17 +152,19 @@ export default function MiCuentaPage() {
         {/* Tab bar */}
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex gap-1 border-b border-white/10">
-            {(["active", "history"] as const).map(t => (
+            {(["active", "history"] as const).map(tab2 => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={tab2}
+                onClick={() => setTab(tab2)}
                 className={`px-5 py-3 text-sm font-semibold capitalize transition-all border-b-2 -mb-px ${
-                  tab === t
+                  tab === tab2
                     ? "text-white border-indigo-400"
                     : "text-white/40 border-transparent hover:text-white/70"
                 }`}
               >
-                {t === "active" ? `Active${active.length > 0 ? ` (${active.length})` : ""}` : `History${done.length > 0 ? ` (${done.length})` : ""}`}
+                {tab2 === "active"
+                  ? `${t(lang, "account.tab.active")}${active.length > 0 ? ` (${active.length})` : ""}`
+                  : `${t(lang, "account.tab.history")}${done.length > 0 ? ` (${done.length})` : ""}`}
               </button>
             ))}
           </div>
@@ -167,8 +175,8 @@ export default function MiCuentaPage() {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-5">
           <p className="text-slate-500 text-sm font-medium">
-            {loading ? "Loading..." : displayed.length === 0
-              ? tab === "active" ? "No active shipments" : "No history yet"
+            {loading ? t(lang, "common.loading") : displayed.length === 0
+              ? tab === "active" ? t(lang, "account.empty.active") : t(lang, "account.empty.history")
               : `${displayed.length} request${displayed.length !== 1 ? "s" : ""}`}
           </p>
           <Link
@@ -179,7 +187,7 @@ export default function MiCuentaPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-            New request
+            {t(lang, "account.newRequest")}
           </Link>
         </div>
 
@@ -204,16 +212,16 @@ export default function MiCuentaPage() {
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 text-lg mb-1">
-              {tab === "active" ? "No active shipments" : "No shipment history"}
+              {tab === "active" ? t(lang, "account.empty.active") : t(lang, "account.empty.history")}
             </h3>
             <p className="text-slate-500 text-sm mb-6">
-              {tab === "active" ? "Create a request to send a package" : "Your completed shipments will appear here"}
+              {tab === "active" ? t(lang, "account.empty.activeSub") : t(lang, "account.empty.historySub")}
             </p>
             {tab === "active" && (
               <Link href="/recoger"
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
                 style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-                Create first request →
+                {t(lang, "account.firstRequest")}
               </Link>
             )}
           </div>
@@ -241,6 +249,7 @@ function PickupCard({
   cancelling: boolean;
   onCancel: (p: Pickup) => void;
 }) {
+  const { lang } = useLang();
   const canCancel = pickup.status === "PENDING";
   const isDone = pickup.status === "PICKED_UP";
   const isCancelled = pickup.status === "CANCELLED";
@@ -254,12 +263,12 @@ function PickupCard({
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          PACKAGE PICKED UP
+          {t(lang, "account.card.pickedUp")}
         </div>
       )}
       {isCancelled && (
         <div className="bg-slate-400 text-white text-xs font-bold px-5 py-1.5 rounded-t-[14px]">
-          CANCELLED
+          {t(lang, "account.card.cancelled")}
         </div>
       )}
 
@@ -277,7 +286,9 @@ function PickupCard({
         {/* Route */}
         <div className="flex items-center gap-2 mb-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Origin</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">
+              {t(lang, "account.card.origin")}
+            </p>
             <p className="font-bold text-slate-900 truncate">{pickup.pickupCity}</p>
             <p className="text-xs text-slate-500">{COUNTRY_NAMES[pickup.pickupCountry] ?? pickup.pickupCountry}</p>
           </div>
@@ -289,7 +300,9 @@ function PickupCard({
             </svg>
           </div>
           <div className="flex-1 min-w-0 text-right">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Destination</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">
+              {t(lang, "account.card.destination")}
+            </p>
             <p className="font-bold text-slate-900 truncate">{pickup.recipientCity}</p>
             <p className="text-xs text-slate-500">{COUNTRY_NAMES[pickup.recipientCountry] ?? pickup.recipientCountry}</p>
           </div>
@@ -311,7 +324,9 @@ function PickupCard({
               {pickup.packageType}
             </span>
           )}
-          <span className="ml-auto">To: <span className="font-semibold text-slate-700">{pickup.recipientName}</span></span>
+          <span className="ml-auto">
+            {t(lang, "account.card.to")} <span className="font-semibold text-slate-700">{pickup.recipientName}</span>
+          </span>
         </div>
 
         {/* Actions */}
@@ -321,7 +336,7 @@ function PickupCard({
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
             style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
           >
-            Track
+            {t(lang, "common.track")}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -332,7 +347,7 @@ function PickupCard({
               disabled={cancelling}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 border-2 border-red-100 hover:bg-red-50 hover:border-red-200 transition-all disabled:opacity-50"
             >
-              {cancelling ? "..." : "Cancel"}
+              {cancelling ? "..." : t(lang, "common.cancel")}
             </button>
           )}
         </div>
