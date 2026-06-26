@@ -18,7 +18,7 @@ async function main() {
   // Auto-resolve any failed migrations so deploy can proceed
   console.log("🔍 Checking for failed migrations...");
   try {
-    const { PrismaClient } = require("@prisma/client");
+    const { PrismaClient } = require("../lib/generated/client");
     const prisma = new PrismaClient();
     try {
       // Check if the migrations table exists first

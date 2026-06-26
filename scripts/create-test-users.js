@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("../lib/generated/client");
 const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
