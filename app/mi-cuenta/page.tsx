@@ -6,12 +6,12 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 const COUNTRY_NAMES: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",
-  DO: "Rep. Dominicana", PA: "Panamá", CR: "Costa Rica",
-  VE: "Venezuela", MX: "México", CO: "Colombia", US: "Estados Unidos",
+  DO: "Dominican Rep.", PA: "Panama", CR: "Costa Rica",
+  VE: "Venezuela", MX: "Mexico", CO: "Colombia", US: "United States",
 };
 
 interface Pickup {
@@ -30,7 +30,7 @@ interface Pickup {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("es-US", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function MiCuentaPage() {
@@ -39,7 +39,7 @@ export default function MiCuentaPage() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
-  const [tab, setTab] = useState<"activas" | "completadas">("activas");
+  const [tab, setTab] = useState<"active" | "history">("active");
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -64,7 +64,7 @@ export default function MiCuentaPage() {
   }, [status]);
 
   const handleCancel = async (pickup: Pickup) => {
-    if (!confirm(`¿Cancelar la solicitud ${pickup.trackingCode}?`)) return;
+    if (!confirm(`Cancel request ${pickup.trackingCode}?`)) return;
     setCancelling(pickup.id);
     try {
       const res = await fetch(`/api/pickup-requests/${pickup.id}`, {
@@ -80,14 +80,14 @@ export default function MiCuentaPage() {
 
   const active = pickups.filter(p => !["PICKED_UP", "CANCELLED"].includes(p.status));
   const done = pickups.filter(p => ["PICKED_UP", "CANCELLED"].includes(p.status));
-  const displayed = tab === "activas" ? active : done;
+  const displayed = tab === "active" ? active : done;
 
   const name = session?.user?.name ?? "";
   const initial = name?.[0]?.toUpperCase() ?? "U";
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Hero header ─────────────────────────── */}
+      {/* Hero header */}
       <div style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
         <div className="max-w-3xl mx-auto px-4 py-8">
           {/* Top bar */}
@@ -96,12 +96,12 @@ export default function MiCuentaPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Inicio
+              Home
             </Link>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white"
                 style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>OG</div>
-              <span className="text-white font-bold text-sm hidden sm:block">O'Globo Cargo</span>
+              <span className="text-white font-bold text-sm hidden sm:block">O&apos;Globo Cargo</span>
             </div>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
@@ -110,7 +110,7 @@ export default function MiCuentaPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              Salir
+              Sign out
             </button>
           </div>
 
@@ -131,8 +131,8 @@ export default function MiCuentaPage() {
             <div className="flex gap-4 sm:gap-6">
               {[
                 { n: pickups.length, l: "Total" },
-                { n: active.length, l: "Activas" },
-                { n: done.filter(p => p.status === "PICKED_UP").length, l: "Completadas" },
+                { n: active.length, l: "Active" },
+                { n: done.filter(p => p.status === "PICKED_UP").length, l: "Completed" },
               ].map(s => (
                 <div key={s.l} className="text-center">
                   <p className="text-2xl font-black text-white">{s.n}</p>
@@ -146,7 +146,7 @@ export default function MiCuentaPage() {
         {/* Tab bar */}
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex gap-1 border-b border-white/10">
-            {(["activas", "completadas"] as const).map(t => (
+            {(["active", "history"] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -156,21 +156,20 @@ export default function MiCuentaPage() {
                     : "text-white/40 border-transparent hover:text-white/70"
                 }`}
               >
-                {t === "activas" ? `Activas ${active.length > 0 ? `(${active.length})` : ""}` : `Historial ${done.length > 0 ? `(${done.length})` : ""}`}
+                {t === "active" ? `Active${active.length > 0 ? ` (${active.length})` : ""}` : `History${done.length > 0 ? ` (${done.length})` : ""}`}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Content ──────────────────────────────── */}
+      {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-6">
-        {/* CTA */}
         <div className="flex items-center justify-between mb-5">
           <p className="text-slate-500 text-sm font-medium">
-            {loading ? "Cargando..." : displayed.length === 0
-              ? tab === "activas" ? "No tienes envíos activos" : "Sin historial aún"
-              : `${displayed.length} solicitud${displayed.length !== 1 ? "es" : ""}`}
+            {loading ? "Loading..." : displayed.length === 0
+              ? tab === "active" ? "No active shipments" : "No history yet"
+              : `${displayed.length} request${displayed.length !== 1 ? "s" : ""}`}
           </p>
           <Link
             href="/recoger"
@@ -180,7 +179,7 @@ export default function MiCuentaPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-            Nueva solicitud
+            New request
           </Link>
         </div>
 
@@ -205,16 +204,16 @@ export default function MiCuentaPage() {
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 text-lg mb-1">
-              {tab === "activas" ? "No tienes envíos activos" : "Sin historial de envíos"}
+              {tab === "active" ? "No active shipments" : "No shipment history"}
             </h3>
             <p className="text-slate-500 text-sm mb-6">
-              {tab === "activas" ? "Crea una solicitud para enviar un paquete" : "Tus envíos completados aparecerán aquí"}
+              {tab === "active" ? "Create a request to send a package" : "Your completed shipments will appear here"}
             </p>
-            {tab === "activas" && (
+            {tab === "active" && (
               <Link href="/recoger"
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
                 style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-                Crear primera solicitud →
+                Create first request →
               </Link>
             )}
           </div>
@@ -255,12 +254,12 @@ function PickupCard({
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          PAQUETE ENTREGADO
+          PACKAGE PICKED UP
         </div>
       )}
       {isCancelled && (
         <div className="bg-slate-400 text-white text-xs font-bold px-5 py-1.5 rounded-t-[14px]">
-          CANCELADO
+          CANCELLED
         </div>
       )}
 
@@ -278,7 +277,7 @@ function PickupCard({
         {/* Route */}
         <div className="flex items-center gap-2 mb-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Origen</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Origin</p>
             <p className="font-bold text-slate-900 truncate">{pickup.pickupCity}</p>
             <p className="text-xs text-slate-500">{COUNTRY_NAMES[pickup.pickupCountry] ?? pickup.pickupCountry}</p>
           </div>
@@ -290,7 +289,7 @@ function PickupCard({
             </svg>
           </div>
           <div className="flex-1 min-w-0 text-right">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Destino</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Destination</p>
             <p className="font-bold text-slate-900 truncate">{pickup.recipientCity}</p>
             <p className="text-xs text-slate-500">{COUNTRY_NAMES[pickup.recipientCountry] ?? pickup.recipientCountry}</p>
           </div>
@@ -312,7 +311,7 @@ function PickupCard({
               {pickup.packageType}
             </span>
           )}
-          <span className="ml-auto">Para: <span className="font-semibold text-slate-700">{pickup.recipientName}</span></span>
+          <span className="ml-auto">To: <span className="font-semibold text-slate-700">{pickup.recipientName}</span></span>
         </div>
 
         {/* Actions */}
@@ -322,7 +321,7 @@ function PickupCard({
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
             style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
           >
-            Rastrear
+            Track
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -333,7 +332,7 @@ function PickupCard({
               disabled={cancelling}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 border-2 border-red-100 hover:bg-red-50 hover:border-red-200 transition-all disabled:opacity-50"
             >
-              {cancelling ? "..." : "Cancelar"}
+              {cancelling ? "..." : "Cancel"}
             </button>
           )}
         </div>

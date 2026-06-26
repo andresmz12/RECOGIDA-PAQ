@@ -6,9 +6,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
-import { SkeletonTableRow } from "@/components/Skeleton";
-import EmptyState from "@/components/EmptyState";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { SkeletonTableRow } from "@/components/ui/Skeleton";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface PickupRequest {
   id: string;
@@ -71,7 +71,7 @@ export default function SolicitudesPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Solicitudes de Recogida</h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              {loading ? "Cargando..." : `${total} solicitud${total !== 1 ? "es" : ""}${statusFilter ? ` · filtrando por ${statusFilter.toLowerCase()}` : ""}`}
+              {loading ? "Loading..." : `${total} request${total !== 1 ? "s" : ""}${statusFilter ? ` · filtered by ${statusFilter.toLowerCase()}` : ""}`}
             </p>
           </div>
           <Link
@@ -81,7 +81,7 @@ export default function SolicitudesPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Nueva solicitud
+            New request
           </Link>
         </div>
 
@@ -94,7 +94,7 @@ export default function SolicitudesPage() {
               </svg>
               <input
                 type="text"
-                placeholder="Buscar por nombre o email..."
+                placeholder="Search by name or email..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50/50"
@@ -106,11 +106,11 @@ export default function SolicitudesPage() {
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-700 min-w-40 transition-all"
             >
               <option value="">Todos los estados</option>
-              <option value="PENDING">Pendiente</option>
-              <option value="ASSIGNED">Asignado</option>
-              <option value="SCHEDULED">Programado</option>
-              <option value="PICKED_UP">Recogido</option>
-              <option value="CANCELLED">Cancelado</option>
+              <option value="PENDING">Pending</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="SCHEDULED">Scheduled</option>
+              <option value="PICKED_UP">Picked up</option>
+              <option value="CANCELLED">Cancelled</option>
             </select>
           </div>
         </div>
@@ -140,17 +140,17 @@ export default function SolicitudesPage() {
                     <td colSpan={7}>
                       <EmptyState
                         icon={<PackageIcon />}
-                        title="No hay solicitudes"
+                        title="No requests found"
                         description={
                           statusFilter || search
-                            ? "No se encontraron solicitudes con los filtros aplicados. Prueba con otros criterios."
-                            : "Aún no hay solicitudes de recogida registradas en el sistema."
+                            ? "No requests match the current filters. Try different criteria."
+                            : "No pickup requests have been created yet."
                         }
                         action={
                           !statusFilter && !search
-                            ? { label: "Nueva solicitud", href: "/recoger" }
+                            ? { label: "New request", href: "/recoger" }
                             : {
-                                label: "Limpiar filtros",
+                                label: "Clear filters",
                                 onClick: () => { setStatusFilter(""); setSearch(""); },
                               }
                         }
@@ -183,7 +183,7 @@ export default function SolicitudesPage() {
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-500">
-                        {new Date(p.preferredDate).toLocaleDateString("es-ES", {
+                        {new Date(p.preferredDate).toLocaleDateString("en-US", {
                           day: "2-digit", month: "short", year: "numeric",
                         })}
                       </td>
@@ -209,7 +209,7 @@ export default function SolicitudesPage() {
           {!loading && totalPages > 1 && (
             <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <p className="text-xs text-slate-500">
-                Página <span className="font-bold text-slate-700">{page}</span> de{" "}
+                Page <span className="font-bold text-slate-700">{page}</span> de{" "}
                 <span className="font-bold text-slate-700">{totalPages}</span>
               </p>
               <div className="flex gap-2">

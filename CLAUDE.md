@@ -59,13 +59,18 @@ app/
 │   ├── pickup-requests    # Pickup CRUD operations
 │   ├── track/[code]       # Public tracking endpoint
 │   ├── admin/users        # Admin user management
+│   ├── couriers/          # Courier listing
+│   ├── my-pickups/        # Courier's assigned pickups
+│   ├── stats/             # Dashboard statistics
+│   ├── routes/            # Route data
 │   └── setup/admin        # Initial admin creation
 ├── dashboard/             # Staff routes (protected)
 │   ├── page.tsx          # Main dashboard
 │   ├── solicitudes/       # Request management
 │   ├── usuarios/          # User management (ADMIN only)
 │   ├── mis-recogidas/     # Courier's pickup list
-│   └── mapa/              # Map view
+│   ├── mapa/              # Map view
+│   └── rutas/             # Route management (ADMIN only)
 ├── login/                 # Login page
 ├── registro/              # Registration page
 ├── recoger/               # Public pickup request form
@@ -74,15 +79,56 @@ app/
 ├── setup/                 # Initial setup (create first admin)
 └── layout.tsx             # Root layout
 
+components/
+├── ui/                   # Base UI components
+│   ├── Alert.tsx
+│   ├── Badge.tsx
+│   ├── Button.tsx
+│   ├── Card.tsx
+│   ├── Container.tsx
+│   ├── EmptyState.tsx
+│   ├── Skeleton.tsx
+│   └── StatusBadge.tsx
+├── maps/                 # Map components
+│   ├── MapView.tsx
+│   └── MiniMap.tsx
+├── Form/                 # Form components
+│   ├── AddressAutocomplete.tsx
+│   ├── AddressFields.tsx
+│   ├── Input.tsx
+│   ├── Label.tsx
+│   ├── LocationPicker.tsx
+│   ├── Select.tsx
+│   └── Textarea.tsx
+├── DashboardLayout.tsx   # Staff dashboard shell
+└── providers.tsx         # Client-side session provider
+
 lib/
 ├── auth.ts               # NextAuth configuration & callbacks
+├── countries.ts          # Country/state data
 ├── email.ts              # SendGrid email templates
+├── geo-data.ts           # Geographic data (US states, cities)
 ├── prisma.ts             # Prisma client singleton
 └── utils.ts              # Helper functions (tracking code generation, date formatting)
+
+docs/                     # Extended documentation
+├── BUG_DIAGNOSIS.md
+├── IMPROVEMENTS.md
+├── RAILWAY_SETUP.md
+├── SETUP_US_MARKET.md
+├── STATUS_REPORT.md
+└── TEST_REGISTER.md
 
 prisma/
 ├── schema.prisma         # Database schema (User, PickupRequest, StatusHistory)
 └── migrations/           # Prisma migrations
+
+scripts/
+├── build.js              # Next.js build with dummy DATABASE_URL
+├── build.sh              # Shell build script
+├── create-test-users.js  # Database seeding
+├── start.js              # Startup with migrations and seeding
+└── verify-setup.js       # Environment verification
 
 middleware.ts            # Route protection middleware for /dashboard and /mi-cuenta
 ```

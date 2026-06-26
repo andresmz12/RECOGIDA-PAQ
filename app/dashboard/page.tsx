@@ -6,8 +6,8 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
-import { SkeletonStatCard } from "@/components/Skeleton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { SkeletonStatCard } from "@/components/ui/Skeleton";
 
 interface Stats {
   total: number; pending: number; assigned: number; scheduled: number;
@@ -22,13 +22,13 @@ interface RecentPickup {
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return "Buenos días";
-  if (h < 18) return "Buenas tardes";
-  return "Buenas noches";
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 function formatDate() {
-  return new Date().toLocaleDateString("es-ES", {
+  return new Date().toLocaleDateString("en-US", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 }
@@ -187,12 +187,12 @@ export default function DashboardPage() {
           <div className="mb-8">
             <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1 capitalize">{formatDate()}</p>
             <h1 className="text-3xl font-black text-slate-900 mb-1">{getGreeting()}, {name}</h1>
-            <p className="text-slate-500 text-sm">Tu resumen de hoy</p>
+            <p className="text-slate-500 text-sm">Your summary for today</p>
           </div>
 
           {/* Today's progress card */}
           <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white mb-6 shadow-lg shadow-indigo-200">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">Recogidas hoy</p>
+            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">Pickups today</p>
             {loading ? (
               <div className="h-10 bg-white/20 rounded-xl animate-pulse w-24" />
             ) : (
@@ -209,10 +209,10 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-white/60 text-sm">
                   {total === 0
-                    ? "Sin recogidas asignadas para hoy"
+                    ? "No pickups assigned for today"
                     : done === total
-                    ? "¡Todo listo por hoy!"
-                    : `${total - done} pendiente${total - done !== 1 ? "s" : ""}`}
+                    ? "All done for today!"
+                    : `${total - done} ${total - done !== 1 ? "pending" : "pending"}`}
                 </p>
               </>
             )}
@@ -221,7 +221,7 @@ export default function DashboardPage() {
           {/* Next stop */}
           {!loading && next && (
             <div className="bg-white border border-indigo-100 ring-1 ring-indigo-100 rounded-xl p-5 mb-6 shadow-sm">
-              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Próxima parada</p>
+              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Next stop</p>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono font-bold text-indigo-600 text-sm mb-1">{next.trackingCode}</p>
@@ -265,11 +265,11 @@ export default function DashboardPage() {
     : 0;
 
   const STAT_CARDS = [
-    { label: "Total activas", value: stats.total,     color: "from-slate-700 to-slate-900",   icon: <IconBox />,   href: "/dashboard/solicitudes" },
-    { label: "Pendientes",    value: stats.pending,   color: "from-amber-500 to-orange-600",  icon: <IconClock />, href: "/dashboard/solicitudes?status=PENDING",   total: stats.total },
-    { label: "Asignadas",     value: stats.assigned,  color: "from-blue-500 to-cyan-600",     icon: <IconTruck />, href: "/dashboard/solicitudes?status=ASSIGNED",  total: stats.total },
-    { label: "En camino",     value: stats.scheduled, color: "from-violet-500 to-purple-700", icon: <IconMap />,   href: "/dashboard/solicitudes?status=SCHEDULED", total: stats.total },
-    { label: "Recogidas",     value: stats.pickedUp,  color: "from-emerald-500 to-green-700", icon: <IconCheck />, href: "/dashboard/solicitudes?status=PICKED_UP",  total: stats.total },
+    { label: "Total active", value: stats.total,     color: "from-slate-700 to-slate-900",   icon: <IconBox />,   href: "/dashboard/solicitudes" },
+    { label: "Pending",    value: stats.pending,   color: "from-amber-500 to-orange-600",  icon: <IconClock />, href: "/dashboard/solicitudes?status=PENDING",   total: stats.total },
+    { label: "Assigned",     value: stats.assigned,  color: "from-blue-500 to-cyan-600",     icon: <IconTruck />, href: "/dashboard/solicitudes?status=ASSIGNED",  total: stats.total },
+    { label: "In transit",     value: stats.scheduled, color: "from-violet-500 to-purple-700", icon: <IconMap />,   href: "/dashboard/solicitudes?status=SCHEDULED", total: stats.total },
+    { label: "Picked up",     value: stats.pickedUp,  color: "from-emerald-500 to-green-700", icon: <IconCheck />, href: "/dashboard/solicitudes?status=PICKED_UP",  total: stats.total },
   ];
 
   return (
@@ -289,7 +289,7 @@ export default function DashboardPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Nueva solicitud
+            New request
           </Link>
         </div>
 
@@ -312,11 +312,11 @@ export default function DashboardPage() {
             <div className="flex-1 min-w-48">
               <p className="font-semibold text-slate-900 text-sm mb-0.5">
                 {stats.todayTotal === 0
-                  ? "Sin recogidas programadas para hoy"
-                  : `${stats.todayTotal} recogida${stats.todayTotal !== 1 ? "s" : ""} programadas para hoy`}
+                  ? "No pickups scheduled for today"
+                  : `${stats.todayTotal} ${stats.todayTotal !== 1 ? "pickups" : "pickup"} scheduled for today`}
               </p>
               {stats.todayTotal > 0 && (
-                <p className="text-slate-500 text-xs">{stats.todayCompleted} completadas · {stats.todayTotal - stats.todayCompleted} pendientes</p>
+                <p className="text-slate-500 text-xs">{stats.todayCompleted} completed · {stats.todayTotal - stats.todayCompleted} pending</p>
               )}
             </div>
             {stats.todayTotal > 0 && (
@@ -360,8 +360,8 @@ export default function DashboardPage() {
                   <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3 text-slate-400">
                     <IconBox />
                   </div>
-                  <p className="font-semibold text-sm text-slate-600">Sin solicitudes aún</p>
-                  <p className="text-xs mt-1">Las nuevas solicitudes aparecerán aquí</p>
+                  <p className="font-semibold text-sm text-slate-600">No requests yet</p>
+                  <p className="text-xs mt-1">New requests will appear here</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
@@ -385,7 +385,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <p className="text-slate-400 text-xs shrink-0">
-                        {new Date(p.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                        {new Date(p.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                       </p>
                     </Link>
                   ))}
@@ -400,10 +400,10 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-base font-bold text-slate-900 mb-3">Acciones rápidas</h2>
               <div className="space-y-2">
-                <QuickAction href="/dashboard/solicitudes" icon={<IconList />}  label="Solicitudes"   desc="Gestionar todas" hoverColor="hover:border-indigo-200 hover:bg-indigo-50/50" />
-                <QuickAction href="/dashboard/mapa"        icon={<IconMap />}   label="Mapa de Rutas" desc="Vista geográfica"        hoverColor="hover:border-violet-200 hover:bg-violet-50/50" />
-                <QuickAction href="/dashboard/usuarios"    icon={<IconUsers />} label="Usuarios"      desc="Couriers y admins"       hoverColor="hover:border-emerald-200 hover:bg-emerald-50/50" />
-                <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label="Rutas PDF"     desc="Exportar hojas de ruta"  hoverColor="hover:border-rose-200 hover:bg-rose-50/50" />
+                <QuickAction href="/dashboard/solicitudes" icon={<IconList />}  label="Requests"   desc="Manage all" hoverColor="hover:border-indigo-200 hover:bg-indigo-50/50" />
+                <QuickAction href="/dashboard/mapa"        icon={<IconMap />}   label="Route Map" desc="Geographic view"        hoverColor="hover:border-violet-200 hover:bg-violet-50/50" />
+                <QuickAction href="/dashboard/usuarios"    icon={<IconUsers />} label="Users"      desc="Couriers & admins"       hoverColor="hover:border-emerald-200 hover:bg-emerald-50/50" />
+                <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label="Routes PDF"     desc="Export route sheets"  hoverColor="hover:border-rose-200 hover:bg-rose-50/50" />
               </div>
             </div>
 

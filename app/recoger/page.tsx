@@ -4,15 +4,15 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
-import LocationPicker from "@/components/LocationPicker";
-import AddressAutocomplete from "@/components/AddressAutocomplete";
+import LocationPicker from "@/components/Form/LocationPicker";
+import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 
 const BOX_SIZES = [
-  { value: "Caja 18x18x18", label: "Caja 18×18×18 in", dimensions: "18x18x18 in", desc: "Pequeña" },
-  { value: "Caja 20x20x20", label: "Caja 20×20×20 in", dimensions: "20x20x20 in", desc: "Mediana" },
-  { value: "Caja 22x22x22", label: "Caja 22×22×22 in", dimensions: "22x22x22 in", desc: "Grande" },
-  { value: "Caja 24x24x24", label: "Caja 24×24×24 in", dimensions: "24x24x24 in", desc: "Extra Grande" },
-  { value: "Documento",     label: "Documento",        dimensions: "",             desc: "Sobre / carta" },
+  { value: "Caja 18x18x18", label: "Box 18×18×18 in", dimensions: "18x18x18 in", desc: "Small" },
+  { value: "Caja 20x20x20", label: "Box 20×20×20 in", dimensions: "20x20x20 in", desc: "Medium" },
+  { value: "Caja 22x22x22", label: "Box 22×22×22 in", dimensions: "22x22x22 in", desc: "Large" },
+  { value: "Caja 24x24x24", label: "Box 24×24×24 in", dimensions: "24x24x24 in", desc: "Extra Large" },
+  { value: "Documento",     label: "Document",         dimensions: "",             desc: "Envelope / letter" },
 ];
 
 const US_STATES = [
@@ -24,9 +24,9 @@ const US_STATES = [
 ];
 
 const TIME_WINDOWS = [
-  { value: "08:00-12:00", label: "Mañana  8:00 am – 12:00 pm" },
-  { value: "12:00-17:00", label: "Tarde  12:00 pm – 5:00 pm" },
-  { value: "17:00-20:00", label: "Noche  5:00 pm – 8:00 pm" },
+  { value: "08:00-12:00", label: "Morning  8:00 am – 12:00 pm" },
+  { value: "12:00-17:00", label: "Afternoon  12:00 pm – 5:00 pm" },
+  { value: "17:00-20:00", label: "Evening  5:00 pm – 8:00 pm" },
 ];
 
 const EMPTY = {
@@ -108,13 +108,13 @@ export default function RecogerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Error al crear la solicitud");
+        setError(data.error || "Failed to create request.");
         setLoading(false);
         return;
       }
       setTrackingCode(data.trackingCode);
     } catch {
-      setError("Error de conexión. Intenta de nuevo.");
+      setError("Connection error. Please try again.");
       setLoading(false);
     }
   };
@@ -129,23 +129,23 @@ export default function RecogerPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">¡Solicitud creada!</h1>
-          <p className="text-white/60 mb-8">Te enviaremos un email de confirmación</p>
+          <h1 className="text-3xl font-black text-white mb-2">Request created!</h1>
+          <p className="text-white/60 mb-8">We will send you a confirmation email</p>
 
           <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-8">
-            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">Código de seguimiento</p>
+            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">Tracking code</p>
             <p className="text-3xl font-mono font-black text-indigo-300">{trackingCode}</p>
-            <p className="text-white/40 text-xs mt-3">Guarda este código para rastrear tu recogida</p>
+            <p className="text-white/40 text-xs mt-3">Save this code to track your pickup</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/" className="flex-1 flex items-center justify-center py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-all text-sm">
-              ← Volver al inicio
+              ← Back to home
             </Link>
             <Link href={`/rastreo/${trackingCode}`}
               className="flex-1 flex items-center justify-center py-3 rounded-xl font-semibold text-sm transition-all text-white"
               style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-              Rastrear paquete →
+              Track package →
             </Link>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function RecogerPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Volver
+            Back
           </Link>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
@@ -170,15 +170,15 @@ export default function RecogerPage() {
             <span className="font-bold text-slate-900 text-sm">O'Globo Cargo</span>
           </div>
           <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
-            Iniciar sesión
+            Sign in
           </Link>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-1">Solicitar recogida</h1>
-          <p className="text-slate-500">Completa el formulario y te contactamos para coordinar</p>
+          <h1 className="text-3xl font-black text-slate-900 mb-1">Request a pickup</h1>
+          <p className="text-slate-500">Fill out the form and we will coordinate your pickup</p>
         </div>
 
         {error && (
@@ -200,18 +200,18 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Tu información (Remitente)</h2>
+              <h2 className="font-bold text-slate-900">Your information (Sender)</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Nombre completo" required>
-                <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} placeholder="Juan García" required />
+              <Field label="Full name" required>
+                <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} placeholder="Jane Doe" required />
               </Field>
-              <Field label="Teléfono" required>
+              <Field label="Phone" required>
                 <input className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} placeholder="+1 (305) 555-0000" required />
               </Field>
             </div>
             <Field label="Email" required>
-              <input type="email" className={inputCls} value={form.contactEmail} onChange={e => set("contactEmail", e.target.value)} placeholder="tu@email.com" required />
+              <input type="email" className={inputCls} value={form.contactEmail} onChange={e => set("contactEmail", e.target.value)} placeholder="you@email.com" required />
             </Field>
           </section>
 
@@ -224,9 +224,9 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Dirección de recogida (USA)</h2>
+              <h2 className="font-bold text-slate-900">Pickup address (USA)</h2>
             </div>
-            <Field label="Dirección" required>
+            <Field label="Address" required>
               <AddressAutocomplete
                 value={form.pickupAddress}
                 onChange={(v) => set("pickupAddress", v)}
@@ -246,10 +246,10 @@ export default function RecogerPage() {
               />
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field label="Ciudad" required>
+              <Field label="City" required>
                 <input className={inputCls} value={form.pickupCity} onChange={e => set("pickupCity", e.target.value)} placeholder="Miami" required />
               </Field>
-              <Field label="Estado" required>
+              <Field label="State" required>
                 <select className={inputCls + " bg-white"} value={form.pickupState} onChange={e => set("pickupState", e.target.value)} required>
                   {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -268,28 +268,28 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Información del destinatario</h2>
+              <h2 className="font-bold text-slate-900">Recipient information</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Nombre del destinatario" required>
-                <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="María López" required />
+              <Field label="Recipient name" required>
+                <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="Maria Lopez" required />
               </Field>
-              <Field label="Teléfono principal" required>
+              <Field label="Primary phone" required>
                 <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
               </Field>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Teléfono secundario" hint="Opcional">
+              <Field label="Secondary phone" hint="Optional">
                 <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} placeholder="+504 8888-8888" />
               </Field>
-              <Field label="Email del destinatario" hint="Opcional">
-                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="destinatario@email.com" />
+              <Field label="Recipient email" hint="Optional">
+                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="recipient@email.com" />
               </Field>
             </div>
 
-            <Field label="Dirección de entrega" required>
+            <Field label="Delivery address" required>
               <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} placeholder="Col. Centro, Calle Principal #12" required />
             </Field>
 
@@ -318,12 +318,12 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Tu paquete</h2>
+              <h2 className="font-bold text-slate-900">Your package</h2>
             </div>
 
             {/* Box size selector */}
             <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2.5">Tamaño de caja <span className="text-red-500">*</span></p>
+              <p className="text-sm font-semibold text-slate-700 mb-2.5">Box size <span className="text-red-500">*</span></p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {BOX_SIZES.map((box) => {
                   const active = form.packageType === box.value;
@@ -361,7 +361,7 @@ export default function RecogerPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Peso estimado (lbs)" hint="Solo el contenido, no la caja">
+              <Field label="Estimated weight (lbs)" hint="Content only, not the box">
                 <div className="relative">
                   <input
                     type="number"
@@ -375,12 +375,12 @@ export default function RecogerPage() {
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">lbs</span>
                 </div>
               </Field>
-              <Field label="Contenido del paquete" required>
+              <Field label="Package contents" required>
                 <input
                   className={inputCls}
                   value={form.packageContents}
                   onChange={e => set("packageContents", e.target.value)}
-                  placeholder="Ropa, zapatos, electrodomésticos..."
+                  placeholder="Clothing, shoes, appliances..."
                   required
                 />
               </Field>
@@ -395,10 +395,10 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Fecha y horario de recogida</h2>
+              <h2 className="font-bold text-slate-900">Pickup date and time</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Fecha preferida" required>
+              <Field label="Preferred date" required>
                 <input
                   type="date"
                   className={inputCls}
@@ -408,19 +408,19 @@ export default function RecogerPage() {
                   required
                 />
               </Field>
-              <Field label="Ventana horaria" required>
+              <Field label="Time window" required>
                 <select className={inputCls + " bg-white"} value={form.preferredTimeWindow} onChange={e => set("preferredTimeWindow", e.target.value)} required>
                   {TIME_WINDOWS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
               </Field>
             </div>
-            <Field label="Instrucciones especiales" hint="Opcional">
+            <Field label="Special instructions" hint="Optional">
               <textarea
                 className={inputCls + " resize-none"}
                 rows={3}
                 value={form.specialInstructions}
                 onChange={e => set("specialInstructions", e.target.value)}
-                placeholder="Ej: Llamar antes de llegar, puerta trasera, código de acceso #1234..."
+                placeholder="e.g. Call before arriving, back door, access code #1234..."
               />
             </Field>
           </section>
@@ -435,11 +435,11 @@ export default function RecogerPage() {
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Creando solicitud...
+                Creating request...
               </>
             ) : (
               <>
-                Solicitar recogida
+                Request pickup
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -448,9 +448,9 @@ export default function RecogerPage() {
           </button>
 
           <p className="text-center text-xs text-slate-400 pb-4">
-            ¿Ya tienes cuenta?{" "}
-            <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">Inicia sesión</Link>
-            {" "}para guardar tus solicitudes
+            Already have an account?{" "}
+            <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">Sign in</Link>
+            {" "}to save your requests
           </p>
         </form>
       </div>

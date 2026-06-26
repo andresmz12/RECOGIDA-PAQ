@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 interface Courier {
   id: string;

@@ -23,7 +23,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
       {/* Country — hidden when locked */}
       {!lockedCountry && (
         <div>
-          <label className="block text-gray-700 font-semibold mb-2">País *</label>
+          <label className="block text-gray-700 font-semibold mb-2">Country *</label>
           <select
             name={countryKey}
             value={selectedCountry}
@@ -31,7 +31,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
           >
-            <option value="">Selecciona un país</option>
+            <option value="">Select a country</option>
             {COUNTRIES.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.name}
@@ -44,7 +44,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
       {/* Address */}
       <div>
         <label className="block text-gray-700 font-semibold mb-2">
-          Dirección Completa *
+          Full Address *
         </label>
         <input
           type="text"
@@ -59,7 +59,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
 
       {/* City */}
       <div>
-        <label className="block text-gray-700 font-semibold mb-2">Ciudad *</label>
+        <label className="block text-gray-700 font-semibold mb-2">City *</label>
         <input
           type="text"
           name={cityKey}
@@ -75,7 +75,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
       {showState && (
         <div>
           <label className="block text-gray-700 font-semibold mb-2">
-            Estado *
+            State *
           </label>
           <select
             name={stateKey}
@@ -84,7 +84,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
           >
-            <option value="">Selecciona un estado</option>
+            <option value="">Select a state</option>
             {US_STATES.map((state) => (
               <option key={state.code} value={state.code}>
                 {state.name}
@@ -98,7 +98,7 @@ export default function AddressFields({ prefix, formData, onChange, lockedCountr
       {showPostal && (
         <div>
           <label className="block text-gray-700 font-semibold mb-2">
-            Código Postal *
+            Postal Code *
           </label>
           <input
             type="text"
