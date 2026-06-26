@@ -27,19 +27,19 @@ interface TrackingData {
 }
 
 const statusMessages: Record<string, string> = {
-  PENDING: "Solicitud Pendiente",
-  ASSIGNED: "Courier Asignado",
-  SCHEDULED: "Recogida en Camino",
-  PICKED_UP: "Paquete Recogido",
-  CANCELLED: "Solicitud Cancelada",
+  PENDING: "Request Pending",
+  ASSIGNED: "Courier Assigned",
+  SCHEDULED: "Courier On the Way",
+  PICKED_UP: "Package Picked Up",
+  CANCELLED: "Request Cancelled",
 };
 
 const statusDescriptions: Record<string, string> = {
-  PENDING: "Tu solicitud está registrada y en espera de ser asignada a un courier.",
-  ASSIGNED: "Se ha asignado un courier para tu recogida. Pronto se confirmará la fecha y hora.",
-  SCHEDULED: "Tu courier está en camino. Estará en tu dirección en el rango horario indicado.",
-  PICKED_UP: "¡Tu paquete ha sido recogido exitosamente!",
-  CANCELLED: "Esta solicitud ha sido cancelada.",
+  PENDING: "Your request is registered and waiting to be assigned to a courier.",
+  ASSIGNED: "A courier has been assigned to your pickup. The date and time will be confirmed soon.",
+  SCHEDULED: "Your courier is on the way and will arrive within the indicated time window.",
+  PICKED_UP: "Your package has been successfully picked up!",
+  CANCELLED: "This request has been cancelled.",
 };
 
 const STEPS = ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"];
@@ -62,14 +62,14 @@ export default function RastreoPage() {
       try {
         const res = await fetch(`/api/track/${trackingCode}`);
         if (!res.ok) {
-          setError("Código de seguimiento no encontrado");
+          setError("Tracking code not found");
           setLoading(false);
           return;
         }
         const data = await res.json();
         setTracking(data);
-      } catch (err) {
-        setError("Error al cargar información de seguimiento");
+      } catch {
+        setError("Error loading tracking information");
       } finally {
         setLoading(false);
       }
@@ -83,7 +83,7 @@ export default function RastreoPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
-          <p className="text-slate-600 font-medium">Cargando información de seguimiento...</p>
+          <p className="text-slate-600 font-medium">Loading tracking information...</p>
         </div>
       </div>
     );
@@ -95,14 +95,14 @@ export default function RastreoPage() {
         <Container size="md">
           <Card variant="elevated" padding="lg" className="text-center">
             <div className="text-6xl mb-4 opacity-50">📭</div>
-            <h1 className="text-2xl font-black text-slate-900 mb-3">No encontrado</h1>
+            <h1 className="text-2xl font-black text-slate-900 mb-3">Not found</h1>
             <p className="text-slate-600 mb-8">{error}</p>
             <div className="flex gap-3 justify-center">
               <Link href="/">
-                <Button variant="outline">← Volver al inicio</Button>
+                <Button variant="outline">← Back to home</Button>
               </Link>
               <Link href="/recoger">
-                <Button variant="primary">Crear nueva solicitud</Button>
+                <Button variant="primary">Create new request</Button>
               </Link>
             </div>
           </Card>
@@ -115,12 +115,12 @@ export default function RastreoPage() {
 
   const isCancelled = tracking.status === "CANCELLED";
   const currentStep = stepIndex(tracking.status);
-  const formattedDate = new Date(tracking.estimatedPickupDate).toLocaleDateString("es-ES", {
+  const formattedDate = new Date(tracking.estimatedPickupDate).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  const lastUpdateDate = new Date(tracking.lastUpdated).toLocaleDateString("es-ES", {
+  const lastUpdateDate = new Date(tracking.lastUpdated).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -133,21 +133,21 @@ export default function RastreoPage() {
       <Container size="md">
         {/* Back link */}
         <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5 mb-8">
-          ← Volver al inicio
+          ← Back to home
         </Link>
 
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-slate-900 mb-2">Tu Solicitud de Recogida</h1>
-          <p className="text-slate-600">Rastrea el estado de tu paquete en tiempo real</p>
+          <h1 className="text-4xl font-black text-slate-900 mb-2">Your Pickup Request</h1>
+          <p className="text-slate-600">Track your package status in real time</p>
         </div>
 
         {/* Tracking Code */}
         <Card variant="elevated" padding="lg" className="mb-8 border-indigo-100">
           <div className="text-center">
-            <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">Código de Seguimiento</p>
+            <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">Tracking Code</p>
             <p className="text-4xl font-black text-indigo-600 font-mono">{tracking.trackingCode}</p>
-            <p className="text-xs text-slate-500 mt-3">Guarda este código para futuras referencias</p>
+            <p className="text-xs text-slate-500 mt-3">Save this code for future reference</p>
           </div>
         </Card>
 
@@ -169,7 +169,7 @@ export default function RastreoPage() {
           {!isCancelled && (
             <div className="mt-8 pt-8 border-t border-slate-100">
               <div className="flex items-center justify-between">
-                {["Solicitado", "Asignado", "En camino", "Recogido"].map((label, i) => (
+                {["Requested", "Assigned", "On the way", "Picked up"].map((label, i) => (
                   <div key={label} className="flex flex-col items-center flex-1">
                     <div className="flex items-center w-full">
                       {i > 0 && (
@@ -202,15 +202,15 @@ export default function RastreoPage() {
         {!isCancelled && (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card variant="default" padding="lg">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 Fecha Estimada</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 Estimated Date</h3>
               <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
-              <p className="text-xs text-slate-500 mt-2">Fecha programada para la recogida</p>
+              <p className="text-xs text-slate-500 mt-2">Scheduled pickup date</p>
             </Card>
 
             <Card variant="default" padding="lg">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ Rango Horario</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ Time Window</h3>
               <p className="text-2xl font-bold text-slate-900">{tracking.preferredTimeWindow}</p>
-              <p className="text-xs text-slate-500 mt-2">Ventana de tiempo para la recogida</p>
+              <p className="text-xs text-slate-500 mt-2">Pickup time window</p>
             </Card>
           </div>
         )}
@@ -219,7 +219,7 @@ export default function RastreoPage() {
         {tracking.statusHistory.length > 0 && (
           <Card variant="default" padding="lg" className="mb-8">
             <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <span>📋</span> Historial de actualizaciones
+              <span>📋</span> Update history
             </h3>
             <div className="relative">
               <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
@@ -240,7 +240,7 @@ export default function RastreoPage() {
                         <StatusBadge status={entry.toStatus} />
                       </div>
                       <p className="text-xs text-slate-500 mt-1.5 font-medium">
-                        {new Date(entry.createdAt).toLocaleDateString("es-ES", {
+                        {new Date(entry.createdAt).toLocaleDateString("en-US", {
                           year: "numeric", month: "long", day: "numeric",
                           hour: "2-digit", minute: "2-digit",
                         })}
@@ -263,7 +263,7 @@ export default function RastreoPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">ℹ️</div>
             <div>
-              <p className="text-sm font-semibold text-slate-600">Última Actualización</p>
+              <p className="text-sm font-semibold text-slate-600">Last Updated</p>
               <p className="text-slate-700 font-medium">{lastUpdateDate}</p>
             </div>
           </div>
@@ -271,13 +271,13 @@ export default function RastreoPage() {
 
         {/* CTA Section */}
         <div className="text-center space-y-4">
-          <p className="text-slate-600 font-medium">¿Necesitas ayuda o deseas crear otra solicitud?</p>
+          <p className="text-slate-600 font-medium">Need help or want to create another request?</p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link href="/">
-              <Button variant="outline">← Volver al inicio</Button>
+              <Button variant="outline">← Back to home</Button>
             </Link>
             <Link href="/recoger">
-              <Button variant="primary">Crear nueva solicitud →</Button>
+              <Button variant="primary">Create new request →</Button>
             </Link>
           </div>
         </div>
