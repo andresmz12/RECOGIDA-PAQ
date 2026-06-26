@@ -5,6 +5,7 @@ import { generateTrackingCode } from "@/lib/utils";
 import { sendPickupConfirmationEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { triggerConfirmationCall } from "@/lib/call-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -172,6 +173,11 @@ export async function POST(request: NextRequest) {
     if (contactEmail) {
       await sendPickupConfirmationEmail(contactEmail, trackingCode, contactName);
     }
+
+    // Trigger voice confirmation call in background (non-blocking)
+    triggerConfirmationCall(pickupRequest.id).catch((err) =>
+      console.error("[pickup-requests] triggerConfirmationCall error:", err)
+    );
 
     return NextResponse.json({
       trackingCode,

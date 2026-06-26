@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendStatusUpdateEmail } from "@/lib/email";
+import { triggerCourierCall } from "@/lib/call-service";
 
 export async function GET(
   request: NextRequest,
@@ -152,6 +153,13 @@ export async function PATCH(
           pickupRequest.contactName,
           status,
           pickupRequest.preferredDate
+        );
+      }
+
+      // Trigger voice call when courier is on the way
+      if (status === "EN_CAMINO") {
+        triggerCourierCall(params.id).catch((err) =>
+          console.error("[pickup-requests/id] triggerCourierCall error:", err)
         );
       }
     }
