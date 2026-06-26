@@ -80,7 +80,13 @@ export async function POST(request: NextRequest) {
       attempts++;
     }
 
-    let linkUserId = userId;
+    // If a session exists, always use the authenticated user's id — ignore
+    // any userId sent in the body to prevent a customer from linking a pickup
+    // to a different account.
+    const session = await getServerSession(authOptions);
+    let linkUserId = session?.user
+      ? (session.user as any).id
+      : userId;
 
     // Create user account if requested
     if (createAccount && contactEmail) {
