@@ -21,6 +21,7 @@ enum PickupStatus {
   PENDING
   ASSIGNED
   SCHEDULED
+  EN_CAMINO
   PICKED_UP
   CANCELLED
 }
@@ -72,6 +73,10 @@ model PickupRequest {
   assignedCourierId   String?
   assignedCourier     User?           @relation("CourierAssignments", fields: [assignedCourierId], references: [id])
   statusHistory       StatusHistory[]
+  callStatus          String?
+  callAttempts        Int             @default(0)
+  lastCallId          String?
+  lastCallAt          DateTime?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 }
