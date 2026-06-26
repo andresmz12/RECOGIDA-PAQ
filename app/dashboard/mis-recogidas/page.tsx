@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 interface PickupRequest {
   id: string;

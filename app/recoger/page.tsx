@@ -4,8 +4,8 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
-import LocationPicker from "@/components/LocationPicker";
-import AddressAutocomplete from "@/components/AddressAutocomplete";
+import LocationPicker from "@/components/Form/LocationPicker";
+import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 
 const BOX_SIZES = [
   { value: "Caja 18x18x18", label: "Caja 18×18×18 in", dimensions: "18x18x18 in", desc: "Pequeña" },

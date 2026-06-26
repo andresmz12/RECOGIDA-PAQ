@@ -7,10 +7,10 @@ import { useSession } from "next-auth/react";
 import dynamicImport from "next/dynamic";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
-import type { MapPoint } from "@/components/MapView";
+import StatusBadge from "@/components/ui/StatusBadge";
+import type { MapPoint } from "@/components/maps/MapView";
 
-const MapView = dynamicImport(() => import("@/components/MapView"), {
+const MapView = dynamicImport(() => import("@/components/maps/MapView"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center">

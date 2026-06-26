@@ -7,10 +7,10 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
-import Button from "@/components/Button";
-import Card from "@/components/Card";
-import Alert from "@/components/Alert";
+import StatusBadge from "@/components/ui/StatusBadge";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Alert from "@/components/ui/Alert";
 
 interface Courier {
   id: string;

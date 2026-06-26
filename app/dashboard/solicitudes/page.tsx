@@ -6,9 +6,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
-import { SkeletonTableRow } from "@/components/Skeleton";
-import EmptyState from "@/components/EmptyState";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { SkeletonTableRow } from "@/components/ui/Skeleton";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface PickupRequest {
   id: string;

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 const COUNTRY_NAMES: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",

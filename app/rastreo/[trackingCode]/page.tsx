@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import Button from "@/components/Button";
-import Card from "@/components/Card";
-import Container from "@/components/Container";
-import StatusBadge from "@/components/StatusBadge";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Container from "@/components/ui/Container";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 interface StatusHistoryEntry {
   fromStatus: string | null;

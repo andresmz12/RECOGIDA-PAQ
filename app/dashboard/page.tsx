@@ -6,8 +6,8 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import StatusBadge from "@/components/StatusBadge";
-import { SkeletonStatCard } from "@/components/Skeleton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { SkeletonStatCard } from "@/components/ui/Skeleton";
 
 interface Stats {
   total: number; pending: number; assigned: number; scheduled: number;

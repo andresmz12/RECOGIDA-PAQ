@@ -6,9 +6,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
-import Button from "@/components/Button";
-import Card from "@/components/Card";
-import Alert from "@/components/Alert";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Alert from "@/components/ui/Alert";
 import Input from "@/components/Form/Input";
 import Select from "@/components/Form/Select";
 
