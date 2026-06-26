@@ -55,7 +55,7 @@ async function main() {
   // Run migrations
   console.log("🗄️  Running database migrations...");
   try {
-    execSync("npx prisma migrate deploy", {
+    execSync("node_modules/.bin/prisma migrate deploy", {
       stdio: "inherit",
       env: process.env,
     });

@@ -22,12 +22,7 @@ try {
   if (!env.DATABASE_URL) {
     env.DATABASE_URL = "postgresql://dummy:dummy@localhost/dummy";
   }
-  // Remove stale generated client so Docker layer cache can't interfere
-  const generatedDir = path.join(__dirname, "..", "node_modules", ".prisma", "client");
-  if (fs.existsSync(generatedDir)) {
-    fs.rmSync(generatedDir, { recursive: true, force: true });
-  }
-  execSync("npx prisma generate", { stdio: "inherit", env });
+  execSync("node_modules/.bin/prisma generate", { stdio: "inherit", env });
   console.log("✓ Prisma Client generated\n");
 } catch (error) {
   console.error("❌ Failed to generate Prisma Client");
