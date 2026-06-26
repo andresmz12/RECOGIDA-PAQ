@@ -85,9 +85,9 @@ export async function POST(request: NextRequest) {
     // any userId sent in the body to prevent a customer from linking a pickup
     // to a different account.
     const session = await getServerSession(authOptions);
-    let linkUserId = session?.user
+    let linkUserId: string | undefined = session?.user
       ? (session.user as any).id
-      : userId;
+      : userId ?? undefined;
 
     // Create user account if requested
     if (createAccount && contactEmail) {

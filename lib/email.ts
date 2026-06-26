@@ -69,11 +69,12 @@ export async function sendStatusUpdateEmail(
   const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
 
   const STATUS_MESSAGES: Record<PickupStatus, { headline: string; body: string }> = {
-    PENDING:   { headline: "Awaiting assignment",         body: "Your request is in our system and will be assigned to a courier soon." },
-    ASSIGNED:  { headline: "Courier assigned",            body: "A courier has been assigned to your pickup request." },
-    SCHEDULED: { headline: "Courier is on the way",       body: "Your courier is heading to the pickup address. Make sure someone is available." },
-    PICKED_UP: { headline: "Package picked up!",          body: "Your package has been collected successfully and is on its way." },
-    CANCELLED: { headline: "Request cancelled",           body: "Your pickup request has been cancelled. Contact us if you have questions." },
+    PENDING:    { headline: "Awaiting assignment",         body: "Your request is in our system and will be assigned to a courier soon." },
+    ASSIGNED:   { headline: "Courier assigned",            body: "A courier has been assigned to your pickup request." },
+    SCHEDULED:  { headline: "Courier is on the way",       body: "Your courier is heading to the pickup address. Make sure someone is available." },
+    EN_CAMINO:  { headline: "Courier is on the way",       body: "Your courier is on the way to pick up your package. Please be available." },
+    PICKED_UP:  { headline: "Package picked up!",          body: "Your package has been collected successfully and is on its way." },
+    CANCELLED:  { headline: "Request cancelled",           body: "Your pickup request has been cancelled. Contact us if you have questions." },
   };
 
   const { headline, body } = STATUS_MESSAGES[newStatus];
@@ -91,7 +92,7 @@ export async function sendStatusUpdateEmail(
 
   const statusColor: Record<PickupStatus, string> = {
     PENDING: "#f59e0b", ASSIGNED: "#3b82f6", SCHEDULED: "#8b5cf6",
-    PICKED_UP: "#10b981", CANCELLED: "#ef4444",
+    EN_CAMINO: "#f97316", PICKED_UP: "#10b981", CANCELLED: "#ef4444",
   };
 
   const html = `
