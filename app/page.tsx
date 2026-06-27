@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 /* ─── Hooks ─────────────────────────────────────────────────────── */
 
@@ -142,42 +144,12 @@ const IconChat = () => (
 );
 
 const FEATURES = [
-  {
-    icon: <IconBolt />,
-    color: "from-accent-400 to-accent-600",
-    title: "Solicitud en 2 minutos",
-    desc: "Formulario simple. Sin cuentas obligatorias. Recibes tu código de seguimiento al instante.",
-  },
-  {
-    icon: <IconMap />,
-    color: "from-navy-500 to-navy-700",
-    title: "Rastreo en tiempo real",
-    desc: "Sigue cada paso de tu recogida con actualizaciones automáticas por email.",
-  },
-  {
-    icon: <IconGlobe />,
-    color: "from-emerald-500 to-teal-600",
-    title: "Cobertura internacional",
-    desc: "Enviamos a más de 50 países. Couriers verificados y seguros en cada destino.",
-  },
-  {
-    icon: <IconShield />,
-    color: "from-sky-500 to-cyan-600",
-    title: "100% Seguro",
-    desc: "Todos los envíos están asegurados. Manejo profesional garantizado.",
-  },
-  {
-    icon: <IconBell />,
-    color: "from-navy-400 to-navy-600",
-    title: "Notificaciones automáticas",
-    desc: "Recibe actualizaciones por email en cada cambio de estado de tu recogida.",
-  },
-  {
-    icon: <IconChat />,
-    color: "from-slate-500 to-slate-700",
-    title: "Soporte dedicado",
-    desc: "Nuestro equipo está disponible para ayudarte en cada paso del proceso.",
-  },
+  { icon: <IconBolt />,   color: "from-accent-400 to-accent-600",  key: "feat1" },
+  { icon: <IconMap />,    color: "from-navy-500 to-navy-700",      key: "feat2" },
+  { icon: <IconGlobe />,  color: "from-emerald-500 to-teal-600",   key: "feat3" },
+  { icon: <IconShield />, color: "from-sky-500 to-cyan-600",       key: "feat4" },
+  { icon: <IconBell />,   color: "from-navy-400 to-navy-600",      key: "feat5" },
+  { icon: <IconChat />,   color: "from-slate-500 to-slate-700",    key: "feat6" },
 ];
 
 /* ─── Hero mockup card ───────────────────────────────────────────── */
@@ -273,6 +245,7 @@ function TrackingMockup() {
 /* ─── Main Page ──────────────────────────────────────────────────── */
 
 export default function Home() {
+  const { t } = useT();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -307,19 +280,20 @@ export default function Home() {
             <span className="font-display font-bold text-base text-navy-900 tracking-tight">O&apos;Globo Cargo</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">Características</a>
-            <a href="#how" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">Cómo funciona</a>
-            <Link href="/rastreo/demo" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">Rastrear</Link>
+            <a href="#features" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navFeatures")}</a>
+            <a href="#how" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navHow")}</a>
+            <Link href="/rastreo/demo" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navTrack")}</Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-slate-600 hover:text-navy-700 text-sm font-semibold transition-colors">
-              Iniciar sesión
+            <LanguageSwitcher />
+            <Link href="/login" className="hidden sm:inline text-slate-600 hover:text-navy-700 text-sm font-semibold transition-colors">
+              {t("landing.navLogin")}
             </Link>
             <Link
               href="/recoger"
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-navy-700 hover:bg-navy-800 text-white text-sm font-semibold rounded-lg transition-all shadow-sm hover:shadow-md"
             >
-              Solicitar recogida
+              {t("landing.navRequest")}
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
@@ -361,17 +335,17 @@ export default function Home() {
             >
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/80 px-4 py-1.5 rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
-                Logística internacional simplificada
+                {t("landing.heroBadge")}
               </div>
 
               <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 leading-[1.08] tracking-tight">
-                Recogemos tu<br />
-                paquete{" "}
-                <span className="text-accent-400">donde estés</span>
+                {t("landing.heroTitleLine1")}<br />
+                {t("landing.heroTitleLine2")}{" "}
+                <span className="text-accent-400">{t("landing.heroTitleAccent")}</span>
               </h1>
 
               <p className="text-lg text-navy-100/70 leading-relaxed mb-10 max-w-lg">
-                Solicita la recogida de tus envíos internacionales en segundos. Seguimiento en tiempo real, notificaciones automáticas y couriers verificados.
+                {t("landing.heroSubtitle")}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-12">
@@ -379,7 +353,7 @@ export default function Home() {
                   href="/recoger"
                   className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-accent-500 hover:bg-accent-400 text-navy-950 font-bold rounded-xl transition-all shadow-lg shadow-accent-900/30 hover:shadow-xl text-sm"
                 >
-                  Solicitar recogida gratis
+                  {t("landing.ctaRequestFree")}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                   </svg>
@@ -388,18 +362,18 @@ export default function Home() {
                   href="/rastreo/demo"
                   className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl transition-all backdrop-blur-sm text-sm"
                 >
-                  Rastrear envío
+                  {t("landing.ctaTrack")}
                 </Link>
               </div>
 
               {/* Trust row */}
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
-                {["Sin tarjeta de crédito", "Código de rastreo inmediato", "Cobertura en 50+ países"].map((t) => (
-                  <div key={t} className="flex items-center gap-1.5">
+                {[t("landing.trust1"), t("landing.trust2"), t("landing.trust3")].map((item) => (
+                  <div key={item} className="flex items-center gap-1.5">
                     <svg className="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="text-white/60">{t}</span>
+                    <span className="text-white/60">{item}</span>
                   </div>
                 ))}
               </div>
@@ -424,10 +398,10 @@ export default function Home() {
       <section className="py-16 md:py-20 bg-navy-900">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <StatCounter value={10000} suffix="+" label="Paquetes recogidos" />
-            <StatCounter value={50} suffix="+" label="Ciudades activas" />
-            <StatCounter value={99} suffix=".2%" label="Tasa de éxito" />
-            <StatCounter value={24} suffix="h" label="Tiempo máx. de respuesta" />
+            <StatCounter value={10000} suffix="+" label={t("landing.statPackages")} />
+            <StatCounter value={50} suffix="+" label={t("landing.statCities")} />
+            <StatCounter value={99} suffix=".2%" label={t("landing.statSuccess")} />
+            <StatCounter value={24} suffix="h" label={t("landing.statResponse")} />
           </div>
         </div>
       </section>
@@ -436,24 +410,24 @@ export default function Home() {
       <section id="features" className="py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-6">
           <Reveal className="text-center mb-16">
-            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">Por qué elegirnos</p>
+            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">{t("landing.featuresEyebrow")}</p>
             <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 mb-4 tracking-tight">
-              Todo lo que necesitas para enviar
+              {t("landing.featuresTitle")}
             </h2>
             <p className="text-lg text-slate-600 max-w-xl mx-auto">
-              Tecnología de logística empresarial, ahora accesible para todos.
+              {t("landing.featuresSubtitle")}
             </p>
           </Reveal>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={i * 80}>
+              <Reveal key={f.key} delay={i * 80}>
                 <div className="group bg-white border border-slate-200 hover:border-navy-200 hover:shadow-lg hover:shadow-navy-50 rounded-2xl p-6 transition-all duration-300 h-full">
                   <div className={`inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br ${f.color} text-white mb-5 shadow-sm`}>
                     {f.icon}
                   </div>
-                  <h3 className="text-base font-bold text-navy-900 mb-2">{f.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
+                  <h3 className="text-base font-bold text-navy-900 mb-2">{t(`landing.${f.key}Title`)}</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed">{t(`landing.${f.key}Desc`)}</p>
                 </div>
               </Reveal>
             ))}
@@ -465,9 +439,9 @@ export default function Home() {
       <section id="how" className="py-24 md:py-32 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
           <Reveal className="text-center mb-16">
-            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">Proceso</p>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 mb-4 tracking-tight">¿Cómo funciona?</h2>
-            <p className="text-lg text-slate-600">Tres pasos, menos de 2 minutos</p>
+            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">{t("landing.howEyebrow")}</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 mb-4 tracking-tight">{t("landing.howTitle")}</h2>
+            <p className="text-lg text-slate-600">{t("landing.howSubtitle")}</p>
           </Reveal>
 
           <div className="relative grid md:grid-cols-3 gap-8 md:gap-12">
@@ -475,32 +449,17 @@ export default function Home() {
             <div className="hidden md:block absolute top-8 h-px border-t-2 border-dashed border-navy-200" style={{ left: "16.67%", right: "16.67%" }} />
 
             {[
-              {
-                step: "01",
-                title: "Solicita",
-                desc: "Completa el formulario con los datos de tu paquete y dirección de recogida. Sin cuenta obligatoria.",
-                color: "from-navy-600 to-navy-800",
-              },
-              {
-                step: "02",
-                title: "Confirmamos",
-                desc: "Recibes tu código de rastreo por email y te asignamos el courier más cercano disponible.",
-                color: "from-navy-500 to-navy-700",
-              },
-              {
-                step: "03",
-                title: "Recogemos",
-                desc: "El courier llega a tu puerta en la fecha y hora programada. Seguimiento en tiempo real.",
-                color: "from-accent-500 to-accent-600",
-              },
+              { step: "01", key: "step1", color: "from-navy-600 to-navy-800" },
+              { step: "02", key: "step2", color: "from-navy-500 to-navy-700" },
+              { step: "03", key: "step3", color: "from-accent-500 to-accent-600" },
             ].map((item, i) => (
               <Reveal key={item.step} delay={i * 120}>
                 <div className="flex flex-col items-center text-center relative">
                   <div className={`w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center text-xl font-extrabold text-white mb-6 shadow-lg relative z-10`}>
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold text-navy-900 mb-3">{item.title}</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed max-w-xs">{item.desc}</p>
+                  <h3 className="text-xl font-bold text-navy-900 mb-3">{t(`landing.${item.key}Title`)}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed max-w-xs">{t(`landing.${item.key}Desc`)}</p>
                 </div>
               </Reveal>
             ))}
@@ -513,7 +472,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <Reveal>
             <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">
-              Confiado por empresas que envían internacionalmente
+              {t("landing.socialProof")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-12">
               {["Global Express", "CargoPro", "ShipFast", "BoxRoute", "PackHub", "MiloFreight"].map((name) => (
@@ -540,16 +499,16 @@ export default function Home() {
               />
               <div className="relative z-10">
                 <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight tracking-tight">
-                  ¿Listo para enviar?
+                  {t("landing.ctaTitle")}
                 </h2>
                 <p className="text-navy-100/70 text-lg mb-8">
-                  Sin registro. Sin complicaciones. Solo envía.
+                  {t("landing.ctaSubtitle")}
                 </p>
                 <Link
                   href="/recoger"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-accent-500 hover:bg-accent-400 text-navy-950 font-bold rounded-xl transition-all shadow-xl text-sm"
                 >
-                  Solicitar mi primera recogida
+                  {t("landing.ctaButton")}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                   </svg>
@@ -569,13 +528,13 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-6">
             <Link href="/login" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
-              Panel de Control
+              {t("landing.footerPanel")}
             </Link>
             <Link href="/recoger" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
-              Solicitar Recogida
+              {t("landing.footerRequest")}
             </Link>
             <Link href="/rastreo/demo" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
-              Rastrear Envío
+              {t("landing.footerTrack")}
             </Link>
           </div>
         </div>
