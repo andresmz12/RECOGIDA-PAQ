@@ -63,6 +63,7 @@ const STATUS_OPTIONS = ["PENDING", "ASSIGNED", "SCHEDULED", "EN_CAMINO", "PICKED
 
 interface Comment {
   id: string;
+  authorId: string;
   authorName: string;
   authorRole: string;
   body: string;
