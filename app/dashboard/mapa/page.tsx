@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import dynamicImport from "next/dynamic";
@@ -64,7 +64,7 @@ interface Pickup {
   lng?: number;
 }
 
-export default function MapaPage() {
+function MapaPageInner() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const { t } = useT();
@@ -523,5 +523,13 @@ export default function MapaPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function MapaPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
+      <MapaPageInner />
+    </Suspense>
   );
 }
