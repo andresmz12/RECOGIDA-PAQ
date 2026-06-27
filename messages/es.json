@@ -206,7 +206,11 @@
     "origin": "Origen",
     "estado": "Estado",
     "date": "Fecha",
-    "action": "Acción"
+    "action": "Acción",
+    "allStates": "Todos los estados",
+    "changeStatus": "Cambiar estado",
+    "assign": "Asignar",
+    "saving": "Guardando…"
   },
   "login": {
     "title": "Iniciar sesión",

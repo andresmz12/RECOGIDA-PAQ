@@ -211,6 +211,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const courierId = searchParams.get("courierId");
+    const state = searchParams.get("state");
     const date = searchParams.get("date");
     const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") || "1");
@@ -226,12 +227,19 @@ export async function GET(request: NextRequest) {
       where.assignedCourierId = courierId;
     }
 
+    // Filter by pickup (origin) US state code, e.g. FL, NY
+    if (state) {
+      where.pickupState = state;
+    }
+
     if (search) {
       where.OR = [
         { contactName: { contains: search, mode: "insensitive" } },
         { trackingCode: { contains: search, mode: "insensitive" } },
         { contactPhone: { contains: search, mode: "insensitive" } },
         { recipientName: { contains: search, mode: "insensitive" } },
+        { pickupCity: { contains: search, mode: "insensitive" } },
+        { pickupAddress: { contains: search, mode: "insensitive" } },
       ];
     }
 

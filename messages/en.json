@@ -206,7 +206,11 @@
     "origin": "Origin",
     "estado": "Status",
     "date": "Date",
-    "action": "Action"
+    "action": "Action",
+    "allStates": "All states",
+    "changeStatus": "Change status",
+    "assign": "Assign",
+    "saving": "Saving…"
   },
   "login": {
     "title": "Sign in",
