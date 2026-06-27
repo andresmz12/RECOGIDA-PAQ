@@ -173,7 +173,14 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email
     if (contactEmail) {
-      await sendPickupConfirmationEmail(contactEmail, trackingCode, contactName);
+      await sendPickupConfirmationEmail(contactEmail, trackingCode, contactName, {
+        preferredDate: new Date(preferredDate),
+        preferredTimeWindow,
+        pickupAddress,
+        pickupCity,
+        destination: [recipientCity, destinationCountry].filter(Boolean).join(", "),
+        packageType,
+      });
     }
 
     // Trigger voice confirmation call in background (non-blocking)
