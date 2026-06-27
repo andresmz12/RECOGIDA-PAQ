@@ -11,6 +11,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
+import { useT } from "@/lib/i18n-context";
 
 interface Courier {
   id: string;
@@ -58,13 +59,14 @@ interface PickupDetail {
   }>;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: "Pending",
-  ASSIGNED: "Assigned",
-  SCHEDULED: "Scheduled",
-  PICKED_UP: "Picked up",
-  CANCELLED: "Cancelled",
-};
+const STATUS_OPTIONS = ["PENDING", "ASSIGNED", "SCHEDULED", "EN_CAMINO", "PICKED_UP", "CANCELLED"];
+
+const TIME_WINDOWS = [
+  { value: "Morning (8am - 12pm)", key: "twMorning" },
+  { value: "Afternoon (12pm - 5pm)", key: "twAfternoon" },
+  { value: "Evening (5pm - 9pm)", key: "twEvening" },
+  { value: "All day (8am - 9pm)", key: "twAllDay" },
+];
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -77,9 +79,11 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default function SolicitudDetailPage() {
   const { data: session, status } = useSession();
+  const { t, lang } = useT();
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const locale = lang === "en" ? "en-US" : "es-CO";
 
   const [pickup, setPickup] = useState<PickupDetail | null>(null);
   const [couriers, setCouriers] = useState<Courier[]>([]);
@@ -139,7 +143,7 @@ export default function SolicitudDetailPage() {
         const updated = await res.json();
         setPickup(updated);
         setNotes("");
-        setToast("Request updated");
+        setToast(t("detail.requestUpdated"));
         setTimeout(() => setToast(""), 3000);
       }
     } finally {
@@ -161,8 +165,8 @@ export default function SolicitudDetailPage() {
         setPickup(updated);
         setNewStatus(updated.status);
         const msg = newStatusValue === "SCHEDULED"
-          ? "Customer notified. On my way!"
-          : "Pickup confirmed! Customer notified.";
+          ? t("detail.customerNotifiedOnWay")
+          : t("detail.pickupConfirmedToast");
         setToast(msg);
         setTimeout(() => setToast(""), 3500);
       }
@@ -184,6 +188,7 @@ export default function SolicitudDetailPage() {
   if (!pickup) return null;
 
   const isCompleted = pickup.status === "PICKED_UP" || pickup.status === "CANCELLED";
+  const navAddress = `${pickup.pickupAddress}, ${pickup.pickupCity}${pickup.pickupState ? ", " + pickup.pickupState : ""}`;
 
   return (
     <DashboardLayout>
@@ -191,18 +196,14 @@ export default function SolicitudDetailPage() {
         {/* Toast */}
         {toast && (
           <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-2">
-            <Alert
-              type="success"
-              title="Success"
-              message={toast}
-            />
+            <Alert type="success" title={t("common.success")} message={toast} />
           </div>
         )}
 
         {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard/solicitudes" className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 mb-4 w-fit">
-            ← Back to requests
+            ← {t("detail.back")}
           </Link>
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -211,7 +212,9 @@ export default function SolicitudDetailPage() {
                 <StatusBadge status={pickup.status} />
               </div>
               <p className="text-slate-600">
-                Created on {new Date(pickup.createdAt).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                {t("detail.createdOn", {
+                  date: new Date(pickup.createdAt).toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
+                })}
               </p>
             </div>
           </div>
@@ -224,14 +227,14 @@ export default function SolicitudDetailPage() {
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
                 <span className="text-xl">👤</span>
-                Sender Information
+                {t("detail.senderInfo")}
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
-                <InfoRow label="Name" value={pickup.contactName} />
-                <InfoRow label="Phone" value={pickup.contactPhone} />
-                <InfoRow label="Email" value={pickup.contactEmail} />
+                <InfoRow label={t("detail.name")} value={pickup.contactName} />
+                <InfoRow label={t("detail.phone")} value={pickup.contactPhone} />
+                <InfoRow label={t("detail.email")} value={pickup.contactEmail} />
                 {pickup.assignedCourier && (
-                  <InfoRow label="Assigned courier" value={pickup.assignedCourier.name} />
+                  <InfoRow label={t("detail.assignedCourier")} value={pickup.assignedCourier.name} />
                 )}
               </div>
             </Card>
@@ -240,28 +243,28 @@ export default function SolicitudDetailPage() {
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
                 <span className="text-xl">🏠</span>
-                Recipient Information
+                {t("detail.recipientInfo")}
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
-                <InfoRow label="Name" value={pickup.recipientName} />
-                <InfoRow label="Phone" value={pickup.recipientPhone} />
+                <InfoRow label={t("detail.name")} value={pickup.recipientName} />
+                <InfoRow label={t("detail.phone")} value={pickup.recipientPhone} />
                 {pickup.recipientPhoneSecondary && (
-                  <InfoRow label="Secondary phone" value={pickup.recipientPhoneSecondary} />
+                  <InfoRow label={t("detail.secondaryPhone")} value={pickup.recipientPhoneSecondary} />
                 )}
                 {pickup.recipientEmail && (
-                  <InfoRow label="Email" value={pickup.recipientEmail} />
+                  <InfoRow label={t("detail.email")} value={pickup.recipientEmail} />
                 )}
                 <div className="sm:col-span-2">
-                  <InfoRow label="Destination address" value={pickup.recipientAddress} />
+                  <InfoRow label={t("detail.destinationAddress")} value={pickup.recipientAddress} />
                 </div>
-                <InfoRow label="City" value={pickup.recipientCity} />
+                <InfoRow label={t("detail.city")} value={pickup.recipientCity} />
                 {pickup.recipientState && (
-                  <InfoRow label="State/Province" value={pickup.recipientState} />
+                  <InfoRow label={t("detail.stateProvince")} value={pickup.recipientState} />
                 )}
                 {pickup.recipientPostalCode && (
-                  <InfoRow label="Postal code" value={pickup.recipientPostalCode} />
+                  <InfoRow label={t("detail.postalCode")} value={pickup.recipientPostalCode} />
                 )}
-                <InfoRow label="Country" value={pickup.recipientCountry} />
+                <InfoRow label={t("detail.country")} value={pickup.recipientCountry} />
               </div>
             </Card>
 
@@ -270,13 +273,13 @@ export default function SolicitudDetailPage() {
               <div className="flex items-start justify-between gap-4 mb-5">
                 <h2 className="font-bold text-slate-900 flex items-center gap-2">
                   <span className="text-xl">📍</span>
-                  Pickup Address
+                  {t("detail.pickupAddressTitle")}
                 </h2>
                 {/* Navigation buttons */}
                 {pickup.pickupAddress && (
                   <div className="flex gap-2 shrink-0">
                     <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pickup.pickupAddress}, ${pickup.pickupCity}${pickup.pickupState ? ", " + pickup.pickupState : ""}`)}&travelmode=driving`}
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(navAddress)}&travelmode=driving`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
@@ -287,7 +290,7 @@ export default function SolicitudDetailPage() {
                       Google Maps
                     </a>
                     <a
-                      href={`https://waze.com/ul?q=${encodeURIComponent(`${pickup.pickupAddress}, ${pickup.pickupCity}${pickup.pickupState ? ", " + pickup.pickupState : ""}`)}&navigate=yes`}
+                      href={`https://waze.com/ul?q=${encodeURIComponent(navAddress)}&navigate=yes`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
@@ -302,17 +305,17 @@ export default function SolicitudDetailPage() {
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="sm:col-span-2">
-                  <InfoRow label="Address" value={pickup.pickupAddress} />
+                  <InfoRow label={t("detail.address")} value={pickup.pickupAddress} />
                 </div>
-                <InfoRow label="City" value={pickup.pickupCity} />
+                <InfoRow label={t("detail.city")} value={pickup.pickupCity} />
                 {pickup.pickupState && (
-                  <InfoRow label="State" value={pickup.pickupState} />
+                  <InfoRow label={t("detail.state")} value={pickup.pickupState} />
                 )}
                 {pickup.pickupPostalCode && (
-                  <InfoRow label="Postal code" value={pickup.pickupPostalCode} />
+                  <InfoRow label={t("detail.postalCode")} value={pickup.pickupPostalCode} />
                 )}
-                <InfoRow label="Origin country" value={pickup.pickupCountry} />
-                <InfoRow label="Destination country" value={pickup.destinationCountry} />
+                <InfoRow label={t("detail.originCountry")} value={pickup.pickupCountry} />
+                <InfoRow label={t("detail.destinationCountry")} value={pickup.destinationCountry} />
               </div>
             </Card>
 
@@ -320,23 +323,23 @@ export default function SolicitudDetailPage() {
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
                 <span className="text-xl">📦</span>
-                Package Details
+                {t("detail.packageDetails")}
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
-                <InfoRow label="Type" value={pickup.packageType} />
-                <InfoRow label="Estimated weight" value={pickup.estimatedWeight ? `${pickup.estimatedWeight} kg` : null} />
-                <InfoRow label="Dimensions" value={pickup.dimensions} />
-                <InfoRow label="Preferred date" value={new Date(pickup.preferredDate).toLocaleDateString("en-US")} />
-                <InfoRow label="Time window" value={pickup.preferredTimeWindow} />
+                <InfoRow label={t("detail.type")} value={pickup.packageType} />
+                <InfoRow label={t("detail.estimatedWeight")} value={pickup.estimatedWeight ? `${pickup.estimatedWeight} lb` : null} />
+                <InfoRow label={t("detail.dimensions")} value={pickup.dimensions} />
+                <InfoRow label={t("detail.preferredDate")} value={new Date(pickup.preferredDate).toLocaleDateString(locale)} />
+                <InfoRow label={t("detail.timeWindow")} value={pickup.preferredTimeWindow} />
               </div>
               {pickup.packageContents && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
-                  <InfoRow label="Package contents" value={pickup.packageContents} />
+                  <InfoRow label={t("detail.packageContents")} value={pickup.packageContents} />
                 </div>
               )}
               {pickup.specialInstructions && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
-                  <InfoRow label="Special instructions" value={pickup.specialInstructions} />
+                  <InfoRow label={t("detail.specialInstructions")} value={pickup.specialInstructions} />
                 </div>
               )}
             </Card>
@@ -345,12 +348,12 @@ export default function SolicitudDetailPage() {
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
                 <span className="text-xl">📋</span>
-                Status History
+                {t("detail.statusHistory")}
               </h2>
               <div className="relative">
                 <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
                 <div className="space-y-6">
-                  {[...pickup.statusHistory].reverse().map((entry, i) => (
+                  {[...pickup.statusHistory].reverse().map((entry) => (
                     <div key={entry.id} className="flex gap-4 pl-10 relative">
                       <div className="absolute left-0 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full flex items-center justify-center shrink-0">
                         <div className="w-2 h-2 bg-indigo-500 rounded-full" />
@@ -366,7 +369,7 @@ export default function SolicitudDetailPage() {
                           <StatusBadge status={entry.toStatus} />
                         </div>
                         <p className="text-xs text-slate-500 mt-2 font-medium">
-                          {new Date(entry.createdAt).toLocaleDateString("en-US", {
+                          {new Date(entry.createdAt).toLocaleDateString(locale, {
                             year: "numeric", month: "long", day: "numeric",
                             hour: "2-digit", minute: "2-digit",
                           })}
@@ -386,32 +389,30 @@ export default function SolicitudDetailPage() {
           <div>
             {["ADMIN", "DISPATCHER"].includes(role) && (
               <Card variant="default" padding="lg" className="sticky top-8">
-                <h2 className="font-bold text-slate-900 mb-6">Update request</h2>
+                <h2 className="font-bold text-slate-900 mb-6">{t("detail.updateRequest")}</h2>
                 <form onSubmit={handleUpdate} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t("detail.status")}</label>
                     <select
                       value={newStatus}
                       onChange={(e) => setNewStatus(e.target.value)}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
                     >
-                      <option value="PENDING">Pending</option>
-                      <option value="ASSIGNED">Assigned</option>
-                      <option value="SCHEDULED">Scheduled</option>
-                      <option value="PICKED_UP">Picked up</option>
-                      <option value="CANCELLED">Cancelled</option>
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>{t(`status.${s}`)}</option>
+                      ))}
                     </select>
                   </div>
 
                   {couriers.length > 0 && (
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">Assign courier</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">{t("detail.assignCourier")}</label>
                       <select
                         value={newCourierId}
                         onChange={(e) => setNewCourierId(e.target.value)}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
                       >
-                        <option value="">Unassigned</option>
+                        <option value="">{t("detail.unassigned")}</option>
                         {couriers.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
@@ -420,7 +421,7 @@ export default function SolicitudDetailPage() {
                   )}
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Pickup date</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t("detail.pickupDate")}</label>
                     <input
                       type="date"
                       value={newDate}
@@ -430,27 +431,26 @@ export default function SolicitudDetailPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Time window</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t("detail.timeWindow")}</label>
                     <select
                       value={newTimeWindow}
                       onChange={(e) => setNewTimeWindow(e.target.value)}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
                     >
-                      <option value="">No change</option>
-                      <option value="Morning (8am - 12pm)">Morning (8am - 12pm)</option>
-                      <option value="Afternoon (12pm - 5pm)">Afternoon (12pm - 5pm)</option>
-                      <option value="Evening (5pm - 9pm)">Evening (5pm - 9pm)</option>
-                      <option value="All day (8am - 9pm)">All day (8am - 9pm)</option>
+                      <option value="">{t("detail.noChange")}</option>
+                      {TIME_WINDOWS.map((w) => (
+                        <option key={w.value} value={w.value}>{t(`detail.${w.key}`)}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Notes</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t("detail.notes")}</label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       rows={3}
-                      placeholder="Optional notes..."
+                      placeholder={t("detail.optionalNotes")}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none transition-colors"
                     />
                   </div>
@@ -463,7 +463,7 @@ export default function SolicitudDetailPage() {
                     disabled={updating}
                     className="w-full"
                   >
-                    {updating ? "Saving..." : "Save changes"}
+                    {updating ? t("detail.saving") : t("detail.saveChanges")}
                   </Button>
                 </form>
               </Card>
@@ -471,11 +471,11 @@ export default function SolicitudDetailPage() {
 
             {role === "COURIER" && !isCompleted && (
               <Card variant="default" padding="lg" className="sticky top-8">
-                <h2 className="font-bold text-slate-900 mb-6">Actions</h2>
+                <h2 className="font-bold text-slate-900 mb-6">{t("detail.actions")}</h2>
 
                 {pickup.status === "ASSIGNED" && (
                   <div className="space-y-3">
-                    <p className="text-sm text-slate-600">Confirm you are on your way to the pickup address.</p>
+                    <p className="text-sm text-slate-600">{t("detail.onWayConfirm")}</p>
                     <button
                       onClick={() => handleCourierAction("SCHEDULED")}
                       disabled={updating}
@@ -483,18 +483,18 @@ export default function SolicitudDetailPage() {
                     >
                       {updating ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : "🚗 On my way — Notify customer"}
+                      ) : <>🚗 {t("detail.onMyWayBtn")}</>}
                     </button>
                   </div>
                 )}
 
-                {pickup.status === "SCHEDULED" && (
+                {(pickup.status === "SCHEDULED" || pickup.status === "EN_CAMINO") && (
                   <div className="space-y-3">
                     <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
-                      <p className="text-xs font-bold text-indigo-700 mb-1">ON THE WAY</p>
-                      <p className="text-sm text-indigo-600">The customer was notified you are on your way.</p>
+                      <p className="text-xs font-bold text-indigo-700 mb-1">{t("detail.onTheWay")}</p>
+                      <p className="text-sm text-indigo-600">{t("detail.customerNotifiedWay")}</p>
                     </div>
-                    <p className="text-sm text-slate-600">Confirm once you have the package in hand.</p>
+                    <p className="text-sm text-slate-600">{t("detail.confirmInHand")}</p>
                     <button
                       onClick={() => handleCourierAction("PICKED_UP")}
                       disabled={updating}
@@ -502,14 +502,14 @@ export default function SolicitudDetailPage() {
                     >
                       {updating ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : "✅ Confirm pickup"}
+                      ) : <>✅ {t("detail.confirmPickupBtn")}</>}
                     </button>
                   </div>
                 )}
 
                 {pickup.status === "PENDING" && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                    <p className="text-sm text-amber-800 font-medium">This request has not been formally assigned to you yet. Contact the administrator.</p>
+                    <p className="text-sm text-amber-800 font-medium">{t("detail.notAssignedYet")}</p>
                   </div>
                 )}
               </Card>
@@ -525,13 +525,13 @@ export default function SolicitudDetailPage() {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-bold text-emerald-900 text-sm">Pickup completed</p>
-                      <p className="text-emerald-700 text-xs">Customer was notified by email</p>
+                      <p className="font-bold text-emerald-900 text-sm">{t("detail.pickupCompleted")}</p>
+                      <p className="text-emerald-700 text-xs">{t("detail.customerNotifiedEmail")}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                    <p className="font-bold text-slate-700 text-sm">Request cancelled</p>
+                    <p className="font-bold text-slate-700 text-sm">{t("detail.requestCancelled")}</p>
                   </div>
                 )}
               </Card>
