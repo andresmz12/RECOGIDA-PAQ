@@ -4,11 +4,13 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const NAV_ITEMS = [
   {
     href: "/dashboard",
-    label: "Inicio",
+    key: "nav.inicio",
     exact: true,
     roles: ["ADMIN", "DISPATCHER"],
     icon: (
@@ -19,7 +21,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/dashboard/solicitudes",
-    label: "Solicitudes",
+    key: "nav.solicitudes",
     exact: false,
     roles: ["ADMIN", "DISPATCHER"],
     icon: (
@@ -30,7 +32,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/dashboard/mapa",
-    label: "Mapa de Rutas",
+    key: "nav.mapa",
     exact: false,
     roles: ["ADMIN", "DISPATCHER", "COURIER"],
     icon: (
@@ -41,7 +43,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/dashboard/mis-recogidas",
-    label: "Mis Recogidas",
+    key: "nav.misRecogidas",
     exact: false,
     roles: ["COURIER"],
     icon: (
@@ -52,7 +54,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/dashboard/usuarios",
-    label: "Usuarios",
+    key: "nav.usuarios",
     exact: false,
     roles: ["ADMIN"],
     icon: (
@@ -63,7 +65,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/dashboard/rutas",
-    label: "Rutas PDF",
+    key: "nav.rutasPdf",
     exact: false,
     roles: ["ADMIN"],
     icon: (
@@ -74,26 +76,15 @@ const NAV_ITEMS = [
   },
 ];
 
-const PAGE_TITLES: Array<{ match: (p: string) => boolean; label: string }> = [
-  { match: (p) => p === "/dashboard", label: "Dashboard" },
-  { match: (p) => p.startsWith("/dashboard/solicitudes/"), label: "Detalle de Solicitud" },
-  { match: (p) => p.startsWith("/dashboard/solicitudes"), label: "Solicitudes" },
-  { match: (p) => p.startsWith("/dashboard/mapa"), label: "Mapa de Rutas" },
-  { match: (p) => p.startsWith("/dashboard/mis-recogidas"), label: "Mis Recogidas" },
-  { match: (p) => p.startsWith("/dashboard/usuarios"), label: "Usuarios" },
-  { match: (p) => p.startsWith("/dashboard/rutas"), label: "Rutas PDF" },
+const PAGE_TITLE_KEYS: Array<{ match: (p: string) => boolean; key: string }> = [
+  { match: (p) => p === "/dashboard", key: "pageTitles.dashboard" },
+  { match: (p) => p.startsWith("/dashboard/solicitudes/"), key: "pageTitles.detalleRecogida" },
+  { match: (p) => p.startsWith("/dashboard/solicitudes"), key: "pageTitles.solicitudes" },
+  { match: (p) => p.startsWith("/dashboard/mapa"), key: "pageTitles.mapa" },
+  { match: (p) => p.startsWith("/dashboard/mis-recogidas"), key: "pageTitles.misRecogidas" },
+  { match: (p) => p.startsWith("/dashboard/usuarios"), key: "pageTitles.usuarios" },
+  { match: (p) => p.startsWith("/dashboard/rutas"), key: "pageTitles.rutasPdf" },
 ];
-
-function getPageTitle(pathname: string): string {
-  return PAGE_TITLES.find((t) => t.match(pathname))?.label ?? "Dashboard";
-}
-
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: "Administrador",
-  COURIER: "Courier",
-  DISPATCHER: "Despachador",
-  CUSTOMER: "Cliente",
-};
 
 function SidebarContent({
   session,
@@ -108,6 +99,7 @@ function SidebarContent({
   pathname: string | null;
   onNavigate?: () => void;
 }) {
+  const { t } = useT();
   return (
     <>
       {/* Logo */}
@@ -117,14 +109,14 @@ function SidebarContent({
         </div>
         <div className="min-w-0">
           <p className="text-white font-bold text-sm leading-none truncate">O&apos;Globo Cargo</p>
-          <p className="text-indigo-400 text-xs mt-0.5">Panel de Control</p>
+          <p className="text-indigo-400 text-xs mt-0.5">{t("nav.panelControl")}</p>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
         <p className="text-slate-600 text-xs font-semibold uppercase tracking-wider px-2.5 mb-2 mt-1">
-          Navegación
+          {t("nav.navegacion")}
         </p>
         {visibleNav.map((item) => {
           const isActive = item.exact
@@ -144,7 +136,7 @@ function SidebarContent({
               <span className={isActive ? "text-white" : "text-slate-500"}>
                 {item.icon}
               </span>
-              {item.label}
+              {t(item.key)}
             </Link>
           );
         })}
@@ -160,7 +152,7 @@ function SidebarContent({
             <p className="text-white text-xs font-semibold truncate leading-none mb-0.5">
               {session?.user?.name}
             </p>
-            <p className="text-slate-500 text-xs truncate">{ROLE_LABEL[role] ?? role}</p>
+            <p className="text-slate-500 text-xs truncate">{t(`roles.${role}`) ?? role}</p>
           </div>
         </div>
         <button
@@ -170,7 +162,7 @@ function SidebarContent({
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          Cerrar sesión
+          {t("nav.cerrarSesion")}
         </button>
       </div>
     </>
@@ -181,6 +173,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useT();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -198,7 +191,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
-          <p className="text-slate-500 text-sm">Cargando...</p>
+          <p className="text-slate-500 text-sm">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -206,11 +199,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const role = (session?.user as any)?.role as string;
   const visibleNav = NAV_ITEMS.filter((item) => item.roles.includes(role));
-  const pageTitle = getPageTitle(pathname ?? "");
+  const pageTitleKey = PAGE_TITLE_KEYS.find((x) => x.match(pathname ?? ""))?.key ?? "pageTitles.dashboard";
+  const pageTitle = t(pageTitleKey);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* ── Desktop sidebar ───────────────────────────────── */}
+      {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-60 bg-slate-900 fixed inset-y-0 left-0 flex-col z-40">
         <SidebarContent
           session={session}
@@ -220,21 +214,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
       </aside>
 
-      {/* ── Mobile sidebar overlay ────────────────────────── */}
+      {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div
           className="lg:hidden fixed inset-0 z-50 flex"
           onClick={() => setMobileOpen(false)}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-
-          {/* Sidebar panel */}
           <aside
             className="relative w-72 max-w-[85vw] bg-slate-900 flex flex-col h-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors z-10"
@@ -254,12 +244,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
-      {/* ── Right side ────────────────────────────────────── */}
+      {/* Right side */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="h-14 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 shrink-0">
           <div className="flex items-center gap-3">
-            {/* Hamburger - mobile only */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
@@ -269,7 +258,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </svg>
             </button>
 
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-400 font-medium hidden sm:block">O&apos;Globo</span>
               <svg className="w-3.5 h-3.5 text-slate-300 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,8 +267,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            {/* Language switcher */}
+            <LanguageSwitcher />
+
+            <div className="w-px h-5 bg-slate-200" />
+
             {/* Notification bell */}
             <button className="relative p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
               <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,6 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-sm font-semibold text-slate-900 truncate">{session?.user?.name}</p>
                     <p className="text-xs text-slate-500 truncate">{session?.user?.email}</p>
+                    <p className="text-xs text-indigo-500 font-semibold mt-0.5">{t(`roles.${role}`)}</p>
                   </div>
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
@@ -321,7 +314,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Cerrar sesión
+                    {t("nav.cerrarSesion")}
                   </button>
                 </div>
               )}

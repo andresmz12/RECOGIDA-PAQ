@@ -7,12 +7,16 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useT } from "@/lib/i18n-context";
 
 const COUNTRY_NAMES: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",
   DO: "Dominican Rep.", PA: "Panama", CR: "Costa Rica",
   VE: "Venezuela", MX: "Mexico", CO: "Colombia", US: "United States",
 };
+
+const STATUS_STEPS = ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"] as const;
 
 interface Pickup {
   id: string;
@@ -33,9 +37,49 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function StatusStepper({ status }: { status: string }) {
+  const { t } = useT();
+  if (status === "CANCELLED") return null;
+  const currentIdx = STATUS_STEPS.indexOf(status as any);
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap mt-3">
+      {STATUS_STEPS.map((s, i) => {
+        const done = currentIdx >= i;
+        const active = currentIdx === i;
+        return (
+          <div key={s} className="flex items-center gap-1">
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold transition-all ${
+              done
+                ? active
+                  ? "bg-indigo-600 text-white"
+                  : "bg-indigo-100 text-indigo-700"
+                : "bg-slate-100 text-slate-400"
+            }`}>
+              {done && !active && (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {active && (
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+              )}
+              {t(`status.${s}`)}
+            </div>
+            {i < STATUS_STEPS.length - 1 && (
+              <div className={`w-4 h-px ${done && currentIdx > i ? "bg-indigo-300" : "bg-slate-200"}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function MiCuentaPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useT();
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
@@ -64,7 +108,7 @@ export default function MiCuentaPage() {
   }, [status]);
 
   const handleCancel = async (pickup: Pickup) => {
-    if (!confirm(`Cancel request ${pickup.trackingCode}?`)) return;
+    if (!confirm(t("account.cancelConfirm", { code: pickup.trackingCode }))) return;
     setCancelling(pickup.id);
     try {
       const res = await fetch(`/api/pickup-requests/${pickup.id}`, {
@@ -96,22 +140,25 @@ export default function MiCuentaPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Home
+              {t("account.home")}
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white"
                 style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>OG</div>
               <span className="text-white font-bold text-sm hidden sm:block">O&apos;Globo Cargo</span>
             </div>
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="text-white/60 hover:text-white text-sm font-medium transition-colors flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign out
-            </button>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="text-white/60 hover:text-white text-sm font-medium transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {t("account.signOut")}
+              </button>
+            </div>
           </div>
 
           {/* User info + stats */}
@@ -127,12 +174,11 @@ export default function MiCuentaPage() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="flex gap-4 sm:gap-6">
               {[
-                { n: pickups.length, l: "Total" },
-                { n: active.length, l: "Active" },
-                { n: done.filter(p => p.status === "PICKED_UP").length, l: "Completed" },
+                { n: pickups.length, l: t("account.total") },
+                { n: active.length, l: t("account.active") },
+                { n: done.filter(p => p.status === "PICKED_UP").length, l: t("account.completed") },
               ].map(s => (
                 <div key={s.l} className="text-center">
                   <p className="text-2xl font-black text-white">{s.n}</p>
@@ -146,17 +192,19 @@ export default function MiCuentaPage() {
         {/* Tab bar */}
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex gap-1 border-b border-white/10">
-            {(["active", "history"] as const).map(t => (
+            {(["active", "history"] as const).map(tabKey => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={tabKey}
+                onClick={() => setTab(tabKey)}
                 className={`px-5 py-3 text-sm font-semibold capitalize transition-all border-b-2 -mb-px ${
-                  tab === t
+                  tab === tabKey
                     ? "text-white border-indigo-400"
                     : "text-white/40 border-transparent hover:text-white/70"
                 }`}
               >
-                {t === "active" ? `Active${active.length > 0 ? ` (${active.length})` : ""}` : `History${done.length > 0 ? ` (${done.length})` : ""}`}
+                {tabKey === "active"
+                  ? `${t("account.activeTab")}${active.length > 0 ? ` (${active.length})` : ""}`
+                  : `${t("account.historyTab")}${done.length > 0 ? ` (${done.length})` : ""}`}
               </button>
             ))}
           </div>
@@ -167,9 +215,9 @@ export default function MiCuentaPage() {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-5">
           <p className="text-slate-500 text-sm font-medium">
-            {loading ? "Loading..." : displayed.length === 0
-              ? tab === "active" ? "No active shipments" : "No history yet"
-              : `${displayed.length} request${displayed.length !== 1 ? "s" : ""}`}
+            {loading ? t("account.loadingShipments") : displayed.length === 0
+              ? tab === "active" ? t("account.noActiveShipments") : t("account.noHistory")
+              : t(displayed.length === 1 ? "account.requests_one" : "account.requests_other", { count: displayed.length })}
           </p>
           <Link
             href="/recoger"
@@ -179,7 +227,7 @@ export default function MiCuentaPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-            New request
+            {t("account.newRequest")}
           </Link>
         </div>
 
@@ -204,16 +252,16 @@ export default function MiCuentaPage() {
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 text-lg mb-1">
-              {tab === "active" ? "No active shipments" : "No shipment history"}
+              {tab === "active" ? t("account.noActiveShipments") : t("account.noHistory")}
             </h3>
             <p className="text-slate-500 text-sm mb-6">
-              {tab === "active" ? "Create a request to send a package" : "Your completed shipments will appear here"}
+              {tab === "active" ? t("account.createRequest") : t("account.historyEmpty")}
             </p>
             {tab === "active" && (
               <Link href="/recoger"
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
                 style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-                Create first request →
+                {t("account.createFirst")}
               </Link>
             )}
           </div>
@@ -234,13 +282,12 @@ export default function MiCuentaPage() {
   );
 }
 
-function PickupCard({
-  pickup, cancelling, onCancel,
-}: {
+function PickupCard({ pickup, cancelling, onCancel }: {
   pickup: Pickup;
   cancelling: boolean;
   onCancel: (p: Pickup) => void;
 }) {
+  const { t } = useT();
   const canCancel = pickup.status === "PENDING";
   const isDone = pickup.status === "PICKED_UP";
   const isCancelled = pickup.status === "CANCELLED";
@@ -254,30 +301,31 @@ function PickupCard({
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          PACKAGE PICKED UP
+          {t("account.packagePickedUp")}
         </div>
       )}
       {isCancelled && (
         <div className="bg-slate-400 text-white text-xs font-bold px-5 py-1.5 rounded-t-[14px]">
-          CANCELLED
+          {t("account.cancelled")}
         </div>
       )}
 
       <div className="p-5">
         {/* Top row */}
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg text-sm">
-              {pickup.trackingCode}
-            </span>
-          </div>
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg text-sm">
+            {pickup.trackingCode}
+          </span>
           <StatusBadge status={pickup.status} />
         </div>
 
+        {/* Status stepper */}
+        {!isCancelled && <StatusStepper status={pickup.status} />}
+
         {/* Route */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 my-4">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Origin</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">{t("account.origin")}</p>
             <p className="font-bold text-slate-900 truncate">{pickup.pickupCity}</p>
             <p className="text-xs text-slate-500">{COUNTRY_NAMES[pickup.pickupCountry] ?? pickup.pickupCountry}</p>
           </div>
@@ -289,7 +337,7 @@ function PickupCard({
             </svg>
           </div>
           <div className="flex-1 min-w-0 text-right">
-            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">Destination</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-0.5">{t("account.destination")}</p>
             <p className="font-bold text-slate-900 truncate">{pickup.recipientCity}</p>
             <p className="text-xs text-slate-500">{COUNTRY_NAMES[pickup.recipientCountry] ?? pickup.recipientCountry}</p>
           </div>
@@ -311,7 +359,7 @@ function PickupCard({
               {pickup.packageType}
             </span>
           )}
-          <span className="ml-auto">To: <span className="font-semibold text-slate-700">{pickup.recipientName}</span></span>
+          <span className="ml-auto">{t("account.to")} <span className="font-semibold text-slate-700">{pickup.recipientName}</span></span>
         </div>
 
         {/* Actions */}
@@ -321,7 +369,7 @@ function PickupCard({
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
             style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
           >
-            Track
+            {t("account.track")}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -332,7 +380,7 @@ function PickupCard({
               disabled={cancelling}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold text-red-600 border-2 border-red-100 hover:bg-red-50 hover:border-red-200 transition-all disabled:opacity-50"
             >
-              {cancelling ? "..." : "Cancel"}
+              {cancelling ? "..." : t("account.cancelRequest")}
             </button>
           )}
         </div>

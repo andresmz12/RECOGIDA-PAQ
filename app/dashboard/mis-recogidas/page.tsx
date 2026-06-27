@@ -4,8 +4,11 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
+import StartRouteModal from "@/components/StartRouteModal";
+import { useT } from "@/lib/i18n-context";
 
 interface PickupRequest {
   id: string;
@@ -23,10 +26,13 @@ interface PickupRequest {
 
 export default function MisRecogidasPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const { t } = useT();
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [toast, setToast] = useState("");
+  const [showRouteModal, setShowRouteModal] = useState(false);
 
   const courierId = (session?.user as any)?.id;
 
@@ -61,11 +67,17 @@ export default function MisRecogidasPage() {
     });
     if (res.ok) {
       const msg = newStatus === "SCHEDULED"
-        ? "Customer notified! On my way."
-        : "Pickup confirmed! Customer notified.";
+        ? t("pickups.customerNotifiedOnWay")
+        : t("pickups.packageInHand");
       showToast(msg);
       loadPickups();
     }
+  };
+
+  const handleRouteModalConfirm = (origin: { address: string; coords: [number, number] | null }) => {
+    setShowRouteModal(false);
+    const originParam = encodeURIComponent(origin.address);
+    router.push(`/dashboard/mapa?mode=route&origin=${originParam}`);
   };
 
   const today = new Date().toDateString();
@@ -76,8 +88,18 @@ export default function MisRecogidasPage() {
     p.status !== "CANCELLED"
   );
 
+  const doneToday = todayPickups.filter(p => p.status === "PICKED_UP").length;
+  const totalToday = todayPickups.length;
+
   return (
     <DashboardLayout>
+      {showRouteModal && (
+        <StartRouteModal
+          onConfirm={handleRouteModalConfirm}
+          onClose={() => setShowRouteModal(false)}
+        />
+      )}
+
       <div className="p-6 max-w-4xl mx-auto">
         {/* Toast */}
         {toast && (
@@ -90,11 +112,47 @@ export default function MisRecogidasPage() {
         )}
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-1">My Pickups</h1>
-          <p className="text-slate-600">
-            {pickups.length === 0 ? "No pickups assigned" : `${pickups.length} pickup${pickups.length !== 1 ? "s" : ""} assigned`}
-          </p>
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 mb-1">{t("pickups.myPickups")}</h1>
+              <p className="text-slate-600">
+                {pickups.length === 0
+                  ? t("pickups.noPickupsAssigned")
+                  : t(pickups.length === 1 ? "pickups.xPickupsAssigned_one" : "pickups.xPickupsAssigned_other", { count: pickups.length })}
+              </p>
+            </div>
+            {/* Start Route CTA */}
+            <button
+              onClick={() => setShowRouteModal(true)}
+              className="shrink-0 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-200 text-sm"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              {t("pickups.startTodayRoute")}
+            </button>
+          </div>
+
+          {/* Today's progress bar */}
+          {totalToday > 0 && (
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex items-center gap-4">
+              <div className="flex-1">
+                <p className="text-xs font-bold text-indigo-600 mb-1.5">
+                  {t("pickups.today")} — {doneToday}/{totalToday}
+                </p>
+                <div className="h-2 bg-indigo-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-600 rounded-full transition-all duration-700"
+                    style={{ width: `${Math.round((doneToday / totalToday) * 100)}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-2xl font-black text-indigo-700 shrink-0">
+                {Math.round((doneToday / totalToday) * 100)}%
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Filter */}
@@ -109,7 +167,7 @@ export default function MisRecogidasPage() {
                   : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300"
               }`}
             >
-              {s === "" ? "All" : s === "ASSIGNED" ? "Assigned" : s === "SCHEDULED" ? "On the way" : "Picked up"}
+              {s === "" ? t("common.all") : t(`status.${s}`)}
             </button>
           ))}
         </div>
@@ -117,13 +175,13 @@ export default function MisRecogidasPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
-            <p className="text-slate-600 font-medium">Loading...</p>
+            <p className="text-slate-600 font-medium">{t("common.loading")}</p>
           </div>
         ) : pickups.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-3xl border border-slate-200">
             <div className="text-6xl mb-4">📭</div>
-            <p className="text-slate-900 font-bold text-lg mb-1">No pickups assigned</p>
-            <p className="text-slate-500 text-sm">You will be notified when new routes are available</p>
+            <p className="text-slate-900 font-bold text-lg mb-1">{t("pickups.noPickupsAvailable")}</p>
+            <p className="text-slate-500 text-sm">{t("pickups.notifiedWhenRoutes")}</p>
           </div>
         ) : (
           <div className="space-y-10">
@@ -132,7 +190,7 @@ export default function MisRecogidasPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   <h2 className="font-bold text-slate-900">
-                    Today — {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" })}
+                    {t("pickups.today")} — {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" })}
                   </h2>
                   <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">{todayPickups.length}</span>
                 </div>
@@ -147,7 +205,7 @@ export default function MisRecogidasPage() {
             {otherPickups.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <h2 className="font-bold text-slate-900">Upcoming</h2>
+                  <h2 className="font-bold text-slate-900">{t("pickups.upcoming")}</h2>
                   <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">{otherPickups.length}</span>
                 </div>
                 <div className="space-y-4">
@@ -165,6 +223,7 @@ export default function MisRecogidasPage() {
 }
 
 function NavButtons({ address }: { address: string }) {
+  const { t } = useT();
   const enc = encodeURIComponent(address);
   return (
     <>
@@ -177,7 +236,7 @@ function NavButtons({ address }: { address: string }) {
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
         </svg>
-        Maps
+        {t("pickups.maps")}
       </a>
       <a
         href={`https://waze.com/ul?q=${enc}&navigate=yes`}
@@ -201,6 +260,7 @@ function PickupActionCard({
   pickup: PickupRequest;
   onAction: (id: string, status: string, notes?: string) => void;
 }) {
+  const { t } = useT();
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [acting, setActing] = useState(false);
@@ -223,16 +283,14 @@ function PickupActionCard({
       isOnTheWay ? "border-indigo-300 shadow-lg shadow-indigo-50" :
       isDone ? "border-slate-100" : "border-slate-200"
     }`}>
-      {/* Status bar */}
       {isOnTheWay && (
         <div className="bg-indigo-600 text-white text-xs font-bold px-6 py-2 rounded-t-[22px] flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-          ON THE WAY — Customer has been notified
+          {t("pickups.onTheWayBanner")}
         </div>
       )}
 
       <div className="p-6">
-        {/* Top row */}
         <div className="flex items-start justify-between mb-5">
           <div>
             <span className="inline-block font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl text-sm mb-2">
@@ -256,21 +314,20 @@ function PickupActionCard({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                Call
+                {t("pickups.call")}
               </a>
             </div>
           )}
         </div>
 
-        {/* Contact & Address */}
         <div className="grid sm:grid-cols-2 gap-4 mb-5">
           <div className="bg-slate-50 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Contact</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t("pickups.contact")}</p>
             <p className="font-bold text-slate-900">{pickup.contactName}</p>
             <p className="text-slate-600 text-sm">{pickup.contactPhone}</p>
           </div>
           <div className="bg-slate-50 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Pickup address</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t("pickups.pickupAddress")}</p>
             <p className="font-bold text-slate-900">{pickup.pickupCity}</p>
             <p className="text-slate-600 text-sm">{pickup.pickupAddress}</p>
           </div>
@@ -278,12 +335,11 @@ function PickupActionCard({
 
         {pickup.specialInstructions && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
-            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">⚠️ Special instructions</p>
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">⚠️ {t("pickups.specialInstructions")}</p>
             <p className="text-amber-900 text-sm">{pickup.specialInstructions}</p>
           </div>
         )}
 
-        {/* Actions */}
         {!isDone && (
           <div className="pt-5 border-t border-slate-100 space-y-3">
             <button
@@ -294,7 +350,7 @@ function PickupActionCard({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                Add note (optional)
+                {t("pickups.addNote")}
               </span>
               <span className="text-xs">{showNotes ? "▲" : "▼"}</span>
             </button>
@@ -323,7 +379,7 @@ function PickupActionCard({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   )}
-                  On my way — Notify customer
+                  {t("pickups.onMyWay")}
                 </button>
               )}
 
@@ -340,7 +396,7 @@ function PickupActionCard({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
-                  Confirm pickup — Package in hand
+                  {t("pickups.confirmPickup")}
                 </button>
               )}
             </div>
@@ -356,8 +412,8 @@ function PickupActionCard({
                 </svg>
               </div>
               <div>
-                <p className="font-bold text-emerald-900 text-sm">Pickup completed</p>
-                <p className="text-emerald-700 text-xs">Customer was notified by email</p>
+                <p className="font-bold text-emerald-900 text-sm">{t("pickups.pickupCompleted")}</p>
+                <p className="text-emerald-700 text-xs">{t("pickups.customerNotifiedEmail")}</p>
               </div>
             </div>
           </div>

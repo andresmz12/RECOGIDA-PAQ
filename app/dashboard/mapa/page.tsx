@@ -4,10 +4,14 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import dynamicImport from "next/dynamic";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
+import StartRouteModal from "@/components/StartRouteModal";
+import { useT } from "@/lib/i18n-context";
+import { optimizeRoute, buildGoogleMapsRouteUrl } from "@/lib/route-optimizer";
 import type { MapPoint } from "@/components/maps/MapView";
 
 const MapView = dynamicImport(() => import("@/components/maps/MapView"), {
@@ -35,7 +39,6 @@ const CITY_COORDS: Record<string, [number, number]> = {
   "medellín": [6.2518, -75.5636], "cali": [3.4516, -76.5319], "barranquilla": [10.9685, -74.7813],
 };
 
-// Flexible match: strips state abbreviations (", FL"), tries partial key matching
 function coordsForCity(city: string): [number, number] | null {
   const normalized = city.toLowerCase().trim().replace(/,\s*[a-z]{2}$/i, "").trim();
   if (CITY_COORDS[normalized]) return CITY_COORDS[normalized];
@@ -43,40 +46,6 @@ function coordsForCity(city: string): [number, number] | null {
     if (normalized.startsWith(key) || normalized.includes(key)) return coords;
   }
   return null;
-}
-
-function haversineKm(a: [number, number], b: [number, number]) {
-  const R = 6371;
-  const dLat = ((b[0] - a[0]) * Math.PI) / 180;
-  const dLng = ((b[1] - a[1]) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a[0] * Math.PI) / 180) * Math.cos((b[0] * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
-function nearestNeighbor<T extends { lat: number; lng: number }>(
-  origin: [number, number],
-  stops: T[]
-): T[] {
-  const remaining = [...stops];
-  const route: T[] = [];
-  let cur = origin;
-  while (remaining.length > 0) {
-    let ni = 0, minD = Infinity;
-    remaining.forEach((s, i) => {
-      const d = haversineKm(cur, [s.lat, s.lng]);
-      if (d < minD) { minD = d; ni = i; }
-    });
-    route.push(remaining[ni]);
-    cur = [remaining[ni].lat, remaining[ni].lng];
-    remaining.splice(ni, 1);
-  }
-  return route;
-}
-
-function mapsUrl(address: string, city: string) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${address}, ${city}`)}&travelmode=driving`;
 }
 
 interface Pickup {
@@ -97,6 +66,8 @@ interface Pickup {
 
 export default function MapaPage() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const { t } = useT();
   const role     = (session?.user as any)?.role as string;
   const userId   = (session?.user as any)?.id as string;
   const isCourier = role === "COURIER";
@@ -104,11 +75,11 @@ export default function MapaPage() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
-  // todayOnly starts false; set to true for couriers once role is known
   const [todayOnly, setTodayOnly] = useState(false);
   const [todayInitialized, setTodayInitialized] = useState(false);
 
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
+  const [currentAddress, setCurrentAddress] = useState("");
   const [locationCity, setLocationCity] = useState("");
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState("");
@@ -116,8 +87,15 @@ export default function MapaPage() {
   const [optimizedRoute, setOptimizedRoute] = useState<Pickup[]>([]);
   const [isOptimized, setIsOptimized] = useState(false);
   const [selected, setSelected] = useState<Pickup | null>(null);
+  const [showRouteModal, setShowRouteModal] = useState(false);
 
-  // Set todayOnly default once role is known
+  // Auto-trigger route modal if ?mode=route
+  useEffect(() => {
+    if (searchParams.get("mode") === "route") setShowRouteModal(true);
+    const originParam = searchParams.get("origin");
+    if (originParam) setCurrentAddress(decodeURIComponent(originParam));
+  }, [searchParams]);
+
   useEffect(() => {
     if (role && !todayInitialized) {
       setTodayOnly(isCourier);
@@ -138,7 +116,6 @@ export default function MapaPage() {
     const data = await res.json();
     const raw: Pickup[] = data.data ?? [];
 
-    // Attach coords where possible — keep ALL pickups regardless
     const withCoords = raw.map((p) => {
       const c = coordsForCity(p.pickupCity);
       return { ...p, lat: c?.[0] ?? undefined, lng: c?.[1] ?? undefined };
@@ -154,18 +131,21 @@ export default function MapaPage() {
     if (todayInitialized || !isCourier) loadPickups();
   }, [loadPickups, todayInitialized, isCourier]);
 
-  // Re-load when todayOnly is initialized for courier
   useEffect(() => {
     if (todayInitialized) loadPickups();
   }, [todayInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const detectLocation = () => {
-    if (!navigator.geolocation) { setGeoError("Tu navegador no soporta geolocalización"); return; }
+    if (!navigator.geolocation) { setGeoError(t("map.noGeo")); return; }
     setGeoLoading(true);
     setGeoError("");
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setCurrentLocation([pos.coords.latitude, pos.coords.longitude]); setGeoLoading(false); },
-      () => { setGeoError("No se pudo obtener la ubicación. Usa el selector de ciudad."); setGeoLoading(false); },
+      (pos) => {
+        setCurrentLocation([pos.coords.latitude, pos.coords.longitude]);
+        setCurrentAddress(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+        setGeoLoading(false);
+      },
+      () => { setGeoError(t("map.geoError")); setGeoLoading(false); },
       { timeout: 8000 }
     );
   };
@@ -173,22 +153,37 @@ export default function MapaPage() {
   const setLocationFromCity = (city: string) => {
     setLocationCity(city);
     const c = coordsForCity(city);
-    if (c) setCurrentLocation(c);
+    if (c) { setCurrentLocation(c); setCurrentAddress(city); }
   };
 
-  const optimizeRoute = () => {
-    if (!currentLocation) return;
+  const handleRouteModalConfirm = (origin: { address: string; coords: [number, number] | null }) => {
+    setCurrentAddress(origin.address);
+    if (origin.coords) setCurrentLocation(origin.coords);
+    else {
+      // Try to match city from text
+      const c = coordsForCity(origin.address);
+      if (c) setCurrentLocation(c);
+    }
+    setShowRouteModal(false);
+    // Auto-optimize after setting location
+    setTimeout(() => doOptimize(origin.coords ?? (coordsForCity(origin.address) ?? null)), 100);
+  };
+
+  const doOptimize = (loc?: [number, number] | null) => {
+    const origin = loc ?? currentLocation;
+    if (!origin) return;
     const active = pickups.filter(
       (p): p is Pickup & { lat: number; lng: number } =>
         p.status !== "PICKED_UP" && p.status !== "CANCELLED" &&
         p.lat !== undefined && p.lng !== undefined
     );
     if (active.length === 0) return;
-    const route = nearestNeighbor(currentLocation, active);
+    const route = optimizeRoute(origin, active);
     setOptimizedRoute(route);
     setIsOptimized(true);
   };
 
+  const runOptimize = () => doOptimize();
   const resetRoute = () => { setOptimizedRoute([]); setIsOptimized(false); };
 
   const displayPickups = isOptimized ? optimizedRoute : pickups;
@@ -196,7 +191,7 @@ export default function MapaPage() {
   const mapPoints: MapPoint[] = [
     ...(currentLocation ? [{
       lat: currentLocation[0], lng: currentLocation[1],
-      label: "Tu ubicación", status: "CURRENT", trackingCode: "", isCurrentLocation: true,
+      label: t("map.yourLocation"), status: "CURRENT", trackingCode: "", isCurrentLocation: true,
     }] : []),
     ...displayPickups
       .filter((p) => p.lat !== undefined && p.lng !== undefined)
@@ -220,27 +215,54 @@ export default function MapaPage() {
     (p) => p.lat !== undefined && p.status !== "PICKED_UP" && p.status !== "CANCELLED"
   );
 
+  const googleMapsUrl = isOptimized && currentAddress && optimizedRoute.length > 0
+    ? buildGoogleMapsRouteUrl(currentAddress, optimizedRoute)
+    : null;
+
+  const mapsUrl = (address: string, city: string) =>
+    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${address}, ${city}`)}&travelmode=driving`;
+
   return (
     <DashboardLayout>
+      {showRouteModal && (
+        <StartRouteModal
+          onConfirm={handleRouteModalConfirm}
+          onClose={() => setShowRouteModal(false)}
+        />
+      )}
+
       <div className="flex flex-col" style={{ height: "calc(100vh - 56px)" }}>
         {/* Header */}
         <div className="px-6 py-3 border-b border-slate-200 bg-white shrink-0">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold text-slate-900">Mapa de Rutas</h1>
+                <h1 className="text-base font-bold text-slate-900">{t("map.title")}</h1>
                 <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">
                   {pickups.length}
                 </span>
                 {mappedCount < pickups.length && !loading && (
                   <span className="text-xs text-slate-400">
-                    ({mappedCount} en mapa · {pickups.length - mappedCount} sin coords)
+                    ({mappedCount} {t("map.onMap")} · {pickups.length - mappedCount} {t("map.noCoords")})
                   </span>
                 )}
               </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Start route button for couriers */}
+              {isCourier && (
+                <button
+                  onClick={() => setShowRouteModal(true)}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm shadow-indigo-200"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  {t("pickups.startTodayRoute")}
+                </button>
+              )}
+
               {/* Today toggle */}
               <button
                 onClick={() => { setTodayOnly(!todayOnly); setIsOptimized(false); }}
@@ -253,7 +275,7 @@ export default function MapaPage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Solo hoy
+                {t("map.todayOnly")}
               </button>
 
               {/* Status filter */}
@@ -262,15 +284,15 @@ export default function MapaPage() {
                 onChange={(e) => { setStatusFilter(e.target.value); setIsOptimized(false); }}
                 className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
               >
-                <option value="">Todos</option>
-                <option value="PENDING">Pendientes</option>
-                <option value="ASSIGNED">Asignados</option>
-                <option value="SCHEDULED">En camino</option>
-                <option value="PICKED_UP">Recogidos</option>
+                <option value="">{t("map.allStatuses")}</option>
+                <option value="PENDING">{t("status.PENDING")}</option>
+                <option value="ASSIGNED">{t("status.ASSIGNED")}</option>
+                <option value="SCHEDULED">{t("status.SCHEDULED")}</option>
+                <option value="PICKED_UP">{t("status.PICKED_UP")}</option>
               </select>
 
-              {/* Location (courier) */}
-              {isCourier && (
+              {/* Location (non-courier or manual) */}
+              {!isCourier && (
                 <>
                   <button
                     onClick={detectLocation}
@@ -285,7 +307,7 @@ export default function MapaPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     )}
-                    Mi ubicación
+                    {t("map.myLocation")}
                   </button>
 
                   <select
@@ -293,7 +315,7 @@ export default function MapaPage() {
                     onChange={(e) => setLocationFromCity(e.target.value)}
                     className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
-                    <option value="">O selecciona ciudad</option>
+                    <option value="">{t("map.selectCity")}</option>
                     {Object.keys(CITY_COORDS).map((c) => (
                       <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
                     ))}
@@ -304,13 +326,13 @@ export default function MapaPage() {
               {/* Optimize / reset */}
               {canOptimize && !isOptimized && (
                 <button
-                  onClick={optimizeRoute}
+                  onClick={runOptimize}
                   className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  Optimizar ruta
+                  {t("map.optimizeRoute")}
                 </button>
               )}
               {isOptimized && (
@@ -321,7 +343,7 @@ export default function MapaPage() {
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Quitar ruta
+                  {t("map.resetRoute")}
                 </button>
               )}
             </div>
@@ -331,10 +353,25 @@ export default function MapaPage() {
             <p className="text-xs text-red-600 font-medium mt-2 bg-red-50 px-3 py-1.5 rounded-lg">{geoError}</p>
           )}
           {isOptimized && (
-            <div className="mt-2 bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5">
-              <span className="text-violet-700 text-xs font-semibold">
-                Ruta optimizada — {optimizedRoute.length} paradas en orden eficiente
-              </span>
+            <div className="mt-2 flex items-center gap-3 flex-wrap">
+              <div className="bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5">
+                <span className="text-violet-700 text-xs font-semibold">
+                  {t("map.routeOptimized", { count: optimizedRoute.length })}
+                </span>
+              </div>
+              {googleMapsUrl && (
+                <a
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm shadow-green-200"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  {t("map.openGoogleMaps")}
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -345,7 +382,7 @@ export default function MapaPage() {
             {loading ? (
               <div className="w-full h-full bg-white rounded-xl flex flex-col items-center justify-center border border-slate-200">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3" />
-                <p className="text-slate-500 text-sm">Cargando...</p>
+                <p className="text-slate-500 text-sm">{t("common.loading")}</p>
               </div>
             ) : (
               <MapView points={mapPoints} routePolyline={routePolyline} />
@@ -356,11 +393,13 @@ export default function MapaPage() {
           <div className="w-72 border-l border-slate-200 bg-white overflow-y-auto shrink-0 flex flex-col">
             <div className="px-4 py-2.5 border-b border-slate-100 shrink-0 bg-slate-50/80 sticky top-0">
               <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
-                {isOptimized ? "Ruta optimizada" : "Solicitudes"} ({displayPickups.length})
+                {isOptimized ? t("map.routeOptimizedTitle") : t("map.requests")} ({displayPickups.length})
               </p>
               {currentLocation && (
                 <p className="text-xs text-emerald-600 font-semibold mt-0.5">
-                  {locationCity ? `Desde: ${locationCity}` : "Ubicación detectada"}
+                  {currentAddress
+                    ? t("map.fromLocation", { city: currentAddress })
+                    : t("map.locationDetected")}
                 </p>
               )}
             </div>
@@ -373,16 +412,16 @@ export default function MapaPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
-                  <p className="text-slate-600 font-semibold text-sm">Sin solicitudes</p>
+                  <p className="text-slate-600 font-semibold text-sm">{t("map.noRequests")}</p>
                   <p className="text-slate-400 text-xs mt-1">
-                    {todayOnly ? "No hay recogidas para hoy" : "Prueba con otros filtros"}
+                    {todayOnly ? t("map.noPickupsToday") : t("map.tryOtherFilters")}
                   </p>
                   {todayOnly && (
                     <button
                       onClick={() => setTodayOnly(false)}
                       className="mt-3 text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
                     >
-                      Ver todas →
+                      {t("map.viewAll")}
                     </button>
                   )}
                 </div>
@@ -431,7 +470,7 @@ export default function MapaPage() {
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           </svg>
-                          Google Maps
+                          {t("pickups.maps")}
                         </a>
                         <a
                           href={`tel:${p.contactPhone}`}
@@ -441,7 +480,7 @@ export default function MapaPage() {
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
-                          Llamar
+                          {t("pickups.call")}
                         </a>
                         {!isCourier && (
                           <Link
@@ -449,7 +488,7 @@ export default function MapaPage() {
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors"
                           >
-                            Ver →
+                            {t("pickups.view")} →
                           </Link>
                         )}
                       </div>
@@ -460,9 +499,24 @@ export default function MapaPage() {
             </div>
 
             {isOptimized && optimizedRoute.length > 1 && (
-              <div className="px-4 py-3 border-t border-slate-200 bg-violet-50 shrink-0">
-                <p className="text-xs text-violet-700 font-semibold">{optimizedRoute.length} paradas · Ruta optimizada</p>
-                <p className="text-xs text-violet-500 mt-0.5">Ordenadas por distancia mínima</p>
+              <div className="px-4 py-3 border-t border-slate-200 bg-violet-50 shrink-0 space-y-2">
+                <p className="text-xs text-violet-700 font-semibold">
+                  {t("map.stopsCount", { count: optimizedRoute.length })}
+                </p>
+                <p className="text-xs text-violet-500">{t("map.orderedByDistance")}</p>
+                {googleMapsUrl && (
+                  <a
+                    href={googleMapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors w-full"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    {t("map.openGoogleMaps")}
+                  </a>
+                )}
               </div>
             )}
           </div>
