@@ -8,10 +8,12 @@ import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { SkeletonStatCard } from "@/components/ui/Skeleton";
+import { useT } from "@/lib/i18n-context";
 
 interface Stats {
   total: number; pending: number; assigned: number; scheduled: number;
   pickedUp: number; cancelled: number; todayTotal: number; todayCompleted: number;
+  pendingOld?: number;
 }
 
 interface RecentPickup {
@@ -20,68 +22,31 @@ interface RecentPickup {
   assignedCourier?: { name: string } | null;
 }
 
-function getGreeting() {
+function getGreetingKey() {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "greeting.morning";
+  if (h < 18) return "greeting.afternoon";
+  return "greeting.evening";
 }
 
-function formatDate() {
-  return new Date().toLocaleDateString("en-US", {
+function formatDate(lang: string) {
+  return new Date().toLocaleDateString(lang === "es" ? "es-ES" : "en-US", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 }
 
-/* ─── Stat card icons ────────────────────────────────────────────── */
+/* ─── Icons ──────────────────────────────────────────────────── */
+const IconBox  = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
+const IconClock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const IconTruck = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1" /></svg>;
+const IconMap  = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>;
+const IconCheck = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const IconUsers = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
+const IconDoc  = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+const IconList = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>;
+const IconAlert = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>;
 
-const IconBox = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-const IconClock = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const IconTruck = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1" />
-  </svg>
-);
-const IconMap = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-  </svg>
-);
-const IconCheck = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-const IconUsers = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-  </svg>
-);
-const IconDoc = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-const IconList = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-  </svg>
-);
-
-/* ─── Stat card ──────────────────────────────────────────────────── */
-
-function StatCard({
-  label, value, total, color, icon, href,
-}: {
+function StatCard({ label, value, total, color, icon, href }: {
   label: string; value: number; total?: number; color: string;
   icon: React.ReactNode; href: string;
 }) {
@@ -90,9 +55,7 @@ function StatCard({
     <Link href={href} className="group">
       <div className={`relative overflow-hidden bg-gradient-to-br ${color} p-5 rounded-2xl text-white shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-0.5 h-full`}>
         <div className="flex items-start justify-between mb-4">
-          <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center">
-            {icon}
-          </div>
+          <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center">{icon}</div>
           {pct !== null && (
             <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">{pct}%</span>
           )}
@@ -101,10 +64,7 @@ function StatCard({
         <p className="text-white/75 text-sm font-medium">{label}</p>
         {pct !== null && (
           <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white/60 rounded-full transition-all duration-700"
-              style={{ width: `${pct}%` }}
-            />
+            <div className="h-full bg-white/60 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
           </div>
         )}
       </div>
@@ -112,19 +72,13 @@ function StatCard({
   );
 }
 
-/* ─── Quick action card ──────────────────────────────────────────── */
-
-function QuickAction({
-  href, icon, label, desc, hoverColor,
-}: {
+function QuickAction({ href, icon, label, desc, hoverColor }: {
   href: string; icon: React.ReactNode; label: string; desc: string; hoverColor: string;
 }) {
   return (
     <Link href={href}>
       <div className={`bg-white border-2 border-slate-100 rounded-xl p-4 flex items-center gap-3.5 transition-all duration-150 ${hoverColor}`}>
-        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 shrink-0">
-          {icon}
-        </div>
+        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 shrink-0">{icon}</div>
         <div className="min-w-0">
           <p className="font-bold text-slate-900 text-sm">{label}</p>
           <p className="text-slate-500 text-xs truncate">{desc}</p>
@@ -137,13 +91,12 @@ function QuickAction({
   );
 }
 
-/* ─── Page ───────────────────────────────────────────────────────── */
-
 export default function DashboardPage() {
   const { data: session, status } = useSession();
+  const { t, lang } = useT();
   const [stats, setStats] = useState<Stats>({
     total: 0, pending: 0, assigned: 0, scheduled: 0, pickedUp: 0, cancelled: 0,
-    todayTotal: 0, todayCompleted: 0,
+    todayTotal: 0, todayCompleted: 0, pendingOld: 0,
   });
   const [recent, setRecent] = useState<RecentPickup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +108,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    if (role === "ADMIN") {
+    if (role === "ADMIN" || role === "DISPATCHER") {
       const today = new Date().toISOString().split("T")[0];
       Promise.all([
         fetch("/api/stats").then((r) => r.json()),
@@ -175,7 +128,7 @@ export default function DashboardPage() {
     }
   }, [status, role]);
 
-  /* ── COURIER VIEW ──────────────────────────────────────────────── */
+  /* ── COURIER VIEW ─────────────────────────────────────────── */
   if (role === "COURIER") {
     const done  = todayPickups.filter((p) => p.status === "PICKED_UP").length;
     const total = todayPickups.length;
@@ -185,14 +138,14 @@ export default function DashboardPage() {
       <DashboardLayout>
         <div className="p-6 md:p-8 max-w-3xl">
           <div className="mb-8">
-            <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1 capitalize">{formatDate()}</p>
-            <h1 className="text-3xl font-black text-slate-900 mb-1">{getGreeting()}, {name}</h1>
-            <p className="text-slate-500 text-sm">Your summary for today</p>
+            <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1 capitalize">{formatDate(lang)}</p>
+            <h1 className="text-3xl font-black text-slate-900 mb-1">{t(getGreetingKey())}, {name}</h1>
+            <p className="text-slate-500 text-sm">{t("dashboard.summaryToday")}</p>
           </div>
 
-          {/* Today's progress card */}
+          {/* Today's progress */}
           <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white mb-6 shadow-lg shadow-indigo-200">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">Pickups today</p>
+            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">{t("dashboard.todayPickups")}</p>
             {loading ? (
               <div className="h-10 bg-white/20 rounded-xl animate-pulse w-24" />
             ) : (
@@ -202,17 +155,15 @@ export default function DashboardPage() {
                   <span className="text-white/50 text-2xl font-bold mb-1">/ {total}</span>
                 </div>
                 <div className="h-1.5 bg-white/20 rounded-full overflow-hidden mb-3">
-                  <div
-                    className="h-full bg-white rounded-full transition-all duration-700"
-                    style={{ width: total > 0 ? `${Math.round((done / total) * 100)}%` : "0%" }}
-                  />
+                  <div className="h-full bg-white rounded-full transition-all duration-700"
+                    style={{ width: total > 0 ? `${Math.round((done / total) * 100)}%` : "0%" }} />
                 </div>
                 <p className="text-white/60 text-sm">
                   {total === 0
-                    ? "No pickups assigned for today"
+                    ? t("dashboard.noPickupsToday")
                     : done === total
-                    ? "All done for today!"
-                    : `${total - done} ${total - done !== 1 ? "pending" : "pending"}`}
+                    ? t("dashboard.allDone")
+                    : `${total - done} ${t("dashboard.pending")}`}
                 </p>
               </>
             )}
@@ -221,7 +172,7 @@ export default function DashboardPage() {
           {/* Next stop */}
           {!loading && next && (
             <div className="bg-white border border-indigo-100 ring-1 ring-indigo-100 rounded-xl p-5 mb-6 shadow-sm">
-              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">Next stop</p>
+              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">{t("dashboard.nextStop")}</p>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono font-bold text-indigo-600 text-sm mb-1">{next.trackingCode}</p>
@@ -237,20 +188,16 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-4">
             <Link href="/dashboard/mapa" className="group">
               <div className="bg-white border-2 border-slate-100 hover:border-violet-200 hover:shadow-md hover:shadow-violet-50 rounded-xl p-5 transition-all duration-200 text-center">
-                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-violet-600 mx-auto mb-3">
-                  <IconMap />
-                </div>
-                <p className="font-bold text-slate-900 text-sm">Mapa de Ruta</p>
-                <p className="text-slate-500 text-xs mt-0.5">Ver y optimizar tu ruta</p>
+                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center text-violet-600 mx-auto mb-3"><IconMap /></div>
+                <p className="font-bold text-slate-900 text-sm">{t("dashboard.routeMap")}</p>
+                <p className="text-slate-500 text-xs mt-0.5">{t("dashboard.mapMyRoute")}</p>
               </div>
             </Link>
             <Link href="/dashboard/mis-recogidas" className="group">
               <div className="bg-white border-2 border-slate-100 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50 rounded-xl p-5 transition-all duration-200 text-center">
-                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 mx-auto mb-3">
-                  <IconList />
-                </div>
-                <p className="font-bold text-slate-900 text-sm">Mis Recogidas</p>
-                <p className="text-slate-500 text-xs mt-0.5">Lista completa de paradas</p>
+                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 mx-auto mb-3"><IconList /></div>
+                <p className="font-bold text-slate-900 text-sm">{t("nav.misRecogidas")}</p>
+                <p className="text-slate-500 text-xs mt-0.5">{t("dashboard.myPickupsList")}</p>
               </div>
             </Link>
           </div>
@@ -259,28 +206,28 @@ export default function DashboardPage() {
     );
   }
 
-  /* ── ADMIN VIEW ────────────────────────────────────────────────── */
+  /* ── ADMIN / DISPATCHER VIEW ──────────────────────────────── */
   const todayPct = stats.todayTotal > 0
     ? Math.round((stats.todayCompleted / stats.todayTotal) * 100)
     : 0;
 
   const STAT_CARDS = [
-    { label: "Total active", value: stats.total,     color: "from-slate-700 to-slate-900",   icon: <IconBox />,   href: "/dashboard/solicitudes" },
-    { label: "Pending",    value: stats.pending,   color: "from-amber-500 to-orange-600",  icon: <IconClock />, href: "/dashboard/solicitudes?status=PENDING",   total: stats.total },
-    { label: "Assigned",     value: stats.assigned,  color: "from-blue-500 to-cyan-600",     icon: <IconTruck />, href: "/dashboard/solicitudes?status=ASSIGNED",  total: stats.total },
-    { label: "In transit",     value: stats.scheduled, color: "from-violet-500 to-purple-700", icon: <IconMap />,   href: "/dashboard/solicitudes?status=SCHEDULED", total: stats.total },
-    { label: "Picked up",     value: stats.pickedUp,  color: "from-emerald-500 to-green-700", icon: <IconCheck />, href: "/dashboard/solicitudes?status=PICKED_UP",  total: stats.total },
+    { label: t("dashboard.totalActive"), value: stats.total,     color: "from-slate-700 to-slate-900",   icon: <IconBox />,   href: "/dashboard/solicitudes" },
+    { label: t("dashboard.statPending"),    value: stats.pending,   color: "from-amber-500 to-orange-600",  icon: <IconClock />, href: "/dashboard/solicitudes?status=PENDING",   total: stats.total },
+    { label: t("dashboard.statAssigned"),     value: stats.assigned,  color: "from-blue-500 to-cyan-600",     icon: <IconTruck />, href: "/dashboard/solicitudes?status=ASSIGNED",  total: stats.total },
+    { label: t("dashboard.statInTransit"),     value: stats.scheduled, color: "from-violet-500 to-purple-700", icon: <IconMap />,   href: "/dashboard/solicitudes?status=SCHEDULED", total: stats.total },
+    { label: t("dashboard.statPickedUp"),     value: stats.pickedUp,  color: "from-emerald-500 to-green-700", icon: <IconCheck />, href: "/dashboard/solicitudes?status=PICKED_UP",  total: stats.total },
   ];
 
   return (
     <DashboardLayout>
       <div className="p-6 md:p-8">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1 capitalize">{formatDate()}</p>
-            <h1 className="text-3xl font-black text-slate-900 mb-1">{getGreeting()}, {name}</h1>
-            <p className="text-slate-500 text-sm">Resumen operacional · O&apos;Globo Cargo</p>
+            <p className="text-xs font-semibold text-indigo-500 uppercase tracking-widest mb-1 capitalize">{formatDate(lang)}</p>
+            <h1 className="text-3xl font-black text-slate-900 mb-1">{t(getGreetingKey())}, {name}</h1>
+            <p className="text-slate-500 text-sm">{t("dashboard.operationalSummary")}</p>
           </div>
           <Link
             href="/recoger"
@@ -289,9 +236,24 @@ export default function DashboardPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New request
+            {t("dashboard.newRequest")}
           </Link>
         </div>
+
+        {/* Pending old alert */}
+        {!loading && stats.pendingOld && stats.pendingOld > 0 ? (
+          <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 shrink-0">
+              <IconAlert />
+            </div>
+            <p className="text-amber-800 text-sm font-semibold">
+              {t(stats.pendingOld === 1 ? "dashboard.pendingOldAlert_one" : "dashboard.pendingOldAlert_other", { count: stats.pendingOld })}
+            </p>
+            <Link href="/dashboard/solicitudes?status=PENDING" className="ml-auto text-amber-700 text-xs font-bold hover:underline shrink-0">
+              {t("common.viewAll")}
+            </Link>
+          </div>
+        ) : null}
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -301,31 +263,31 @@ export default function DashboardPage() {
           }
         </div>
 
-        {/* Today's progress bar */}
+        {/* Today's progress */}
         {!loading && (
           <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl p-5 mb-7 flex items-center gap-5 flex-wrap">
             <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
-              <svg className="w-4.5 h-4.5 w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
               </svg>
             </div>
             <div className="flex-1 min-w-48">
               <p className="font-semibold text-slate-900 text-sm mb-0.5">
                 {stats.todayTotal === 0
-                  ? "No pickups scheduled for today"
-                  : `${stats.todayTotal} ${stats.todayTotal !== 1 ? "pickups" : "pickup"} scheduled for today`}
+                  ? t("dashboard.noPickupsScheduled")
+                  : t(stats.todayTotal === 1 ? "dashboard.todayScheduled_one" : "dashboard.todayScheduled_other", { count: stats.todayTotal })}
               </p>
               {stats.todayTotal > 0 && (
-                <p className="text-slate-500 text-xs">{stats.todayCompleted} completed · {stats.todayTotal - stats.todayCompleted} pending</p>
+                <p className="text-slate-500 text-xs">
+                  {t("dashboard.completedPending", { done: stats.todayCompleted, pending: stats.todayTotal - stats.todayCompleted })}
+                </p>
               )}
             </div>
             {stats.todayTotal > 0 && (
               <div className="flex items-center gap-3 min-w-48 flex-1">
                 <div className="flex-1 h-2 bg-white border border-indigo-100 rounded-full overflow-hidden shadow-inner">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all duration-700"
-                    style={{ width: `${todayPct}%` }}
-                  />
+                  <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all duration-700"
+                    style={{ width: `${todayPct}%` }} />
                 </div>
                 <span className="text-sm font-bold text-indigo-600 shrink-0 tabular-nums">{todayPct}%</span>
               </div>
@@ -337,9 +299,9 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-slate-900">Actividad reciente</h2>
+              <h2 className="text-base font-bold text-slate-900">{t("dashboard.recentActivity")}</h2>
               <Link href="/dashboard/solicitudes" className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">
-                Ver todas →
+                {t("common.viewAll")}
               </Link>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -357,20 +319,15 @@ export default function DashboardPage() {
                 </div>
               ) : recent.length === 0 ? (
                 <div className="text-center py-10 text-slate-400">
-                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3 text-slate-400">
-                    <IconBox />
-                  </div>
-                  <p className="font-semibold text-sm text-slate-600">No requests yet</p>
-                  <p className="text-xs mt-1">New requests will appear here</p>
+                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3"><IconBox /></div>
+                  <p className="font-semibold text-sm text-slate-600">{t("dashboard.noRequestsYet")}</p>
+                  <p className="text-xs mt-1">{t("dashboard.newRequestsHere")}</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {recent.map((p) => (
-                    <Link
-                      key={p.id}
-                      href={`/dashboard/solicitudes/${p.id}`}
-                      className="px-4 py-3.5 flex items-center gap-3.5 hover:bg-slate-50/70 transition-colors group"
-                    >
+                    <Link key={p.id} href={`/dashboard/solicitudes/${p.id}`}
+                      className="px-4 py-3.5 flex items-center gap-3.5 hover:bg-slate-50/70 transition-colors group">
                       <div className="w-9 h-9 bg-slate-100 group-hover:bg-indigo-100 rounded-xl flex items-center justify-center shrink-0 text-slate-500 group-hover:text-indigo-600 transition-colors">
                         <IconBox />
                       </div>
@@ -385,7 +342,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <p className="text-slate-400 text-xs shrink-0">
-                        {new Date(p.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
+                        {new Date(p.createdAt).toLocaleDateString(lang === "es" ? "es-ES" : "en-US", { day: "numeric", month: "short" })}
                       </p>
                     </Link>
                   ))}
@@ -396,21 +353,22 @@ export default function DashboardPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Actions */}
             <div>
-              <h2 className="text-base font-bold text-slate-900 mb-3">Acciones rápidas</h2>
+              <h2 className="text-base font-bold text-slate-900 mb-3">{t("dashboard.quickActions")}</h2>
               <div className="space-y-2">
-                <QuickAction href="/dashboard/solicitudes" icon={<IconList />}  label="Requests"   desc="Manage all" hoverColor="hover:border-indigo-200 hover:bg-indigo-50/50" />
-                <QuickAction href="/dashboard/mapa"        icon={<IconMap />}   label="Route Map" desc="Geographic view"        hoverColor="hover:border-violet-200 hover:bg-violet-50/50" />
-                <QuickAction href="/dashboard/usuarios"    icon={<IconUsers />} label="Users"      desc="Couriers & admins"       hoverColor="hover:border-emerald-200 hover:bg-emerald-50/50" />
-                <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label="Routes PDF"     desc="Export route sheets"  hoverColor="hover:border-rose-200 hover:bg-rose-50/50" />
+                <QuickAction href="/dashboard/solicitudes" icon={<IconList />}  label={t("nav.solicitudes")}   desc={t("dashboard.manageAll")} hoverColor="hover:border-indigo-200 hover:bg-indigo-50/50" />
+                <QuickAction href="/dashboard/mapa"        icon={<IconMap />}   label={t("nav.mapa")} desc={t("dashboard.geographicView")}        hoverColor="hover:border-violet-200 hover:bg-violet-50/50" />
+                <QuickAction href="/dashboard/usuarios"    icon={<IconUsers />} label={t("nav.usuarios")}      desc={t("dashboard.couriersAdmins")}       hoverColor="hover:border-emerald-200 hover:bg-emerald-50/50" />
+                <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label={t("nav.rutasPdf")}     desc={t("dashboard.exportRoutes")}  hoverColor="hover:border-rose-200 hover:bg-rose-50/50" />
               </div>
             </div>
 
             {/* Today's pickups list */}
             {!loading && todayPickups.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Hoy · {todayPickups.length} solicitudes</h3>
+                <h3 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">
+                  {t("dashboard.todayLabel", { count: todayPickups.length })}
+                </h3>
                 <div className="space-y-1.5">
                   {todayPickups.slice(0, 5).map((p) => (
                     <Link key={p.id} href={`/dashboard/solicitudes/${p.id}`}>
@@ -425,7 +383,7 @@ export default function DashboardPage() {
                   ))}
                   {todayPickups.length > 5 && (
                     <Link href="/dashboard/solicitudes" className="block text-center text-xs text-slate-400 hover:text-indigo-600 py-1.5 transition-colors">
-                      +{todayPickups.length - 5} más →
+                      {t("dashboard.moreItems", { count: todayPickups.length - 5 })}
                     </Link>
                   )}
                 </div>

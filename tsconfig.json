@@ -9,11 +9,12 @@
     "strict": false,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     },
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "jsx": "preserve",
     "incremental": true,

@@ -2,7 +2,12 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";
+import { I18nProvider } from "@/lib/i18n-context";
 
 export default function Providers({ children }: { children: ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <SessionProvider>
+      <I18nProvider>{children}</I18nProvider>
+    </SessionProvider>
+  );
 }
