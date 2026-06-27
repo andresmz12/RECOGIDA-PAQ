@@ -199,13 +199,25 @@
   },
   "login": {
     "title": "Iniciar sesión",
+    "subtitle": "Accede a tu panel de control",
+    "heroLine1": "Logística internacional",
+    "heroAccent": "simplificada.",
+    "heroSubtitle": "Gestiona recogidas, rastrea envíos y coordina couriers — todo en un solo lugar.",
+    "statPickups": "Recogidas",
+    "statSuccess": "Éxito",
+    "statResponse": "Respuesta",
     "email": "Correo electrónico",
     "password": "Contraseña",
+    "emailPlaceholder": "tu@correo.com",
     "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión...",
     "noAccount": "¿No tienes cuenta?",
     "register": "Registrarse",
+    "signUpHere": "Regístrate aquí",
+    "requestWithoutAccount": "Solicitar una recogida sin cuenta",
     "forgotPassword": "¿Olvidaste tu contraseña?",
-    "invalidCredentials": "Credenciales inválidas"
+    "invalidCredentials": "Correo o contraseña incorrectos.",
+    "connectionError": "Error de conexión. Inténtalo de nuevo."
   },
   "registro": {
     "title": "Crear cuenta",

@@ -5,8 +5,11 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function LoginPage() {
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +23,7 @@ export default function LoginPage() {
     try {
       const result = await signIn("credentials", { email, password, redirect: false });
       if (!result || result.error) {
-        setError("Incorrect email or password.");
+        setError(t("login.invalidCredentials"));
         setIsLoading(false);
         return;
       }
@@ -28,36 +31,46 @@ export default function LoginPage() {
         window.location.href = "/dashboard";
       }
     } catch {
-      setError("Connection error. Please try again.");
+      setError(t("login.connectionError"));
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+    <div className="min-h-screen flex relative" style={{ background: "linear-gradient(135deg, #0c1b2e, #142b45, #0d2240)" }}>
+      {/* Language switcher – top right */}
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageSwitcher />
+      </div>
+
       {/* Left panel – branding */}
       <div className="hidden lg:flex flex-1 items-center justify-center p-16">
         <div className="max-w-md text-white">
           <div className="flex items-center gap-4 mb-12">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-2xl"
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl ring-1 ring-white/10"
               style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}>
-              OG
+              <svg className="w-7 h-7 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                <path strokeWidth={2} strokeLinecap="round" d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z" />
+              </svg>
             </div>
             <span className="text-2xl font-bold tracking-tight">O&apos;Globo Cargo</span>
           </div>
-          <h1 className="text-5xl font-black mb-6 leading-tight">
-            International logistics<br />
-            <span style={{ background: "linear-gradient(90deg,#4d80b4,#2c629b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              simplified.
-            </span>
+          <h1 className="text-5xl font-extrabold mb-6 leading-tight tracking-tight">
+            {t("login.heroLine1")}<br />
+            <span className="text-accent-400">{t("login.heroAccent")}</span>
           </h1>
-          <p className="text-lg text-white/60 leading-relaxed">
-            Manage pickups, track shipments, and coordinate couriers — all in one place.
+          <p className="text-lg text-navy-100/60 leading-relaxed">
+            {t("login.heroSubtitle")}
           </p>
           <div className="mt-12 grid grid-cols-3 gap-6">
-            {[{ v: "10K+", l: "Pickups" }, { v: "99.2%", l: "Success" }, { v: "< 24h", l: "Response" }].map(s => (
+            {[
+              { v: "10K+", l: t("login.statPickups") },
+              { v: "99.2%", l: t("login.statSuccess") },
+              { v: "< 24h", l: t("login.statResponse") },
+            ].map((s) => (
               <div key={s.l} className="text-center">
-                <p className="text-3xl font-black text-indigo-300">{s.v}</p>
+                <p className="text-3xl font-extrabold text-accent-400">{s.v}</p>
                 <p className="text-sm text-white/50 mt-1">{s.l}</p>
               </div>
             ))}
@@ -69,17 +82,20 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
           <div className="flex items-center gap-3 mb-10 lg:hidden justify-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-lg"
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ring-1 ring-white/10"
               style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}>
-              <span className="text-white">OG</span>
+              <svg className="w-5 h-5 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" strokeWidth={2} />
+                <path strokeWidth={2} strokeLinecap="round" d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z" />
+              </svg>
             </div>
             <span className="text-xl font-bold text-white">O&apos;Globo Cargo</span>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
             <div className="mb-8">
-              <h2 className="text-3xl font-black text-slate-900">Sign in</h2>
-              <p className="text-slate-500 mt-2">Access your control panel</p>
+              <h2 className="text-3xl font-extrabold text-navy-900 tracking-tight">{t("login.title")}</h2>
+              <p className="text-slate-500 mt-2">{t("login.subtitle")}</p>
             </div>
 
             {error && (
@@ -93,23 +109,23 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t("login.email")}</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
+                  placeholder={t("login.emailPlaceholder")}
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-navy-500 focus:ring-4 focus:ring-navy-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-slate-700">Password</label>
-                  <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">
-                    Forgot password?
+                  <label className="text-sm font-semibold text-slate-700">{t("login.password")}</label>
+                  <Link href="/forgot-password" className="text-xs text-navy-600 hover:text-navy-700 font-semibold">
+                    {t("login.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
@@ -120,7 +136,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     required
                     disabled={isLoading}
-                    className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-navy-500 focus:ring-4 focus:ring-navy-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
@@ -145,21 +161,21 @@ export default function LoginPage() {
                 style={{ background: isLoading ? "#4d80b4" : "linear-gradient(135deg, #1d4f86, #2c629b)" }}
               >
                 {isLoading ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
-                ) : "Sign In →"}
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("login.signingIn")}</>
+                ) : <>{t("login.signIn")} →</>}
               </button>
             </form>
 
             <div className="mt-8 pt-8 border-t border-slate-100 space-y-3 text-sm text-center">
               <p className="text-slate-600">
-                Don&apos;t have an account?{" "}
-                <Link href="/registro" className="font-bold text-indigo-600 hover:text-indigo-700">
-                  Sign up here
+                {t("login.noAccount")}{" "}
+                <Link href="/registro" className="font-bold text-navy-600 hover:text-navy-700">
+                  {t("login.signUpHere")}
                 </Link>
               </p>
               <p>
                 <Link href="/recoger" className="text-slate-500 hover:text-slate-700 font-medium">
-                  Request a pickup without an account →
+                  {t("login.requestWithoutAccount")} →
                 </Link>
               </p>
             </div>

@@ -199,13 +199,25 @@
   },
   "login": {
     "title": "Sign in",
+    "subtitle": "Access your control panel",
+    "heroLine1": "International logistics",
+    "heroAccent": "simplified.",
+    "heroSubtitle": "Manage pickups, track shipments, and coordinate couriers — all in one place.",
+    "statPickups": "Pickups",
+    "statSuccess": "Success",
+    "statResponse": "Response",
     "email": "Email",
     "password": "Password",
-    "signIn": "Sign in",
+    "emailPlaceholder": "you@email.com",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
     "noAccount": "Don't have an account?",
     "register": "Sign up",
+    "signUpHere": "Sign up here",
+    "requestWithoutAccount": "Request a pickup without an account",
     "forgotPassword": "Forgot password?",
-    "invalidCredentials": "Invalid credentials"
+    "invalidCredentials": "Incorrect email or password.",
+    "connectionError": "Connection error. Please try again."
   },
   "registro": {
     "title": "Create account",
