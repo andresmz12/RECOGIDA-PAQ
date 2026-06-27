@@ -42,7 +42,7 @@
   "status": {
     "PENDING": "Pendiente",
     "ASSIGNED": "Asignado",
-    "SCHEDULED": "En camino",
+    "SCHEDULED": "Programado",
     "EN_CAMINO": "En camino",
     "PICKED_UP": "Recogido",
     "CANCELLED": "Cancelado"

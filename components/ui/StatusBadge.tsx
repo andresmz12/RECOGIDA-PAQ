@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n-context";
 const STATUS_STYLE: Record<string, { className: string; dot: string }> = {
   PENDING:   { className: "bg-amber-50 text-amber-700 border border-amber-200",       dot: "bg-amber-500" },
   ASSIGNED:  { className: "bg-blue-50 text-blue-700 border border-blue-200",          dot: "bg-blue-500" },
-  SCHEDULED: { className: "bg-violet-50 text-violet-700 border border-violet-200",    dot: "bg-violet-500" },
+  SCHEDULED: { className: "bg-indigo-50 text-indigo-700 border border-indigo-200",    dot: "bg-indigo-500" },
   EN_CAMINO: { className: "bg-violet-50 text-violet-700 border border-violet-200",    dot: "bg-violet-500" },
   PICKED_UP: { className: "bg-emerald-50 text-emerald-700 border border-emerald-200", dot: "bg-emerald-500" },
   CANCELLED: { className: "bg-red-50 text-red-700 border border-red-200",             dot: "bg-red-400" },
