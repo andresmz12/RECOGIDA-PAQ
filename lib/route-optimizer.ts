@@ -91,3 +91,55 @@ export function buildGoogleMapsRouteUrl(
   ];
   return `https://www.google.com/maps/dir/${parts.join("/")}`;
 }
+
+// ── City geocoding (offline lookup) ───────────────────────────────
+// Used to order stops geographically without an external geocoder.
+export const CITY_COORDS: Record<string, [number, number]> = {
+  "miami": [25.7617, -80.1918], "new york": [40.7128, -74.0060], "los angeles": [34.0522, -118.2437],
+  "chicago": [41.8781, -87.6298], "houston": [29.7604, -95.3698], "dallas": [32.7767, -96.7970],
+  "san francisco": [37.7749, -122.4194], "seattle": [47.6062, -122.3321], "boston": [42.3601, -71.0589],
+  "atlanta": [33.7490, -84.3880], "orlando": [28.5383, -81.3792], "las vegas": [36.1699, -115.1398],
+  "phoenix": [33.4484, -112.0740], "denver": [39.7392, -104.9903], "washington": [38.9072, -77.0369],
+  "philadelphia": [39.9526, -75.1652], "san diego": [32.7157, -117.1611], "summit": [40.7156, -74.3590],
+  "minneapolis": [44.9778, -93.2650], "detroit": [42.3314, -83.0458], "portland": [45.5051, -122.6750],
+  "charlotte": [35.2271, -80.8431], "tampa": [27.9506, -82.4572], "austin": [30.2672, -97.7431],
+  "san jose": [37.3382, -121.8863], "jacksonville": [30.3322, -81.6557], "fort lauderdale": [26.1224, -80.1373],
+  "new orleans": [29.9511, -90.0715], "memphis": [35.1495, -90.0490], "nashville": [36.1627, -86.7816],
+  "madrid": [40.4168, -3.7038], "london": [51.5074, -0.1278], "toronto": [43.6532, -79.3832],
+  "bogota": [4.711, -74.0721], "bogotá": [4.711, -74.0721], "medellin": [6.2518, -75.5636],
+  "medellín": [6.2518, -75.5636], "cali": [3.4516, -76.5319], "barranquilla": [10.9685, -74.7813],
+};
+
+export function geocodeCity(city: string): [number, number] | null {
+  if (!city) return null;
+  const normalized = city.toLowerCase().trim().replace(/,\s*[a-z]{2}$/i, "").trim();
+  if (CITY_COORDS[normalized]) return CITY_COORDS[normalized];
+  for (const [key, coords] of Object.entries(CITY_COORDS)) {
+    if (normalized.startsWith(key) || normalized.includes(key)) return coords;
+  }
+  return null;
+}
+
+// Order stops geographically using best-effort city geocoding. Stops whose
+// city can't be geocoded are appended (in their original order) at the end so
+// they are never dropped from the route.
+export function optimizeStopsByCity<T extends { pickupCity: string }>(
+  originCoords: [number, number] | null,
+  originText: string,
+  stops: T[]
+): T[] {
+  const origin = originCoords ?? geocodeCity(originText);
+  if (!origin || stops.length < 2) return stops;
+
+  const geo: Array<T & { lat: number; lng: number }> = [];
+  const ungeo: T[] = [];
+  for (const s of stops) {
+    const c = geocodeCity(s.pickupCity);
+    if (c) geo.push({ ...s, lat: c[0], lng: c[1] });
+    else ungeo.push(s);
+  }
+  if (geo.length === 0) return stops;
+
+  const ordered = optimizeRoute(origin, geo);
+  return [...ordered, ...ungeo] as T[];
+}

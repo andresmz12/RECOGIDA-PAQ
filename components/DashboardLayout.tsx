@@ -109,7 +109,9 @@ function SidebarContent({
         </div>
         <div className="min-w-0">
           <p className="text-white font-bold text-sm leading-none truncate">O&apos;Globo Cargo</p>
-          <p className="text-indigo-400 text-xs mt-0.5">{t("nav.panelControl")}</p>
+          <p className="text-indigo-400 text-xs mt-0.5 truncate">
+            {t("nav.panelControl")}{role ? ` · ${t(`roles.${role}`)}` : ""}
+          </p>
         </div>
       </div>
 

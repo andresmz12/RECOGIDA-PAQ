@@ -4,11 +4,11 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import StartRouteModal from "@/components/StartRouteModal";
 import { useT } from "@/lib/i18n-context";
+import { optimizeStopsByCity, buildGoogleMapsRouteUrl } from "@/lib/route-optimizer";
 
 interface PickupRequest {
   id: string;
@@ -22,19 +22,28 @@ interface PickupRequest {
   preferredDate: string;
   preferredTimeWindow: string;
   specialInstructions?: string | null;
+  // Package / box info
+  packageType?: string | null;
+  packageContents?: string | null;
+  estimatedWeight?: number | null;
+  dimensions?: string | null;
+  // Destination
+  recipientCity?: string | null;
+  destinationCountry?: string | null;
 }
 
 export default function MisRecogidasPage() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(""); // "" | "today" | "tomorrow" | YYYY-MM-DD
   const [toast, setToast] = useState("");
   const [showRouteModal, setShowRouteModal] = useState(false);
 
   const courierId = (session?.user as any)?.id;
+  const locale = lang === "en" ? "en-US" : "es-CO";
 
   const loadPickups = async () => {
     if (!courierId) return;
@@ -74,22 +83,60 @@ export default function MisRecogidasPage() {
     }
   };
 
-  const handleRouteModalConfirm = (origin: { address: string; coords: [number, number] | null }) => {
-    setShowRouteModal(false);
-    const originParam = encodeURIComponent(origin.address);
-    router.push(`/dashboard/mapa?mode=route&origin=${originParam}`);
+  // ── Date helpers ────────────────────────────────────────────────
+  const now = new Date();
+  const todayKey = now.toDateString();
+  const tmrw = new Date(now);
+  tmrw.setDate(now.getDate() + 1);
+  const tomorrowKey = tmrw.toDateString();
+  const dateKeyOf = (d: string) => new Date(d).toDateString();
+
+  const matchesDate = (p: PickupRequest) => {
+    if (!dateFilter) return true;
+    const k = dateKeyOf(p.preferredDate);
+    if (dateFilter === "today") return k === todayKey;
+    if (dateFilter === "tomorrow") return k === tomorrowKey;
+    return k === new Date(dateFilter + "T00:00:00").toDateString();
   };
 
-  const today = new Date().toDateString();
-  const todayPickups = pickups.filter(p => new Date(p.preferredDate).toDateString() === today);
-  const otherPickups = pickups.filter(p =>
-    new Date(p.preferredDate).toDateString() !== today &&
-    p.status !== "PICKED_UP" &&
-    p.status !== "CANCELLED"
+  // ── Route: build Google Maps multi-stop and open it directly ────
+  const handleRouteModalConfirm = (origin: { address: string; coords: [number, number] | null }) => {
+    setShowRouteModal(false);
+    const active = pickups.filter((p) => p.status !== "PICKED_UP" && p.status !== "CANCELLED");
+    const todayActive = active.filter((p) => dateKeyOf(p.preferredDate) === todayKey);
+    const stops = todayActive.length ? todayActive : active;
+    if (stops.length === 0) {
+      showToast(t("pickups.noStopsForRoute"));
+      return;
+    }
+    const ordered = optimizeStopsByCity(origin.coords, origin.address, stops);
+    const originText = origin.coords
+      ? `${origin.coords[0]},${origin.coords[1]}`
+      : origin.address;
+    const url = buildGoogleMapsRouteUrl(originText, ordered);
+    showToast(t("pickups.openingRoute"));
+    window.open(url, "_blank", "noopener");
+  };
+
+  const filtered = pickups.filter(matchesDate);
+
+  const todayPickups = filtered.filter((p) => dateKeyOf(p.preferredDate) === todayKey);
+  const otherPickups = filtered.filter(
+    (p) =>
+      dateKeyOf(p.preferredDate) !== todayKey &&
+      p.status !== "PICKED_UP" &&
+      p.status !== "CANCELLED"
   );
 
-  const doneToday = todayPickups.filter(p => p.status === "PICKED_UP").length;
+  const doneToday = todayPickups.filter((p) => p.status === "PICKED_UP").length;
   const totalToday = todayPickups.length;
+
+  const dateFilters: { value: string; label: string }[] = [
+    { value: "", label: t("pickups.dateAll") },
+    { value: "today", label: t("pickups.today") },
+    { value: "tomorrow", label: t("pickups.dateTomorrow") },
+  ];
+  const specificDate = !["", "today", "tomorrow"].includes(dateFilter) ? dateFilter : "";
 
   return (
     <DashboardLayout>
@@ -155,8 +202,8 @@ export default function MisRecogidasPage() {
           )}
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2 mb-8 flex-wrap">
+        {/* Status filter */}
+        <div className="flex gap-2 mb-3 flex-wrap">
           {["", "ASSIGNED", "SCHEDULED", "PICKED_UP"].map(s => (
             <button
               key={s}
@@ -172,6 +219,37 @@ export default function MisRecogidasPage() {
           ))}
         </div>
 
+        {/* Date filter */}
+        <div className="flex gap-2 mb-8 flex-wrap items-center">
+          {dateFilters.map((d) => (
+            <button
+              key={d.value}
+              onClick={() => setDateFilter(d.value)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                dateFilter === d.value
+                  ? "bg-slate-900 text-white"
+                  : "bg-white border border-slate-200 text-slate-500 hover:border-slate-400"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {d.label}
+            </button>
+          ))}
+          <input
+            type="date"
+            value={specificDate}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              specificDate
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
+            }`}
+            aria-label={t("pickups.pickByDate")}
+          />
+        </div>
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
@@ -183,6 +261,18 @@ export default function MisRecogidasPage() {
             <p className="text-slate-900 font-bold text-lg mb-1">{t("pickups.noPickupsAvailable")}</p>
             <p className="text-slate-500 text-sm">{t("pickups.notifiedWhenRoutes")}</p>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-3xl border border-slate-200">
+            <div className="text-5xl mb-3">📅</div>
+            <p className="text-slate-700 font-semibold">{t("pickups.noPickupsForDate")}</p>
+          </div>
+        ) : dateFilter ? (
+          // Flat filtered list when a specific date filter is active
+          <div className="space-y-4">
+            {filtered.map((p) => (
+              <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} />
+            ))}
+          </div>
         ) : (
           <div className="space-y-10">
             {todayPickups.length > 0 && (
@@ -190,13 +280,13 @@ export default function MisRecogidasPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   <h2 className="font-bold text-slate-900">
-                    {t("pickups.today")} — {new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" })}
+                    {t("pickups.today")} — {now.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
                   </h2>
                   <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">{todayPickups.length}</span>
                 </div>
                 <div className="space-y-4">
                   {todayPickups.map(p => (
-                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} />
+                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} />
                   ))}
                 </div>
               </section>
@@ -210,7 +300,7 @@ export default function MisRecogidasPage() {
                 </div>
                 <div className="space-y-4">
                   {otherPickups.map(p => (
-                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} />
+                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} />
                   ))}
                 </div>
               </section>
@@ -256,9 +346,11 @@ function NavButtons({ address }: { address: string }) {
 function PickupActionCard({
   pickup,
   onAction,
+  locale,
 }: {
   pickup: PickupRequest;
   onAction: (id: string, status: string, notes?: string) => void;
+  locale: string;
 }) {
   const { t } = useT();
   const [notes, setNotes] = useState("");
@@ -274,8 +366,10 @@ function PickupActionCard({
   };
 
   const isPending = pickup.status === "ASSIGNED";
-  const isOnTheWay = pickup.status === "SCHEDULED";
+  const isOnTheWay = pickup.status === "SCHEDULED" || pickup.status === "EN_CAMINO";
   const isDone = pickup.status === "PICKED_UP" || pickup.status === "CANCELLED";
+
+  const destination = [pickup.recipientCity, pickup.destinationCountry].filter(Boolean).join(", ");
 
   return (
     <div className={`bg-white rounded-3xl border-2 transition-all ${
@@ -299,7 +393,7 @@ function PickupActionCard({
             <div className="flex items-center gap-2">
               <StatusBadge status={pickup.status} />
               <span className="text-slate-500 text-xs">
-                {new Date(pickup.preferredDate).toLocaleDateString("en-US", { day: "numeric", month: "short" })} · {pickup.preferredTimeWindow}
+                {new Date(pickup.preferredDate).toLocaleDateString(locale, { day: "numeric", month: "short" })} · {pickup.preferredTimeWindow}
               </span>
             </div>
           </div>
@@ -320,7 +414,7 @@ function PickupActionCard({
           )}
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4 mb-5">
+        <div className="grid sm:grid-cols-2 gap-4 mb-4">
           <div className="bg-slate-50 rounded-2xl p-4">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t("pickups.contact")}</p>
             <p className="font-bold text-slate-900">{pickup.contactName}</p>
@@ -330,6 +424,40 @@ function PickupActionCard({
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t("pickups.pickupAddress")}</p>
             <p className="font-bold text-slate-900">{pickup.pickupCity}</p>
             <p className="text-slate-600 text-sm">{pickup.pickupAddress}</p>
+          </div>
+        </div>
+
+        {/* Package / box info — so the courier knows what to expect */}
+        <div className="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2.5">
+            <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide">{t("pickups.packageInfo")}</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t("pickups.packageInfo")}</p>
+              <p className="text-sm font-semibold text-slate-900">{pickup.packageType || t("pickups.notSpecified")}</p>
+            </div>
+            {pickup.estimatedWeight ? (
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t("pickups.weight")}</p>
+                <p className="text-sm font-semibold text-slate-900">{pickup.estimatedWeight} lb</p>
+              </div>
+            ) : null}
+            {destination ? (
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t("pickups.destination")}</p>
+                <p className="text-sm font-semibold text-slate-900">{destination}</p>
+              </div>
+            ) : null}
+            <div className="col-span-2 sm:col-span-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{t("pickups.contents")}</p>
+              <p className="text-sm font-semibold text-slate-900 truncate" title={pickup.packageContents || ""}>
+                {pickup.packageContents || t("pickups.notSpecified")}
+              </p>
+            </div>
           </div>
         </div>
 

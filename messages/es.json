@@ -115,7 +115,18 @@
     "call": "Llamar",
     "view": "Ver",
     "startTodayRoute": "Iniciar Ruta de Hoy",
-    "startRouteDesc": "Abrir ruta optimizada en Google Maps"
+    "startRouteDesc": "Abrir ruta optimizada en Google Maps",
+    "dateAll": "Todas las fechas",
+    "dateTomorrow": "Mañana",
+    "pickByDate": "Elegir fecha",
+    "packageInfo": "Paquete",
+    "contents": "Contenido",
+    "weight": "Peso",
+    "destination": "Destino",
+    "notSpecified": "No especificado",
+    "openingRoute": "Abriendo ruta en Google Maps…",
+    "noStopsForRoute": "Sin recogidas activas para armar la ruta.",
+    "noPickupsForDate": "Sin recogidas para esta fecha."
   },
   "account": {
     "home": "Inicio",

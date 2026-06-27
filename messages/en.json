@@ -115,7 +115,18 @@
     "call": "Call",
     "view": "View",
     "startTodayRoute": "Start Today's Route",
-    "startRouteDesc": "Open optimized route in Google Maps"
+    "startRouteDesc": "Open optimized route in Google Maps",
+    "dateAll": "All dates",
+    "dateTomorrow": "Tomorrow",
+    "pickByDate": "Pick date",
+    "packageInfo": "Package",
+    "contents": "Contents",
+    "weight": "Weight",
+    "destination": "Destination",
+    "notSpecified": "Not specified",
+    "openingRoute": "Opening route in Google Maps…",
+    "noStopsForRoute": "No active pickups to build a route.",
+    "noPickupsForDate": "No pickups for this date."
   },
   "account": {
     "home": "Home",
