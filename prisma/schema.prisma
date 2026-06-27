@@ -36,6 +36,7 @@ model User {
   role               Role            @default(CUSTOMER)
   pickupRequests     PickupRequest[] @relation("CustomerRequests")
   courierAssignments PickupRequest[] @relation("CourierAssignments")
+  comments           Comment[]       @relation("AuthoredComments")
   createdAt          DateTime        @default(now())
 }
 
@@ -74,6 +75,7 @@ model PickupRequest {
   assignedCourierId   String?
   assignedCourier     User?           @relation("CourierAssignments", fields: [assignedCourierId], references: [id])
   statusHistory       StatusHistory[]
+  comments            Comment[]
   callStatus          String?
   callAttempts        Int             @default(0)
   lastCallId          String?
@@ -91,6 +93,18 @@ model StatusHistory {
   changedById     String?
   notes           String?
   createdAt       DateTime       @default(now())
+}
+
+model Comment {
+  id              String        @id @default(cuid())
+  pickupRequestId String
+  pickupRequest   PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User          @relation("AuthoredComments", fields: [authorId], references: [id], onDelete: Cascade)
+  authorName      String
+  authorRole      String
+  body            String
+  createdAt       DateTime      @default(now())
 }
 
 model PasswordResetToken {

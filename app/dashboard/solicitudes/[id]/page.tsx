@@ -61,6 +61,104 @@ interface PickupDetail {
 
 const STATUS_OPTIONS = ["PENDING", "ASSIGNED", "SCHEDULED", "EN_CAMINO", "PICKED_UP", "CANCELLED"];
 
+interface Comment {
+  id: string;
+  authorName: string;
+  authorRole: string;
+  body: string;
+  createdAt: string;
+}
+
+function InternalComments({ pickupId }: { pickupId: string }) {
+  const { t } = useT();
+  const { data: session } = useSession();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const load = () =>
+    fetch(`/api/comments?pickupRequestId=${pickupId}`)
+      .then(r => r.json())
+      .then(d => setComments(d.comments ?? []));
+
+  useEffect(() => { load(); }, [pickupId]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!body.trim()) return;
+    setSending(true);
+    await fetch("/api/comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pickupRequestId: pickupId, body }),
+    });
+    setBody("");
+    await load();
+    setSending(false);
+  };
+
+  const remove = async (id: string) => {
+    await fetch(`/api/comments?id=${id}`, { method: "DELETE" });
+    load();
+  };
+
+  const userId = (session?.user as any)?.id;
+  const role = (session?.user as any)?.role;
+
+  return (
+    <Card variant="default" padding="lg">
+      <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <span className="text-xl">💬</span>
+        {t("detail.internalComments")}
+      </h2>
+      {comments.length === 0 ? (
+        <p className="text-slate-400 text-sm mb-4">{t("detail.noComments")}</p>
+      ) : (
+        <div className="space-y-3 mb-4">
+          {comments.map(c => (
+            <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-800 text-sm">{c.authorName}</span>
+                  <span className="text-xs text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded-full">{c.authorRole}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">
+                    {new Date(c.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  {(c.authorId === userId || role === "ADMIN") && (
+                    <button onClick={() => remove(c.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-sm text-slate-700">{c.body}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <form onSubmit={submit} className="flex gap-2">
+        <input
+          value={body}
+          onChange={e => setBody(e.target.value)}
+          placeholder={t("detail.commentPlaceholder")}
+          className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button
+          type="submit"
+          disabled={sending || !body.trim()}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+        >
+          {t("detail.commentSend")}
+        </button>
+      </form>
+    </Card>
+  );
+}
+
 const TIME_WINDOWS = [
   { value: "Morning (8am - 12pm)", key: "twMorning" },
   { value: "Afternoon (12pm - 5pm)", key: "twAfternoon" },
@@ -383,6 +481,9 @@ export default function SolicitudDetailPage() {
                 </div>
               </div>
             </Card>
+
+            {/* Internal comments */}
+            <InternalComments pickupId={pickup.id} />
           </div>
 
           {/* Sidebar: actions */}

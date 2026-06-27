@@ -58,6 +58,32 @@ export default function SolicitudesPage() {
   const role = (session?.user as any)?.role;
   const canEdit = role === "ADMIN" || role === "DISPATCHER";
 
+  const exportCSV = async () => {
+    let url = `/api/pickup-requests?limit=2000`;
+    if (statusFilter) url += `&status=${statusFilter}`;
+    if (stateFilter) url += `&state=${stateFilter}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const rows: string[][] = [
+      ["Code", "Status", "Date", "Time", "Client", "Phone", "Email", "Pickup Address", "City", "State", "Recipient", "Dest. Country", "Package", "Weight", "Courier"],
+      ...(data.data ?? []).map((p: any) => [
+        p.trackingCode, p.status,
+        new Date(p.preferredDate).toLocaleDateString("en-US"),
+        p.preferredTimeWindow, p.contactName, p.contactPhone, p.contactEmail ?? "",
+        p.pickupAddress, p.pickupCity, p.pickupState ?? "",
+        p.recipientName, p.destinationCountry ?? p.recipientCountry ?? "",
+        p.packageType ?? "", p.estimatedWeight ?? "", p.assignedCourier?.name ?? "",
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `solicitudes-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
   const load = async () => {
     setLoading(true);
     try {
@@ -134,15 +160,28 @@ export default function SolicitudesPage() {
               {loading ? t("common.loading") : `${total} ${t("solicitudes.title").toLowerCase()}`}
             </p>
           </div>
-          <Link
-            href="/recoger"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-indigo-200"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {t("dashboard.newRequest")}
-          </Link>
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <button
+                onClick={exportCSV}
+                className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {t("solicitudes.exportCSV")}
+              </button>
+            )}
+            <Link
+              href="/recoger"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-indigo-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {t("dashboard.newRequest")}
+            </Link>
+          </div>
         </div>
 
         {/* Filters */}

@@ -258,6 +258,15 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
+    if (dateFrom || dateTo) {
+      where.preferredDate = {
+        ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+        ...(dateTo ? { lte: new Date(dateTo) } : {}),
+      };
+    }
+
     // Couriers only see their own pickups
     if (role === "COURIER") {
       where.assignedCourierId = (session.user as any).id;

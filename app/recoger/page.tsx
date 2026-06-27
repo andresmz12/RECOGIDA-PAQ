@@ -4,10 +4,29 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import LocationPicker from "@/components/Form/LocationPicker";
 import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+
+// Estimated price table (approximate – final price confirmed by team)
+const BOX_BASE: Record<string, number> = {
+  "Documento": 15,
+  "Caja 18x18x18": 35,
+  "Caja 20x20x20": 45,
+  "Caja 22x22x22": 55,
+  "Caja 24x24x24": 65,
+};
+const WEIGHT_THRESHOLD = 20; // lbs included in base
+const WEIGHT_RATE = 1.0;     // $ per extra lb
+
+function calcPrice(packageType: string, weightStr: string) {
+  const base = BOX_BASE[packageType] ?? 45;
+  const lbs = parseFloat(weightStr) || 0;
+  const extra = Math.max(0, lbs - WEIGHT_THRESHOLD) * WEIGHT_RATE;
+  return base + extra;
+}
 
 const BOX_SIZES = [
   { value: "Caja 18x18x18", dimensions: "18x18x18 in", descKey: "boxSmall" },
@@ -82,12 +101,16 @@ const inputCls =
 
 export default function RecogerPage() {
   const { t } = useT();
+  const { data: session } = useSession();
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const isLoggedIn = !!session;
+  const estimatedPrice = calcPrice(form.packageType, form.estimatedWeight);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +146,10 @@ export default function RecogerPage() {
   };
 
   if (trackingCode) {
+    const trackingUrl = `/rastreo/${trackingCode}`;
+    const guiaUrl = `/guia/${trackingCode}`;
+    const backUrl = isLoggedIn ? "/mi-cuenta" : "/";
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
         style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
@@ -135,17 +162,33 @@ export default function RecogerPage() {
           <h1 className="text-3xl font-black text-white mb-2">{t("recoger.successTitle")}</h1>
           <p className="text-white/60 mb-8">{t("recoger.successDesc")}</p>
 
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-8">
+          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-6">
             <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">{t("recoger.trackingCodeLabel")}</p>
             <p className="text-3xl font-mono font-black text-indigo-300">{trackingCode}</p>
             <p className="text-white/40 text-xs mt-3">{t("recoger.saveCode")}</p>
           </div>
 
+          {/* Download guide button */}
+          <a
+            href={guiaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-emerald-400/40 bg-emerald-500/20 text-emerald-300 font-semibold hover:bg-emerald-500/30 transition-all text-sm mb-3"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {t("recoger.downloadGuide")}
+          </a>
+
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/" className="flex-1 flex items-center justify-center py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-all text-sm">
-              {t("recoger.backHome")}
+            <Link href={backUrl} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-all text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              {isLoggedIn ? t("recoger.goToAccount") : t("recoger.backHome")}
             </Link>
-            <Link href={`/rastreo/${trackingCode}`}
+            <Link href={trackingUrl}
               className="flex-1 flex items-center justify-center py-3 rounded-xl font-semibold text-sm transition-all text-white"
               style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
               {t("recoger.trackPackage")}
@@ -432,6 +475,35 @@ export default function RecogerPage() {
               />
             </Field>
           </section>
+
+          {/* Price estimate */}
+          {form.packageType && (
+            <section className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl border border-indigo-200 p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-0.5">{t("recoger.priceEstimate")}</p>
+                  <p className="text-3xl font-black text-slate-900">${estimatedPrice.toFixed(2)}</p>
+                  <p className="text-xs text-slate-500 mt-1">{t("recoger.priceNote")}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500 space-y-1">
+                    <div className="flex items-center justify-end gap-2">
+                      <span>{t("recoger.priceBase")}:</span>
+                      <span className="font-bold text-slate-700">${BOX_BASE[form.packageType] ?? 45}</span>
+                    </div>
+                    {parseFloat(form.estimatedWeight) > WEIGHT_THRESHOLD && (
+                      <div className="flex items-center justify-end gap-2">
+                        <span>{t("recoger.priceExtraWeight")}:</span>
+                        <span className="font-bold text-slate-700">
+                          +${((parseFloat(form.estimatedWeight) - WEIGHT_THRESHOLD) * WEIGHT_RATE).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Submit */}
           <button

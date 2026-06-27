@@ -229,15 +229,18 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-black text-slate-900 mb-1">{t(getGreetingKey())}, {name}</h1>
             <p className="text-slate-500 text-sm">{t("dashboard.operationalSummary")}</p>
           </div>
-          <Link
-            href="/recoger"
-            className="shrink-0 inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors shadow-sm shadow-indigo-200"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {t("dashboard.newRequest")}
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            {role === "ADMIN" && <DailyReportButton />}
+            <Link
+              href="/recoger"
+              className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors shadow-sm shadow-indigo-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {t("dashboard.newRequest")}
+            </Link>
+          </div>
         </div>
 
         {/* Pending old alert */}
@@ -393,5 +396,48 @@ export default function DashboardPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function DailyReportButton() {
+  const { t } = useT();
+  const [sending, setSending] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const send = async () => {
+    setSending(true);
+    try {
+      const res = await fetch("/api/admin/daily-report", { method: "POST" });
+      const data = await res.json();
+      if (data.ok) setDone(true);
+    } finally {
+      setSending(false);
+      setTimeout(() => setDone(false), 3000);
+    }
+  };
+
+  return (
+    <button
+      onClick={send}
+      disabled={sending}
+      className={`inline-flex items-center gap-1.5 border font-semibold px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-60 ${
+        done
+          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+      }`}
+    >
+      {sending ? (
+        <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+      ) : done ? (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      )}
+      <span className="hidden sm:inline">{done ? t("dashboard.reportSent") : t("dashboard.sendReport")}</span>
+    </button>
   );
 }

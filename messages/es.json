@@ -2,6 +2,7 @@
   "nav": {
     "inicio": "Inicio",
     "solicitudes": "Solicitudes",
+    "calendario": "Calendario",
     "mapa": "Mapa de Rutas",
     "misRecogidas": "Mis Recogidas",
     "usuarios": "Usuarios",
@@ -23,7 +24,8 @@
     "mapa": "Mapa de Rutas",
     "misRecogidas": "Mis Recogidas",
     "usuarios": "Usuarios",
-    "rutasPdf": "Rutas PDF"
+    "rutasPdf": "Rutas PDF",
+    "calendario": "Calendario"
   },
   "common": {
     "loading": "Cargando...",
@@ -89,7 +91,9 @@
     "couriersToday": "Couriers activos hoy",
     "assignmentsCount_one": "{{count}} asignación",
     "assignmentsCount_other": "{{count}} asignaciones",
-    "noCouriersToday": "Sin couriers con asignaciones hoy"
+    "noCouriersToday": "Sin couriers con asignaciones hoy",
+    "sendReport": "Enviar reporte",
+    "reportSent": "¡Reporte enviado!"
   },
   "pickups": {
     "myPickups": "Mis Recogidas",
@@ -153,7 +157,9 @@
     "requests_other": "{{count}} solicitudes",
     "loadingShipments": "Cargando...",
     "statusStepper": "Progreso del envío",
-    "cancelConfirm": "¿Cancelar solicitud {{code}}?"
+    "cancelConfirm": "¿Cancelar solicitud {{code}}?",
+    "downloadGuide": "Descargar guía",
+    "guide": "Guía"
   },
   "map": {
     "title": "Mapa de Rutas",
@@ -210,7 +216,17 @@
     "allStates": "Todos los estados",
     "changeStatus": "Cambiar estado",
     "assign": "Asignar",
-    "saving": "Guardando…"
+    "saving": "Guardando…",
+    "exportCSV": "Exportar CSV"
+  },
+  "cal": {
+    "title": "Calendario de Recogidas",
+    "subtitle": "Vista mensual de todas las solicitudes programadas",
+    "listView": "Vista de lista",
+    "legend": "Leyenda",
+    "noPickups": "Sin recogidas este día",
+    "selectDay": "Selecciona un día del calendario",
+    "monthSummary": "Resumen del mes"
   },
   "rutas": {
     "title": "Rutas por Courier",
@@ -360,7 +376,11 @@
     "twMorning": "Mañana (8am – 12pm)",
     "twAfternoon": "Tarde (12pm – 5pm)",
     "twEvening": "Noche (5pm – 9pm)",
-    "twAllDay": "Todo el día (8am – 9pm)"
+    "twAllDay": "Todo el día (8am – 9pm)",
+    "internalComments": "Comentarios internos",
+    "noComments": "Sin comentarios aún. Los comentarios son privados entre el equipo.",
+    "commentPlaceholder": "Agregar nota interna…",
+    "commentSend": "Enviar"
   },
   "landing": {
     "navFeatures": "Características",
@@ -467,7 +487,13 @@
     "boxDoc": "Sobre / carta",
     "twMorning": "Mañana  8:00 am – 12:00 pm",
     "twAfternoon": "Tarde  12:00 pm – 5:00 pm",
-    "twEvening": "Noche  5:00 pm – 8:00 pm"
+    "twEvening": "Noche  5:00 pm – 8:00 pm",
+    "downloadGuide": "Descargar guía de envío",
+    "goToAccount": "← Ir a mi cuenta",
+    "priceEstimate": "Precio estimado",
+    "priceNote": "Precio aproximado · El equipo confirmará el precio final",
+    "priceBase": "Precio base",
+    "priceExtraWeight": "Peso extra"
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

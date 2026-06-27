@@ -2,6 +2,7 @@
   "nav": {
     "inicio": "Home",
     "solicitudes": "Requests",
+    "calendario": "Calendar",
     "mapa": "Route Map",
     "misRecogidas": "My Pickups",
     "usuarios": "Users",
@@ -23,7 +24,8 @@
     "mapa": "Route Map",
     "misRecogidas": "My Pickups",
     "usuarios": "Users",
-    "rutasPdf": "Routes PDF"
+    "rutasPdf": "Routes PDF",
+    "calendario": "Calendar"
   },
   "common": {
     "loading": "Loading...",
@@ -89,7 +91,9 @@
     "couriersToday": "Active couriers today",
     "assignmentsCount_one": "{{count}} assignment",
     "assignmentsCount_other": "{{count}} assignments",
-    "noCouriersToday": "No couriers with assignments today"
+    "noCouriersToday": "No couriers with assignments today",
+    "sendReport": "Send report",
+    "reportSent": "Report sent!"
   },
   "pickups": {
     "myPickups": "My Pickups",
@@ -153,7 +157,9 @@
     "requests_other": "{{count}} requests",
     "loadingShipments": "Loading...",
     "statusStepper": "Shipment progress",
-    "cancelConfirm": "Cancel request {{code}}?"
+    "cancelConfirm": "Cancel request {{code}}?",
+    "downloadGuide": "Download guide",
+    "guide": "Guide"
   },
   "map": {
     "title": "Route Map",
@@ -210,7 +216,17 @@
     "allStates": "All states",
     "changeStatus": "Change status",
     "assign": "Assign",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "exportCSV": "Export CSV"
+  },
+  "cal": {
+    "title": "Pickup Calendar",
+    "subtitle": "Monthly view of all scheduled pickups",
+    "listView": "List view",
+    "legend": "Legend",
+    "noPickups": "No pickups this day",
+    "selectDay": "Select a day on the calendar",
+    "monthSummary": "Month summary"
   },
   "rutas": {
     "title": "Routes by Courier",
@@ -360,7 +376,11 @@
     "twMorning": "Morning (8am – 12pm)",
     "twAfternoon": "Afternoon (12pm – 5pm)",
     "twEvening": "Evening (5pm – 9pm)",
-    "twAllDay": "All day (8am – 9pm)"
+    "twAllDay": "All day (8am – 9pm)",
+    "internalComments": "Internal Comments",
+    "noComments": "No comments yet. Comments are private to the team.",
+    "commentPlaceholder": "Add an internal note…",
+    "commentSend": "Send"
   },
   "landing": {
     "navFeatures": "Features",
@@ -467,7 +487,13 @@
     "boxDoc": "Envelope / letter",
     "twMorning": "Morning  8:00 am – 12:00 pm",
     "twAfternoon": "Afternoon  12:00 pm – 5:00 pm",
-    "twEvening": "Evening  5:00 pm – 8:00 pm"
+    "twEvening": "Evening  5:00 pm – 8:00 pm",
+    "downloadGuide": "Download shipping guide",
+    "goToAccount": "← Go to my account",
+    "priceEstimate": "Estimated price",
+    "priceNote": "Approximate price · Team will confirm the final price",
+    "priceBase": "Base price",
+    "priceExtraWeight": "Extra weight"
   },
   "rastreo": {
     "loading": "Loading tracking information...",
