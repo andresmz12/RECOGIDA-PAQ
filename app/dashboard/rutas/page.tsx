@@ -286,8 +286,8 @@ export default function RutasPage() {
                       <tbody>
                         {routeData.pickups.map((p, i) => (
                           <tr key={p.id} style={{ borderBottom: "1px solid #e2e8f0", background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
-                            <td style={{ padding: "8px 6px", fontWeight: 700, color: "#6366f1" }}>{i + 1}</td>
-                            <td style={{ padding: "8px 6px", fontFamily: "monospace", fontWeight: 700, color: "#4338ca", fontSize: "11px" }}>{p.trackingCode}</td>
+                            <td style={{ padding: "8px 6px", fontWeight: 700, color: "#1d4f86" }}>{i + 1}</td>
+                            <td style={{ padding: "8px 6px", fontFamily: "monospace", fontWeight: 700, color: "#173455", fontSize: "11px" }}>{p.trackingCode}</td>
                             <td style={{ padding: "8px 6px" }}>
                               <div style={{ fontWeight: 600 }}>{p.contactName}</div>
                               <div style={{ color: "#64748b", fontSize: "10px" }}>{p.contactPhone}</div>
@@ -309,7 +309,7 @@ export default function RutasPage() {
                               <span style={{
                                 padding: "2px 8px", borderRadius: "99px", fontWeight: 600, fontSize: "10px",
                                 background: p.status === "PICKED_UP" ? "#d1fae5" : p.status === "ASSIGNED" ? "#dbeafe" : p.status === "SCHEDULED" ? "#ede9fe" : "#fef3c7",
-                                color: p.status === "PICKED_UP" ? "#065f46" : p.status === "ASSIGNED" ? "#1e40af" : p.status === "SCHEDULED" ? "#5b21b6" : "#92400e",
+                                color: p.status === "PICKED_UP" ? "#065f46" : p.status === "ASSIGNED" ? "#1e40af" : p.status === "SCHEDULED" ? "#173f6b" : "#92400e",
                               }}>
                                 {STATUS_LABELS[p.status] ?? p.status}
                               </span>

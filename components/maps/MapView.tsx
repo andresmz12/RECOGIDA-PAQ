@@ -21,7 +21,7 @@ interface MapViewProps {
 const STATUS_COLORS: Record<string, string> = {
   PENDING:   "#f59e0b",
   ASSIGNED:  "#3b82f6",
-  SCHEDULED: "#8b5cf6",
+  SCHEDULED: "#2c629b",
   PICKED_UP: "#10b981",
   CANCELLED: "#ef4444",
 };
@@ -106,7 +106,7 @@ export default function MapView({ points, center, routePolyline }: MapViewProps)
           className: "",
         });
       } else if (pt.routeOrder != null) {
-        const color = STATUS_COLORS[pt.status] ?? "#6366f1";
+        const color = STATUS_COLORS[pt.status] ?? "#1d4f86";
         icon = L.divIcon({
           html: `
             <div style="
@@ -122,7 +122,7 @@ export default function MapView({ points, center, routePolyline }: MapViewProps)
           className: "",
         });
       } else {
-        const color = STATUS_COLORS[pt.status] ?? "#6366f1";
+        const color = STATUS_COLORS[pt.status] ?? "#1d4f86";
         icon = L.divIcon({
           html: `
             <div style="
@@ -137,7 +137,7 @@ export default function MapView({ points, center, routePolyline }: MapViewProps)
         });
       }
 
-      const color = STATUS_COLORS[pt.status] ?? "#6366f1";
+      const color = STATUS_COLORS[pt.status] ?? "#1d4f86";
       const marker = L.marker([pt.lat, pt.lng], { icon })
         .addTo(map)
         .bindPopup(
@@ -162,7 +162,7 @@ export default function MapView({ points, center, routePolyline }: MapViewProps)
     // Draw route polyline
     if (routePolyline && routePolyline.length > 1) {
       polylineRef.current = L.polyline(routePolyline, {
-        color: "#6366f1",
+        color: "#1d4f86",
         weight: 3,
         opacity: 0.75,
         dashArray: "10, 6",

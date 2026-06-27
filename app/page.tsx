@@ -87,13 +87,24 @@ function StatCounter({
   const count = useCounter(value, inView);
   return (
     <div ref={ref} className="text-center">
-      <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent mb-1.5 tabular-nums">
+      <p className="text-4xl md:text-5xl font-extrabold text-accent-400 mb-1.5 tabular-nums tracking-tight">
         {count}{suffix}
       </p>
-      <p className="text-slate-400 text-sm">{label}</p>
+      <p className="text-navy-200/70 text-sm">{label}</p>
     </div>
   );
 }
+
+/* ─── Brand globe mark ───────────────────────────────────────────── */
+
+const GlobeMark = ({ className = "w-9 h-9" }: { className?: string }) => (
+  <div className={`${className} bg-navy-700 rounded-xl flex items-center justify-center shadow-md ring-1 ring-white/10`}>
+    <svg className="w-1/2 h-1/2 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" strokeWidth={2} />
+      <path strokeWidth={2} strokeLinecap="round" d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3z" />
+    </svg>
+  </div>
+);
 
 /* ─── Feature icons ──────────────────────────────────────────────── */
 
@@ -133,43 +144,37 @@ const IconChat = () => (
 const FEATURES = [
   {
     icon: <IconBolt />,
-    color: "from-amber-500 to-orange-500",
-    bg: "bg-amber-50",
+    color: "from-accent-400 to-accent-600",
     title: "Solicitud en 2 minutos",
     desc: "Formulario simple. Sin cuentas obligatorias. Recibes tu código de seguimiento al instante.",
   },
   {
     icon: <IconMap />,
-    color: "from-indigo-500 to-violet-500",
-    bg: "bg-indigo-50",
+    color: "from-navy-500 to-navy-700",
     title: "Rastreo en tiempo real",
     desc: "Sigue cada paso de tu recogida con actualizaciones automáticas por email.",
   },
   {
     icon: <IconGlobe />,
-    color: "from-emerald-500 to-teal-500",
-    bg: "bg-emerald-50",
+    color: "from-emerald-500 to-teal-600",
     title: "Cobertura internacional",
     desc: "Enviamos a más de 50 países. Couriers verificados y seguros en cada destino.",
   },
   {
     icon: <IconShield />,
-    color: "from-blue-500 to-cyan-500",
-    bg: "bg-blue-50",
+    color: "from-sky-500 to-cyan-600",
     title: "100% Seguro",
     desc: "Todos los envíos están asegurados. Manejo profesional garantizado.",
   },
   {
     icon: <IconBell />,
-    color: "from-violet-500 to-purple-500",
-    bg: "bg-violet-50",
+    color: "from-navy-400 to-navy-600",
     title: "Notificaciones automáticas",
     desc: "Recibe actualizaciones por email en cada cambio de estado de tu recogida.",
   },
   {
     icon: <IconChat />,
-    color: "from-rose-500 to-pink-500",
-    bg: "bg-rose-50",
+    color: "from-slate-500 to-slate-700",
     title: "Soporte dedicado",
     desc: "Nuestro equipo está disponible para ayudarte en cada paso del proceso.",
   },
@@ -186,15 +191,15 @@ function TrackingMockup() {
         style={{ animation: "floatCard 6s ease-in-out infinite" }}
       >
         <div className="flex items-center justify-between mb-5">
-          <span className="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-3 py-1.5 rounded-lg tracking-wide">
+          <span className="font-mono font-bold text-navy-700 text-sm bg-navy-50 px-3 py-1.5 rounded-lg tracking-wide">
             OGC-A7B3K9
           </span>
           <span className="text-xs text-slate-400">Hace 2 horas</span>
         </div>
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-11 h-11 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-11 h-11 bg-navy-100 rounded-xl flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
@@ -209,18 +214,18 @@ function TrackingMockup() {
           {["Pendiente", "Asignado", "Programado", "Recogido"].map((s, i) => (
             <div key={s} className="flex-1 flex flex-col items-center gap-1">
               <div
-                className={`h-1.5 w-full rounded-full ${i < 3 ? "bg-indigo-500" : "bg-slate-200"}`}
+                className={`h-1.5 w-full rounded-full ${i < 3 ? "bg-navy-600" : "bg-slate-200"}`}
               />
             </div>
           ))}
         </div>
         <div className="flex items-center gap-1.5 mb-5">
-          <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse" />
+          <span className="w-2 h-2 bg-accent-500 rounded-full animate-pulse" />
           <p className="text-sm font-semibold text-slate-700">Programado — Mañana 10:00–13:00</p>
         </div>
 
         <div className="pt-4 border-t border-slate-100 flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+          <div className="w-8 h-8 bg-navy-700 rounded-full flex items-center justify-center text-white text-xs font-bold">
             JP
           </div>
           <div>
@@ -251,8 +256,8 @@ function TrackingMockup() {
         className="absolute -bottom-3 -left-6 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-2.5 z-20 border border-slate-100"
         style={{ animation: "floatBadge 8s ease-in-out infinite", animationDelay: "0.6s" }}
       >
-        <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
@@ -284,49 +289,35 @@ export default function Home() {
           50% { transform: translateY(-6px); }
         }
         @keyframes orbMove {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
-          33% { transform: translate(40px, -30px) scale(1.08); opacity: 0.5; }
-          66% { transform: translate(-15px, 20px) scale(0.95); opacity: 0.4; }
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+          33% { transform: translate(40px, -30px) scale(1.08); opacity: 0.65; }
+          66% { transform: translate(-15px, 20px) scale(0.95); opacity: 0.55; }
         }
         @keyframes orbMove2 {
-          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
-          50% { transform: translate(-35px, 25px) scale(1.12); opacity: 0.45; }
-        }
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        .gradient-text-animated {
-          background: linear-gradient(135deg, #818cf8, #c084fc, #818cf8);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: gradientShift 4s ease infinite;
+          0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+          50% { transform: translate(-35px, 25px) scale(1.12); opacity: 0.35; }
         }
       `}</style>
 
       {/* ── Navbar ───────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-200">
-              <span className="text-white font-black text-xs">OG</span>
-            </div>
-            <span className="font-bold text-base text-slate-900">O&apos;Globo Cargo</span>
+          <div className="flex items-center gap-2.5">
+            <GlobeMark className="w-9 h-9" />
+            <span className="font-display font-bold text-base text-navy-900 tracking-tight">O&apos;Globo Cargo</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">Características</a>
-            <a href="#how" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">Cómo funciona</a>
-            <Link href="/rastreo/demo" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">Rastrear</Link>
+            <a href="#features" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">Características</a>
+            <a href="#how" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">Cómo funciona</a>
+            <Link href="/rastreo/demo" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">Rastrear</Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors">
+            <Link href="/login" className="text-slate-600 hover:text-navy-700 text-sm font-semibold transition-colors">
               Iniciar sesión
             </Link>
             <Link
               href="/recoger"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-all shadow-sm shadow-indigo-200 hover:shadow-md hover:shadow-indigo-300"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-navy-700 hover:bg-navy-800 text-white text-sm font-semibold rounded-lg transition-all shadow-sm hover:shadow-md"
             >
               Solicitar recogida
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,20 +331,20 @@ export default function Home() {
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section
         className="relative overflow-hidden py-24 md:py-32"
-        style={{ background: "linear-gradient(135deg, #0a0520 0%, #1a0a3d 50%, #0d1b3e 100%)" }}
+        style={{ background: "linear-gradient(135deg, #0c1b2e 0%, #142b45 55%, #0d2240 100%)" }}
       >
-        {/* Animated orbs */}
+        {/* Animated glow orbs */}
         <div
           className="absolute top-20 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
           style={{
-            background: "radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(45,98,155,0.55) 0%, transparent 70%)",
             animation: "orbMove 20s ease-in-out infinite",
           }}
         />
         <div
           className="absolute bottom-10 right-1/4 w-80 h-80 rounded-full blur-3xl pointer-events-none"
           style={{
-            background: "radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(245,165,36,0.22) 0%, transparent 70%)",
             animation: "orbMove2 25s ease-in-out infinite",
           }}
         />
@@ -368,25 +359,25 @@ export default function Home() {
                 transition: "opacity 0.7s ease, transform 0.7s ease",
               }}
             >
-              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 px-4 py-1.5 rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/80 px-4 py-1.5 rounded-full text-sm font-medium mb-8 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
                 Logística internacional simplificada
               </div>
 
-              <h1 className="text-5xl md:text-6xl lg:text-6xl font-black text-white mb-6 leading-[1.08]">
+              <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 leading-[1.08] tracking-tight">
                 Recogemos tu<br />
                 paquete{" "}
-                <span className="gradient-text-animated">donde estés</span>
+                <span className="text-accent-400">donde estés</span>
               </h1>
 
-              <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-lg">
+              <p className="text-lg text-navy-100/70 leading-relaxed mb-10 max-w-lg">
                 Solicita la recogida de tus envíos internacionales en segundos. Seguimiento en tiempo real, notificaciones automáticas y couriers verificados.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-12">
                 <Link
                   href="/recoger"
-                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/40 hover:shadow-xl hover:shadow-indigo-900/50 text-sm"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-accent-500 hover:bg-accent-400 text-navy-950 font-bold rounded-xl transition-all shadow-lg shadow-accent-900/30 hover:shadow-xl text-sm"
                 >
                   Solicitar recogida gratis
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,25 +393,15 @@ export default function Home() {
               </div>
 
               {/* Trust row */}
-              <div className="flex items-center gap-6 text-white/40 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-white/60">Sin tarjeta de crédito</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-white/60">Código de rastreo inmediato</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-white/60">Cobertura en 50+ países</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                {["Sin tarjeta de crédito", "Código de rastreo inmediato", "Cobertura en 50+ países"].map((t) => (
+                  <div key={t} className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-white/60">{t}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -440,7 +421,7 @@ export default function Home() {
       </section>
 
       {/* ── Stats ────────────────────────────────────────────────── */}
-      <section className="py-16 md:py-20 bg-slate-900">
+      <section className="py-16 md:py-20 bg-navy-900">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             <StatCounter value={10000} suffix="+" label="Paquetes recogidos" />
@@ -455,23 +436,23 @@ export default function Home() {
       <section id="features" className="py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-6">
           <Reveal className="text-center mb-16">
-            <p className="text-indigo-600 text-xs font-bold uppercase tracking-widest mb-4">Por qué elegirnos</p>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
+            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">Por qué elegirnos</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 mb-4 tracking-tight">
               Todo lo que necesitas para enviar
             </h2>
             <p className="text-lg text-slate-600 max-w-xl mx-auto">
-              Tecnología de logistics enterprise, ahora accesible para todos.
+              Tecnología de logística empresarial, ahora accesible para todos.
             </p>
           </Reveal>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map((f, i) => (
               <Reveal key={f.title} delay={i * 80}>
-                <div className="group bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-50 rounded-2xl p-6 transition-all duration-300 h-full">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${f.color} text-white mb-5 shadow-sm`}>
+                <div className="group bg-white border border-slate-200 hover:border-navy-200 hover:shadow-lg hover:shadow-navy-50 rounded-2xl p-6 transition-all duration-300 h-full">
+                  <div className={`inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br ${f.color} text-white mb-5 shadow-sm`}>
                     {f.icon}
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 mb-2">{f.title}</h3>
+                  <h3 className="text-base font-bold text-navy-900 mb-2">{f.title}</h3>
                   <p className="text-sm text-slate-600 leading-relaxed">{f.desc}</p>
                 </div>
               </Reveal>
@@ -484,41 +465,41 @@ export default function Home() {
       <section id="how" className="py-24 md:py-32 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
           <Reveal className="text-center mb-16">
-            <p className="text-indigo-600 text-xs font-bold uppercase tracking-widest mb-4">Proceso</p>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">¿Cómo funciona?</h2>
+            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">Proceso</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 mb-4 tracking-tight">¿Cómo funciona?</h2>
             <p className="text-lg text-slate-600">Tres pasos, menos de 2 minutos</p>
           </Reveal>
 
           <div className="relative grid md:grid-cols-3 gap-8 md:gap-12">
             {/* Connecting line */}
-            <div className="hidden md:block absolute top-8 left-1/6 right-1/6 h-px border-t-2 border-dashed border-slate-300" style={{ left: "16.67%", right: "16.67%" }} />
+            <div className="hidden md:block absolute top-8 h-px border-t-2 border-dashed border-navy-200" style={{ left: "16.67%", right: "16.67%" }} />
 
             {[
               {
                 step: "01",
                 title: "Solicita",
                 desc: "Completa el formulario con los datos de tu paquete y dirección de recogida. Sin cuenta obligatoria.",
-                color: "from-indigo-600 to-violet-600",
+                color: "from-navy-600 to-navy-800",
               },
               {
                 step: "02",
                 title: "Confirmamos",
                 desc: "Recibes tu código de rastreo por email y te asignamos el courier más cercano disponible.",
-                color: "from-violet-600 to-purple-600",
+                color: "from-navy-500 to-navy-700",
               },
               {
                 step: "03",
                 title: "Recogemos",
                 desc: "El courier llega a tu puerta en la fecha y hora programada. Seguimiento en tiempo real.",
-                color: "from-purple-600 to-indigo-600",
+                color: "from-accent-500 to-accent-600",
               },
             ].map((item, i) => (
               <Reveal key={item.step} delay={i * 120}>
                 <div className="flex flex-col items-center text-center relative">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center text-xl font-black text-white mb-6 shadow-lg relative z-10`}>
+                  <div className={`w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center text-xl font-extrabold text-white mb-6 shadow-lg relative z-10`}>
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
+                  <h3 className="text-xl font-bold text-navy-900 mb-3">{item.title}</h3>
                   <p className="text-slate-600 text-sm leading-relaxed max-w-xs">{item.desc}</p>
                 </div>
               </Reveal>
@@ -551,22 +532,22 @@ export default function Home() {
           <Reveal>
             <div
               className="rounded-3xl p-12 relative overflow-hidden"
-              style={{ background: "linear-gradient(135deg, #1a0a3d, #0d1b3e)" }}
+              style={{ background: "linear-gradient(135deg, #142b45, #0c1b2e)" }}
             >
               <div
                 className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl pointer-events-none"
-                style={{ background: "radial-gradient(circle, rgba(99,102,241,0.5) 0%, transparent 70%)" }}
+                style={{ background: "radial-gradient(circle, rgba(245,165,36,0.28) 0%, transparent 70%)" }}
               />
               <div className="relative z-10">
-                <h2 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+                <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight tracking-tight">
                   ¿Listo para enviar?
                 </h2>
-                <p className="text-white/60 text-lg mb-8">
+                <p className="text-navy-100/70 text-lg mb-8">
                   Sin registro. Sin complicaciones. Solo envía.
                 </p>
                 <Link
                   href="/recoger"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-xl shadow-indigo-900/50 text-sm"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-accent-500 hover:bg-accent-400 text-navy-950 font-bold rounded-xl transition-all shadow-xl text-sm"
                 >
                   Solicitar mi primera recogida
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -583,19 +564,17 @@ export default function Home() {
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-white font-black text-xs">OG</span>
-            </div>
+            <GlobeMark className="w-7 h-7" />
             <p className="text-slate-500 text-sm">&copy; 2025 O&apos;Globo Cargo</p>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/login" className="text-slate-500 hover:text-slate-900 text-sm transition-colors">
+            <Link href="/login" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               Panel de Control
             </Link>
-            <Link href="/recoger" className="text-slate-500 hover:text-slate-900 text-sm transition-colors">
+            <Link href="/recoger" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               Solicitar Recogida
             </Link>
-            <Link href="/rastreo/demo" className="text-slate-500 hover:text-slate-900 text-sm transition-colors">
+            <Link href="/rastreo/demo" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               Rastrear Envío
             </Link>
           </div>

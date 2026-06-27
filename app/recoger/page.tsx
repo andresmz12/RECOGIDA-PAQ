@@ -144,7 +144,7 @@ export default function RecogerPage() {
             </Link>
             <Link href={`/rastreo/${trackingCode}`}
               className="flex-1 flex items-center justify-center py-3 rounded-xl font-semibold text-sm transition-all text-white"
-              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+              style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
               Track package →
             </Link>
           </div>
@@ -166,7 +166,7 @@ export default function RecogerPage() {
           </Link>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
-              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>OG</div>
+              style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
             <span className="font-bold text-slate-900 text-sm">O'Globo Cargo</span>
           </div>
           <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
@@ -430,7 +430,7 @@ export default function RecogerPage() {
             type="submit"
             disabled={loading}
             className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
-            style={{ background: loading ? "#818cf8" : "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+            style={{ background: loading ? "#4d80b4" : "linear-gradient(135deg,#1d4f86,#2c629b)" }}
           >
             {loading ? (
               <>

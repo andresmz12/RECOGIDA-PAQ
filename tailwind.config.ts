@@ -8,8 +8,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-body)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
       },
       colors: {
         slate: {
@@ -34,6 +34,41 @@ const config: Config = {
           850: '#192132',
           900: '#0f172a',
           950: '#0a0f1f',
+        },
+        // ── Brand: O'Globo Cargo marine navy ──────────────────────────
+        // Corporate logistics navy. indigo/violet/purple are remapped to
+        // this same scale so legacy "purple-era" classes render as navy.
+        navy: {
+          50: '#eef4fa', 100: '#d5e3f1', 200: '#aec8e2', 300: '#7ea7cf',
+          400: '#4d80b4', 500: '#2c629b', 600: '#1d4f86', 700: '#193f6b',
+          800: '#173455', 900: '#142b45', 950: '#0c1b2e',
+        },
+        brand: {
+          50: '#eef4fa', 100: '#d5e3f1', 200: '#aec8e2', 300: '#7ea7cf',
+          400: '#4d80b4', 500: '#2c629b', 600: '#1d4f86', 700: '#193f6b',
+          800: '#173455', 900: '#142b45', 950: '#0c1b2e',
+        },
+        // Warm cargo accent (amber/gold) for highlights & emphasis
+        accent: {
+          50: '#fff8ec', 100: '#feecc8', 200: '#fdd88c', 300: '#fbbf24',
+          400: '#f5a524', 500: '#e8910c', 600: '#c9730a', 700: '#a3570c',
+          800: '#854610', 900: '#713a11',
+        },
+        // Legacy purple-family classes → remapped to brand navy (no purple)
+        indigo: {
+          50: '#eef4fa', 100: '#d5e3f1', 200: '#aec8e2', 300: '#7ea7cf',
+          400: '#4d80b4', 500: '#2c629b', 600: '#1d4f86', 700: '#193f6b',
+          800: '#173455', 900: '#142b45', 950: '#0c1b2e',
+        },
+        violet: {
+          50: '#eef4fa', 100: '#d5e3f1', 200: '#aec8e2', 300: '#7ea7cf',
+          400: '#4d80b4', 500: '#2c629b', 600: '#1d4f86', 700: '#193f6b',
+          800: '#173455', 900: '#142b45', 950: '#0c1b2e',
+        },
+        purple: {
+          50: '#eef4fa', 100: '#d5e3f1', 200: '#aec8e2', 300: '#7ea7cf',
+          400: '#4d80b4', 500: '#2c629b', 600: '#1d4f86', 700: '#193f6b',
+          800: '#173455', 900: '#142b45', 950: '#0c1b2e',
         },
       },
       fontSize: {

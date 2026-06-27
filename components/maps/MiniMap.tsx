@@ -51,7 +51,7 @@ function DraggableMarker({
 
   useEffect(() => {
     const icon = L.divIcon({
-      html: `<div style="width:28px;height:28px;background:#6366f1;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);cursor:grab;"></div>`,
+      html: `<div style="width:28px;height:28px;background:#1d4f86;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);cursor:grab;"></div>`,
       iconSize: [28, 28],
       iconAnchor: [14, 14],
       className: "",
@@ -115,7 +115,7 @@ export default function MiniMap({ lat, lng, zoom = 7, editable = false, onPinMov
         <CircleMarker
           center={[lat, lng]}
           radius={10}
-          pathOptions={{ color: "#6366f1", fillColor: "#6366f1", fillOpacity: 0.9, weight: 3 }}
+          pathOptions={{ color: "#1d4f86", fillColor: "#1d4f86", fillOpacity: 0.9, weight: 3 }}
         />
       )}
     </MapContainer>

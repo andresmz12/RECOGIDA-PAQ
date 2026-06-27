@@ -144,7 +144,7 @@ export default function MiCuentaPage() {
             </Link>
             <div className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white"
-                style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>OG</div>
+                style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
               <span className="text-white font-bold text-sm hidden sm:block">O&apos;Globo Cargo</span>
             </div>
             <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function MiCuentaPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-indigo-900/50 shrink-0"
-                style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+                style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
                 {initial}
               </div>
               <div>
@@ -222,7 +222,7 @@ export default function MiCuentaPage() {
           <Link
             href="/recoger"
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:shadow-xl hover:shadow-indigo-300"
-            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+            style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -260,7 +260,7 @@ export default function MiCuentaPage() {
             {tab === "active" && (
               <Link href="/recoger"
                 className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+                style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
                 {t("account.createFirst")}
               </Link>
             )}
@@ -367,7 +367,7 @@ function PickupCard({ pickup, cancelling, onCancel }: {
           <Link
             href={`/rastreo/${pickup.trackingCode}`}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-            style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}
+            style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}
           >
             {t("account.track")}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

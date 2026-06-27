@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-                style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}
               >
                 {loading ? (
                   <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Updating...</>

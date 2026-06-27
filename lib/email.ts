@@ -32,7 +32,7 @@ export async function sendPickupConfirmationEmail(
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;color:#1e293b;">
-      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;border-radius:12px 12px 0 0;">
+      <div style="background:linear-gradient(135deg,#1d4f86,#2c629b);padding:32px 40px;border-radius:12px 12px 0 0;">
         <h1 style="margin:0;font-size:24px;font-weight:800;color:white;">Pickup Request Confirmed</h1>
       </div>
       <div style="background:#fff;padding:40px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
@@ -41,10 +41,10 @@ export async function sendPickupConfirmationEmail(
 
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:24px;margin:28px 0;text-align:center;">
           <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Tracking Code</p>
-          <p style="margin:0;font-size:28px;font-weight:800;color:#4f46e5;font-family:monospace;">${trackingCode}</p>
+          <p style="margin:0;font-size:28px;font-weight:800;color:#1d4f86;font-family:monospace;">${trackingCode}</p>
         </div>
 
-        <a href="${trackingUrl}" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
+        <a href="${trackingUrl}" style="display:inline-block;background:linear-gradient(135deg,#1d4f86,#2c629b);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
           Track My Shipment →
         </a>
 
@@ -91,13 +91,13 @@ export async function sendStatusUpdateEmail(
   }
 
   const statusColor: Record<PickupStatus, string> = {
-    PENDING: "#f59e0b", ASSIGNED: "#3b82f6", SCHEDULED: "#8b5cf6",
+    PENDING: "#f59e0b", ASSIGNED: "#3b82f6", SCHEDULED: "#2c629b",
     EN_CAMINO: "#f97316", PICKED_UP: "#10b981", CANCELLED: "#ef4444",
   };
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;color:#1e293b;">
-      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;border-radius:12px 12px 0 0;">
+      <div style="background:linear-gradient(135deg,#1d4f86,#2c629b);padding:32px 40px;border-radius:12px 12px 0 0;">
         <h1 style="margin:0;font-size:24px;font-weight:800;color:white;">Shipment Update</h1>
       </div>
       <div style="background:#fff;padding:40px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
@@ -112,10 +112,10 @@ export async function sendStatusUpdateEmail(
 
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin:28px 0;text-align:center;">
           <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Tracking Code</p>
-          <p style="margin:0;font-size:24px;font-weight:800;color:#4f46e5;font-family:monospace;">${trackingCode}</p>
+          <p style="margin:0;font-size:24px;font-weight:800;color:#1d4f86;font-family:monospace;">${trackingCode}</p>
         </div>
 
-        <a href="${trackingUrl}" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
+        <a href="${trackingUrl}" style="display:inline-block;background:linear-gradient(135deg,#1d4f86,#2c629b);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;">
           View Full Details →
         </a>
         ${BRAND}
@@ -135,14 +135,14 @@ export async function sendPasswordResetEmail(
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;color:#1e293b;">
-      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px 40px;border-radius:12px 12px 0 0;">
+      <div style="background:linear-gradient(135deg,#1d4f86,#2c629b);padding:32px 40px;border-radius:12px 12px 0 0;">
         <h1 style="margin:0;font-size:24px;font-weight:800;color:white;">Reset Your Password</h1>
       </div>
       <div style="background:#fff;padding:40px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
         <p style="font-size:15px;line-height:1.6;margin-top:0;">Hi <strong>${name}</strong>,</p>
         <p style="font-size:15px;line-height:1.6;">We received a request to reset the password for your O'Globo Cargo account. Click the button below to set a new one.</p>
 
-        <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;margin:20px 0;">
+        <a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#1d4f86,#2c629b);color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px;margin:20px 0;">
           Reset Password →
         </a>
 

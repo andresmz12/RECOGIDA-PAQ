@@ -40,14 +40,14 @@ export default function LoginPage() {
         <div className="max-w-md text-white">
           <div className="flex items-center gap-4 mb-12">
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shadow-2xl"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}>
               OG
             </div>
             <span className="text-2xl font-bold tracking-tight">O&apos;Globo Cargo</span>
           </div>
           <h1 className="text-5xl font-black mb-6 leading-tight">
             International logistics<br />
-            <span style={{ background: "linear-gradient(90deg,#818cf8,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{ background: "linear-gradient(90deg,#4d80b4,#2c629b)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               simplified.
             </span>
           </h1>
@@ -70,7 +70,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="flex items-center gap-3 mb-10 lg:hidden justify-center">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shadow-lg"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}>
               <span className="text-white">OG</span>
             </div>
             <span className="text-xl font-bold text-white">O&apos;Globo Cargo</span>
@@ -142,7 +142,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={isLoading}
                 className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style={{ background: isLoading ? "#818cf8" : "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+                style={{ background: isLoading ? "#4d80b4" : "linear-gradient(135deg, #1d4f86, #2c629b)" }}
               >
                 {isLoading ? (
                   <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in...</>
