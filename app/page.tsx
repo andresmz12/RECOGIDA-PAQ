@@ -467,24 +467,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Social proof strip ───────────────────────────────────── */}
-      <section className="py-14 border-y border-slate-200 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <Reveal>
-            <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">
-              {t("landing.socialProof")}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-12">
-              {["Global Express", "CargoPro", "ShipFast", "BoxRoute", "PackHub", "MiloFreight"].map((name) => (
-                <span key={name} className="text-slate-400 font-bold text-sm tracking-wide opacity-60 hover:opacity-100 transition-opacity cursor-default">
-                  {name}
-                </span>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
       {/* ── CTA ──────────────────────────────────────────────────── */}
       <section className="py-24 md:py-32">
         <div className="max-w-3xl mx-auto px-6 text-center">
