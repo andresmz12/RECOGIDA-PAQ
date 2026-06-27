@@ -183,12 +183,19 @@
   "solicitudes": {
     "title": "Pickup Requests",
     "searchPlaceholder": "Search by name, address, code...",
-    "filterStatus": "Filter by status",
+    "filterStatus": "All statuses",
     "unassigned": "Unassigned",
     "viewDetail": "View detail",
     "assignCourier": "Assign courier",
     "noRequests": "No requests found",
-    "tryFilters": "Try different filters"
+    "noRequestsDesc": "No pickup requests have been created yet.",
+    "tryFilters": "No requests match the current filters. Try different criteria.",
+    "code": "Code",
+    "contact": "Contact",
+    "origin": "Origin",
+    "estado": "Status",
+    "date": "Date",
+    "action": "Action"
   },
   "login": {
     "title": "Sign in",

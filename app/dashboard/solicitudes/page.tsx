@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { SkeletonTableRow } from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
+import { useT } from "@/lib/i18n-context";
 
 interface PickupRequest {
   id: string;
@@ -31,6 +32,7 @@ const PackageIcon = () => (
 
 export default function SolicitudesPage() {
   const { data: session, status } = useSession();
+  const { t, lang } = useT();
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,7 @@ export default function SolicitudesPage() {
   }, [status, session, statusFilter, search, page, role]);
 
   const totalPages = Math.ceil(total / limit);
+  const locale = lang === "en" ? "en-US" : "es-CO";
 
   return (
     <DashboardLayout>
@@ -69,9 +72,11 @@ export default function SolicitudesPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Solicitudes de Recogida</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t("solicitudes.title")}</h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              {loading ? "Loading..." : `${total} request${total !== 1 ? "s" : ""}${statusFilter ? ` · filtered by ${statusFilter.toLowerCase()}` : ""}`}
+              {loading
+                ? t("common.loading")
+                : `${total} ${total !== 1 ? t("solicitudes.title").toLowerCase() : t("solicitudes.title").toLowerCase()}${statusFilter ? ` · ${t("common.filter").toLowerCase()}: ${t(`status.${statusFilter}`)}` : ""}`}
             </p>
           </div>
           <Link
@@ -81,7 +86,7 @@ export default function SolicitudesPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New request
+            {t("dashboard.newRequest")}
           </Link>
         </div>
 
@@ -94,7 +99,7 @@ export default function SolicitudesPage() {
               </svg>
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder={t("solicitudes.searchPlaceholder")}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50/50"
@@ -105,12 +110,12 @@ export default function SolicitudesPage() {
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-700 min-w-40 transition-all"
             >
-              <option value="">Todos los estados</option>
-              <option value="PENDING">Pending</option>
-              <option value="ASSIGNED">Assigned</option>
-              <option value="SCHEDULED">Scheduled</option>
-              <option value="PICKED_UP">Picked up</option>
-              <option value="CANCELLED">Cancelled</option>
+              <option value="">{t("solicitudes.filterStatus")}</option>
+              <option value="PENDING">{t("status.PENDING")}</option>
+              <option value="ASSIGNED">{t("status.ASSIGNED")}</option>
+              <option value="SCHEDULED">{t("status.SCHEDULED")}</option>
+              <option value="PICKED_UP">{t("status.PICKED_UP")}</option>
+              <option value="CANCELLED">{t("status.CANCELLED")}</option>
             </select>
           </div>
         </div>
@@ -121,13 +126,13 @@ export default function SolicitudesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80">
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Código</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Contacto</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Origen</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.code") || "Code"}</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.contact") || "Contact"}</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.origin") || "Origin"}</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.estado") || "Status"}</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Courier</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Fecha</th>
-                  <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Acción</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.date") || "Date"}</th>
+                  <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.action") || "Action"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -140,17 +145,17 @@ export default function SolicitudesPage() {
                     <td colSpan={7}>
                       <EmptyState
                         icon={<PackageIcon />}
-                        title="No requests found"
+                        title={t("solicitudes.noRequests")}
                         description={
                           statusFilter || search
-                            ? "No requests match the current filters. Try different criteria."
-                            : "No pickup requests have been created yet."
+                            ? t("solicitudes.tryFilters")
+                            : t("solicitudes.noRequestsDesc") || "No pickup requests have been created yet."
                         }
                         action={
                           !statusFilter && !search
-                            ? { label: "New request", href: "/recoger" }
+                            ? { label: t("dashboard.newRequest"), href: "/recoger" }
                             : {
-                                label: "Clear filters",
+                                label: t("common.filter"),
                                 onClick: () => { setStatusFilter(""); setSearch(""); },
                               }
                         }
@@ -179,11 +184,11 @@ export default function SolicitudesPage() {
                         {p.assignedCourier?.name ? (
                           <span className="font-medium text-slate-700">{p.assignedCourier.name}</span>
                         ) : (
-                          <span className="text-slate-400 text-xs italic">Sin asignar</span>
+                          <span className="text-slate-400 text-xs italic">{t("solicitudes.unassigned")}</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-500">
-                        {new Date(p.preferredDate).toLocaleDateString("en-US", {
+                        {new Date(p.preferredDate).toLocaleDateString(locale, {
                           day: "2-digit", month: "short", year: "numeric",
                         })}
                       </td>
@@ -192,7 +197,7 @@ export default function SolicitudesPage() {
                           href={`/dashboard/solicitudes/${p.id}`}
                           className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-xs font-semibold transition-colors opacity-60 group-hover:opacity-100"
                         >
-                          Ver detalle
+                          {t("solicitudes.viewDetail")}
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
@@ -209,7 +214,9 @@ export default function SolicitudesPage() {
           {!loading && totalPages > 1 && (
             <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <p className="text-xs text-slate-500">
-                Page <span className="font-bold text-slate-700">{page}</span> de{" "}
+                {lang === "en" ? "Page" : "Página"}{" "}
+                <span className="font-bold text-slate-700">{page}</span>{" "}
+                {lang === "en" ? "of" : "de"}{" "}
                 <span className="font-bold text-slate-700">{totalPages}</span>
               </p>
               <div className="flex gap-2">
@@ -218,14 +225,14 @@ export default function SolicitudesPage() {
                   disabled={page === 1}
                   className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-white hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  ← Anterior
+                  {lang === "en" ? "← Previous" : "← Anterior"}
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                   className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-white hover:border-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Siguiente →
+                  {lang === "en" ? "Next →" : "Siguiente →"}
                 </button>
               </div>
             </div>

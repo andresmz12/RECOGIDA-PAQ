@@ -183,12 +183,19 @@
   "solicitudes": {
     "title": "Solicitudes de Recogida",
     "searchPlaceholder": "Buscar por nombre, dirección, código...",
-    "filterStatus": "Filtrar por estado",
+    "filterStatus": "Todos los estados",
     "unassigned": "Sin asignar",
     "viewDetail": "Ver detalle",
     "assignCourier": "Asignar courier",
     "noRequests": "Sin solicitudes encontradas",
-    "tryFilters": "Prueba con otros filtros"
+    "noRequestsDesc": "Aún no se han creado solicitudes de recogida.",
+    "tryFilters": "Ninguna solicitud coincide con los filtros actuales.",
+    "code": "Código",
+    "contact": "Contacto",
+    "origin": "Origen",
+    "estado": "Estado",
+    "date": "Fecha",
+    "action": "Acción"
   },
   "login": {
     "title": "Iniciar sesión",
