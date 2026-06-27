@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function ResetPasswordPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useT();
   const token = params.token as string;
 
   const [password, setPassword] = useState("");
@@ -19,8 +22,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
-    if (password !== confirm) { setError("Passwords do not match."); return; }
+    if (password.length < 6) { setError(t("auth.errorMin6")); return; }
+    if (password !== confirm) { setError(t("auth.errorMismatch")); return; }
 
     setLoading(true);
     try {
@@ -30,23 +33,26 @@ export default function ResetPasswordPage() {
         body: JSON.stringify({ token, password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
+      if (!res.ok) { setError(data.error ?? t("auth.errorGeneric")); return; }
       setDone(true);
       setTimeout(() => router.push("/login"), 3000);
     } catch {
-      setError("Connection error. Please try again.");
+      setError(t("auth.connectionError"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "linear-gradient(135deg, #0c1b2e, #142b45, #0d2240)" }}>
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           <div className="mb-8">
-            <h2 className="text-3xl font-black text-slate-900">Set new password</h2>
-            <p className="text-slate-500 mt-2 text-sm">Choose a strong password for your account.</p>
+            <h2 className="text-3xl font-black text-slate-900">{t("auth.resetTitle")}</h2>
+            <p className="text-slate-500 mt-2 text-sm">{t("auth.resetSubtitle")}</p>
           </div>
 
           {done ? (
@@ -56,10 +62,10 @@ export default function ResetPasswordPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Password updated!</h3>
-              <p className="text-slate-500 text-sm mb-4">Redirecting you to login...</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{t("auth.passwordUpdated")}</h3>
+              <p className="text-slate-500 text-sm mb-4">{t("auth.redirecting")}</p>
               <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm">
-                Go to login →
+                {t("auth.goToLogin")}
               </Link>
             </div>
           ) : (
@@ -73,13 +79,13 @@ export default function ResetPasswordPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">New password</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t("auth.newPassword")}</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={t("auth.passwordPlaceholder")}
                     required
                     disabled={loading}
                     className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50"
@@ -95,12 +101,12 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm password</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t("auth.confirmPassword")}</label>
                 <input
                   type={showPassword ? "text" : "password"}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Repeat your password"
+                  placeholder={t("auth.confirmPlaceholder")}
                   required
                   disabled={loading}
                   className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-50"
@@ -113,8 +119,8 @@ export default function ResetPasswordPage() {
                 style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}
               >
                 {loading ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Updating...</>
-                ) : "Update password →"}
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("auth.updating")}</>
+                ) : t("auth.updateBtn")}
               </button>
             </form>
           )}

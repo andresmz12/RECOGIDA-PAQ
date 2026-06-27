@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function ForgotPasswordPage() {
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -21,29 +24,30 @@ export default function ForgotPasswordPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
+        setError(data.error ?? t("auth.errorGeneric"));
         return;
       }
       setSent(true);
     } catch {
-      setError("Connection error. Please try again.");
+      setError(t("auth.connectionError"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "linear-gradient(135deg, #0c1b2e, #142b45, #0d2240)" }}>
       <div className="w-full max-w-md">
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           <div className="mb-8">
             <Link href="/login" className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 mb-6">
-              ← Back to login
+              {t("auth.backToLogin")}
             </Link>
-            <h2 className="text-3xl font-black text-slate-900">Forgot password?</h2>
-            <p className="text-slate-500 mt-2 text-sm">
-              Enter your email and we&apos;ll send you a reset link.
-            </p>
+            <h2 className="text-3xl font-black text-slate-900">{t("auth.forgotTitle")}</h2>
+            <p className="text-slate-500 mt-2 text-sm">{t("auth.forgotSubtitle")}</p>
           </div>
 
           {sent ? (
@@ -53,12 +57,12 @@ export default function ForgotPasswordPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Check your inbox</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{t("auth.checkInbox")}</h3>
               <p className="text-slate-500 text-sm mb-6">
-                If <strong>{email}</strong> is registered, you&apos;ll receive a reset link within a few minutes.
+                {t("auth.sentDesc").replace("{email}", email)}
               </p>
               <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm">
-                Back to login →
+                {t("auth.backToLoginLink")}
               </Link>
             </div>
           ) : (
@@ -72,7 +76,7 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Email address</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">{t("auth.emailLabel")}</label>
                 <input
                   type="email"
                   value={email}
@@ -90,8 +94,8 @@ export default function ForgotPasswordPage() {
                 style={{ background: "linear-gradient(135deg, #1d4f86, #2c629b)" }}
               >
                 {loading ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</>
-                ) : "Send reset link →"}
+                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t("auth.sending")}</>
+                ) : t("auth.sendLink")}
               </button>
             </form>
           )}

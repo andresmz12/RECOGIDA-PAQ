@@ -9,6 +9,8 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 interface StatusHistoryEntry {
   fromStatus: string | null;
@@ -26,23 +28,14 @@ interface TrackingData {
   statusHistory: StatusHistoryEntry[];
 }
 
-const statusMessages: Record<string, string> = {
-  PENDING: "Request Pending",
-  ASSIGNED: "Courier Assigned",
-  SCHEDULED: "Courier On the Way",
-  PICKED_UP: "Package Picked Up",
-  CANCELLED: "Request Cancelled",
-};
-
-const statusDescriptions: Record<string, string> = {
-  PENDING: "Your request is registered and waiting to be assigned to a courier.",
-  ASSIGNED: "A courier has been assigned to your pickup. The date and time will be confirmed soon.",
-  SCHEDULED: "Your courier is on the way and will arrive within the indicated time window.",
-  PICKED_UP: "Your package has been successfully picked up!",
-  CANCELLED: "This request has been cancelled.",
-};
-
 const STEPS = ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"];
+const STATUS_MSG_KEY: Record<string, string> = {
+  PENDING: "Pending",
+  ASSIGNED: "Assigned",
+  SCHEDULED: "Scheduled",
+  PICKED_UP: "PickedUp",
+  CANCELLED: "Cancelled",
+};
 
 function stepIndex(status: string) {
   return STEPS.indexOf(status);
@@ -50,6 +43,8 @@ function stepIndex(status: string) {
 
 export default function RastreoPage() {
   const params = useParams();
+  const { t, lang } = useT();
+  const locale = lang === "en" ? "en-US" : "es-CO";
   const trackingCode = params.trackingCode as string;
   const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,14 +57,14 @@ export default function RastreoPage() {
       try {
         const res = await fetch(`/api/track/${trackingCode}`);
         if (!res.ok) {
-          setError("Tracking code not found");
+          setError(t("rastreo.trackingNotFound"));
           setLoading(false);
           return;
         }
         const data = await res.json();
         setTracking(data);
       } catch {
-        setError("Error loading tracking information");
+        setError(t("rastreo.errorLoad"));
       } finally {
         setLoading(false);
       }
@@ -83,7 +78,7 @@ export default function RastreoPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
-          <p className="text-slate-600 font-medium">Loading tracking information...</p>
+          <p className="text-slate-600 font-medium">{t("rastreo.loading")}</p>
         </div>
       </div>
     );
@@ -95,14 +90,14 @@ export default function RastreoPage() {
         <Container size="md">
           <Card variant="elevated" padding="lg" className="text-center">
             <div className="text-6xl mb-4 opacity-50">📭</div>
-            <h1 className="text-2xl font-black text-slate-900 mb-3">Not found</h1>
+            <h1 className="text-2xl font-black text-slate-900 mb-3">{t("rastreo.notFound")}</h1>
             <p className="text-slate-600 mb-8">{error}</p>
             <div className="flex gap-3 justify-center">
               <Link href="/">
-                <Button variant="outline">← Back to home</Button>
+                <Button variant="outline">{t("rastreo.backHome")}</Button>
               </Link>
               <Link href="/recoger">
-                <Button variant="primary">Create new request</Button>
+                <Button variant="primary">{t("rastreo.createNew")}</Button>
               </Link>
             </div>
           </Card>
@@ -115,12 +110,12 @@ export default function RastreoPage() {
 
   const isCancelled = tracking.status === "CANCELLED";
   const currentStep = stepIndex(tracking.status);
-  const formattedDate = new Date(tracking.estimatedPickupDate).toLocaleDateString("en-US", {
+  const formattedDate = new Date(tracking.estimatedPickupDate).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  const lastUpdateDate = new Date(tracking.lastUpdated).toLocaleDateString("en-US", {
+  const lastUpdateDate = new Date(tracking.lastUpdated).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -131,23 +126,26 @@ export default function RastreoPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12">
       <Container size="md">
-        {/* Back link */}
-        <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5 mb-8">
-          ← Back to home
-        </Link>
+        {/* Back link + lang switcher */}
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5">
+            {t("rastreo.backHome")}
+          </Link>
+          <LanguageSwitcher />
+        </div>
 
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-4xl font-black text-slate-900 mb-2">Your Pickup Request</h1>
-          <p className="text-slate-600">Track your package status in real time</p>
+          <h1 className="text-4xl font-black text-slate-900 mb-2">{t("rastreo.pageTitle")}</h1>
+          <p className="text-slate-600">{t("rastreo.pageSubtitle")}</p>
         </div>
 
         {/* Tracking Code */}
         <Card variant="elevated" padding="lg" className="mb-8 border-indigo-100">
           <div className="text-center">
-            <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">Tracking Code</p>
+            <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">{t("rastreo.trackingCodeLabel")}</p>
             <p className="text-4xl font-black text-indigo-600 font-mono">{tracking.trackingCode}</p>
-            <p className="text-xs text-slate-500 mt-3">Save this code for future reference</p>
+            <p className="text-xs text-slate-500 mt-3">{t("rastreo.saveCode")}</p>
           </div>
         </Card>
 
@@ -158,10 +156,10 @@ export default function RastreoPage() {
               <StatusBadge status={tracking.status} />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              {statusMessages[tracking.status]}
+              {t(`rastreo.status${STATUS_MSG_KEY[tracking.status] ?? tracking.status}`)}
             </h2>
             <p className="text-slate-600">
-              {statusDescriptions[tracking.status]}
+              {t(`rastreo.desc${STATUS_MSG_KEY[tracking.status] ?? tracking.status}`)}
             </p>
           </div>
 
@@ -169,7 +167,7 @@ export default function RastreoPage() {
           {!isCancelled && (
             <div className="mt-8 pt-8 border-t border-slate-100">
               <div className="flex items-center justify-between">
-                {["Requested", "Assigned", "On the way", "Picked up"].map((label, i) => (
+                {[t("rastreo.stepRequested"), t("rastreo.stepAssigned"), t("rastreo.stepOnWay"), t("rastreo.stepPickedUp")].map((label, i) => (
                   <div key={label} className="flex flex-col items-center flex-1">
                     <div className="flex items-center w-full">
                       {i > 0 && (
@@ -202,15 +200,15 @@ export default function RastreoPage() {
         {!isCancelled && (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card variant="default" padding="lg">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 Estimated Date</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 {t("rastreo.estimatedDate")}</h3>
               <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
-              <p className="text-xs text-slate-500 mt-2">Scheduled pickup date</p>
+              <p className="text-xs text-slate-500 mt-2">{t("rastreo.scheduledDate")}</p>
             </Card>
 
             <Card variant="default" padding="lg">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ Time Window</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ {t("rastreo.timeWindow")}</h3>
               <p className="text-2xl font-bold text-slate-900">{tracking.preferredTimeWindow}</p>
-              <p className="text-xs text-slate-500 mt-2">Pickup time window</p>
+              <p className="text-xs text-slate-500 mt-2">{t("rastreo.timeWindowDesc")}</p>
             </Card>
           </div>
         )}
@@ -219,7 +217,7 @@ export default function RastreoPage() {
         {tracking.statusHistory.length > 0 && (
           <Card variant="default" padding="lg" className="mb-8">
             <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <span>📋</span> Update history
+              <span>📋</span> {t("rastreo.updateHistory")}
             </h3>
             <div className="relative">
               <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
@@ -240,7 +238,7 @@ export default function RastreoPage() {
                         <StatusBadge status={entry.toStatus} />
                       </div>
                       <p className="text-xs text-slate-500 mt-1.5 font-medium">
-                        {new Date(entry.createdAt).toLocaleDateString("en-US", {
+                        {new Date(entry.createdAt).toLocaleDateString(locale, {
                           year: "numeric", month: "long", day: "numeric",
                           hour: "2-digit", minute: "2-digit",
                         })}
@@ -263,7 +261,7 @@ export default function RastreoPage() {
           <div className="flex items-center gap-3">
             <div className="text-2xl">ℹ️</div>
             <div>
-              <p className="text-sm font-semibold text-slate-600">Last Updated</p>
+              <p className="text-sm font-semibold text-slate-600">{t("rastreo.lastUpdated")}</p>
               <p className="text-slate-700 font-medium">{lastUpdateDate}</p>
             </div>
           </div>
@@ -271,13 +269,13 @@ export default function RastreoPage() {
 
         {/* CTA Section */}
         <div className="text-center space-y-4">
-          <p className="text-slate-600 font-medium">Need help or want to create another request?</p>
+          <p className="text-slate-600 font-medium">{t("rastreo.needHelp")}</p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link href="/">
-              <Button variant="outline">← Back to home</Button>
+              <Button variant="outline">{t("rastreo.backHome")}</Button>
             </Link>
             <Link href="/recoger">
-              <Button variant="primary">Create new request →</Button>
+              <Button variant="primary">{t("rastreo.createNew")} →</Button>
             </Link>
           </div>
         </div>

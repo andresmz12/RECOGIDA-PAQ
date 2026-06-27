@@ -6,13 +6,15 @@ import { useState } from "react";
 import Link from "next/link";
 import LocationPicker from "@/components/Form/LocationPicker";
 import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
+import { useT } from "@/lib/i18n-context";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const BOX_SIZES = [
-  { value: "Caja 18x18x18", label: "Box 18×18×18 in", dimensions: "18x18x18 in", desc: "Small" },
-  { value: "Caja 20x20x20", label: "Box 20×20×20 in", dimensions: "20x20x20 in", desc: "Medium" },
-  { value: "Caja 22x22x22", label: "Box 22×22×22 in", dimensions: "22x22x22 in", desc: "Large" },
-  { value: "Caja 24x24x24", label: "Box 24×24×24 in", dimensions: "24x24x24 in", desc: "Extra Large" },
-  { value: "Documento",     label: "Document",         dimensions: "",             desc: "Envelope / letter" },
+  { value: "Caja 18x18x18", dimensions: "18x18x18 in", descKey: "boxSmall" },
+  { value: "Caja 20x20x20", dimensions: "20x20x20 in", descKey: "boxMedium" },
+  { value: "Caja 22x22x22", dimensions: "22x22x22 in", descKey: "boxLarge" },
+  { value: "Caja 24x24x24", dimensions: "24x24x24 in", descKey: "boxXL" },
+  { value: "Documento",     dimensions: "",             descKey: "boxDoc" },
 ];
 
 const US_STATES = [
@@ -24,9 +26,9 @@ const US_STATES = [
 ];
 
 const TIME_WINDOWS = [
-  { value: "08:00-12:00", label: "Morning  8:00 am – 12:00 pm" },
-  { value: "12:00-17:00", label: "Afternoon  12:00 pm – 5:00 pm" },
-  { value: "17:00-20:00", label: "Evening  5:00 pm – 8:00 pm" },
+  { value: "08:00-12:00", labelKey: "twMorning" },
+  { value: "12:00-17:00", labelKey: "twAfternoon" },
+  { value: "17:00-20:00", labelKey: "twEvening" },
 ];
 
 const EMPTY = {
@@ -79,6 +81,7 @@ const inputCls =
   "w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all";
 
 export default function RecogerPage() {
+  const { t } = useT();
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,13 +111,13 @@ export default function RecogerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to create request.");
+        setError(data.error || t("recoger.errorCreate"));
         setLoading(false);
         return;
       }
       setTrackingCode(data.trackingCode);
     } catch {
-      setError("Connection error. Please try again.");
+      setError(t("recoger.connectionError"));
       setLoading(false);
     }
   };
@@ -129,23 +132,23 @@ export default function RecogerPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-white mb-2">Request created!</h1>
-          <p className="text-white/60 mb-8">We will send you a confirmation email</p>
+          <h1 className="text-3xl font-black text-white mb-2">{t("recoger.successTitle")}</h1>
+          <p className="text-white/60 mb-8">{t("recoger.successDesc")}</p>
 
           <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-6 mb-8">
-            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">Tracking code</p>
+            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest mb-2">{t("recoger.trackingCodeLabel")}</p>
             <p className="text-3xl font-mono font-black text-indigo-300">{trackingCode}</p>
-            <p className="text-white/40 text-xs mt-3">Save this code to track your pickup</p>
+            <p className="text-white/40 text-xs mt-3">{t("recoger.saveCode")}</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/" className="flex-1 flex items-center justify-center py-3 rounded-xl border-2 border-white/20 text-white font-semibold hover:bg-white/10 transition-all text-sm">
-              ← Back to home
+              {t("recoger.backHome")}
             </Link>
             <Link href={`/rastreo/${trackingCode}`}
               className="flex-1 flex items-center justify-center py-3 rounded-xl font-semibold text-sm transition-all text-white"
               style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
-              Track package →
+              {t("recoger.trackPackage")}
             </Link>
           </div>
         </div>
@@ -162,23 +165,26 @@ export default function RecogerPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back
+            {t("recoger.back")}
           </Link>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
               style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
             <span className="font-bold text-slate-900 text-sm">O'Globo Cargo</span>
           </div>
-          <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
-            Sign in
-          </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
+              {t("recoger.signIn")}
+            </Link>
+          </div>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-slate-900 mb-1">Request a pickup</h1>
-          <p className="text-slate-500">Fill out the form and we will coordinate your pickup</p>
+          <h1 className="text-3xl font-black text-slate-900 mb-1">{t("recoger.title")}</h1>
+          <p className="text-slate-500">{t("recoger.subtitle")}</p>
         </div>
 
         {error && (
@@ -200,17 +206,17 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Your information (Sender)</h2>
+              <h2 className="font-bold text-slate-900">{t("recoger.senderSection")}</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Full name" required>
+              <Field label={t("recoger.fullName")} required>
                 <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} placeholder="Jane Doe" required />
               </Field>
-              <Field label="Phone" required>
+              <Field label={t("recoger.phone")} required>
                 <input className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} placeholder="+1 (305) 555-0000" required />
               </Field>
             </div>
-            <Field label="Email" required>
+            <Field label={t("recoger.email")} required>
               <input type="email" className={inputCls} value={form.contactEmail} onChange={e => set("contactEmail", e.target.value)} placeholder="you@email.com" required />
             </Field>
           </section>
@@ -224,9 +230,9 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Pickup address (USA)</h2>
+              <h2 className="font-bold text-slate-900">{t("recoger.pickupSection")}</h2>
             </div>
-            <Field label="Address" required>
+            <Field label={t("recoger.address")} required>
               <AddressAutocomplete
                 value={form.pickupAddress}
                 onChange={(v) => set("pickupAddress", v)}
@@ -246,15 +252,15 @@ export default function RecogerPage() {
               />
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <Field label="City" required>
+              <Field label={t("recoger.city")} required>
                 <input className={inputCls} value={form.pickupCity} onChange={e => set("pickupCity", e.target.value)} placeholder="Miami" required />
               </Field>
-              <Field label="State" required>
+              <Field label={t("recoger.state")} required>
                 <select className={inputCls + " bg-white"} value={form.pickupState} onChange={e => set("pickupState", e.target.value)} required>
                   {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </Field>
-              <Field label="ZIP" required>
+              <Field label={t("recoger.zip")} required>
                 <input className={inputCls} value={form.pickupPostalCode} onChange={e => set("pickupPostalCode", e.target.value)} placeholder="33101" required />
               </Field>
             </div>
@@ -268,28 +274,28 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Recipient information</h2>
+              <h2 className="font-bold text-slate-900">{t("recoger.recipientSection")}</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Recipient name" required>
+              <Field label={t("recoger.recipientName")} required>
                 <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="Maria Lopez" required />
               </Field>
-              <Field label="Primary phone" required>
+              <Field label={t("recoger.primaryPhone")} required>
                 <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
               </Field>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Secondary phone" hint="Optional">
+              <Field label={t("recoger.secondaryPhone")} hint={t("recoger.secondaryPhoneHint")}>
                 <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} placeholder="+504 8888-8888" />
               </Field>
-              <Field label="Recipient email" hint="Optional">
+              <Field label={t("recoger.recipientEmail")} hint={t("recoger.recipientEmailHint")}>
                 <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="recipient@email.com" />
               </Field>
             </div>
 
-            <Field label="Delivery address" required>
+            <Field label={t("recoger.deliveryAddress")} required>
               <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} placeholder="Col. Centro, Calle Principal #12" required />
             </Field>
 
@@ -318,15 +324,17 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Your package</h2>
+              <h2 className="font-bold text-slate-900">{t("recoger.packageSection")}</h2>
             </div>
 
             {/* Box size selector */}
             <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2.5">Box size <span className="text-red-500">*</span></p>
+              <p className="text-sm font-semibold text-slate-700 mb-2.5">{t("recoger.boxSize")} <span className="text-red-500">*</span></p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {BOX_SIZES.map((box) => {
                   const active = form.packageType === box.value;
+                  const label = box.value === "Documento" ? t("recoger.boxDoc") : `Box ${box.dimensions}`;
+                  const desc = t(`recoger.${box.descKey}`);
                   return (
                     <button
                       key={box.value}
@@ -352,8 +360,8 @@ export default function RecogerPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         )}
                       </svg>
-                      <span className={`text-xs font-bold leading-tight ${active ? "text-indigo-700" : "text-slate-700"}`}>{box.label}</span>
-                      <span className={`text-xs mt-0.5 ${active ? "text-indigo-500" : "text-slate-400"}`}>{box.desc}</span>
+                      <span className={`text-xs font-bold leading-tight ${active ? "text-indigo-700" : "text-slate-700"}`}>{label}</span>
+                      <span className={`text-xs mt-0.5 ${active ? "text-indigo-500" : "text-slate-400"}`}>{desc}</span>
                     </button>
                   );
                 })}
@@ -361,7 +369,7 @@ export default function RecogerPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Estimated weight (lbs)" hint="Content only, not the box">
+              <Field label={t("recoger.weightLabel")} hint={t("recoger.weightHint")}>
                 <div className="relative">
                   <input
                     type="number"
@@ -375,7 +383,7 @@ export default function RecogerPage() {
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">lbs</span>
                 </div>
               </Field>
-              <Field label="Package contents" required>
+              <Field label={t("recoger.contents")} required>
                 <input
                   className={inputCls}
                   value={form.packageContents}
@@ -395,10 +403,10 @@ export default function RecogerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="font-bold text-slate-900">Pickup date and time</h2>
+              <h2 className="font-bold text-slate-900">{t("recoger.scheduleSection")}</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Preferred date" required>
+              <Field label={t("recoger.preferredDate")} required>
                 <input
                   type="date"
                   className={inputCls}
@@ -408,19 +416,19 @@ export default function RecogerPage() {
                   required
                 />
               </Field>
-              <Field label="Time window" required>
+              <Field label={t("recoger.timeWindow")} required>
                 <select className={inputCls + " bg-white"} value={form.preferredTimeWindow} onChange={e => set("preferredTimeWindow", e.target.value)} required>
-                  {TIME_WINDOWS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  {TIME_WINDOWS.map(tw => <option key={tw.value} value={tw.value}>{t(`recoger.${tw.labelKey}`)}</option>)}
                 </select>
               </Field>
             </div>
-            <Field label="Special instructions" hint="Optional">
+            <Field label={t("recoger.specialInstructions")} hint={t("recoger.specialInstructionsHint")}>
               <textarea
                 className={inputCls + " resize-none"}
                 rows={3}
                 value={form.specialInstructions}
                 onChange={e => set("specialInstructions", e.target.value)}
-                placeholder="e.g. Call before arriving, back door, access code #1234..."
+                placeholder={t("recoger.specialInstructionsPlaceholder")}
               />
             </Field>
           </section>
@@ -435,11 +443,11 @@ export default function RecogerPage() {
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Creating request...
+                {t("recoger.submitting")}
               </>
             ) : (
               <>
-                Request pickup
+                {t("recoger.submit")}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -448,9 +456,9 @@ export default function RecogerPage() {
           </button>
 
           <p className="text-center text-xs text-slate-400 pb-4">
-            Already have an account?{" "}
-            <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">Sign in</Link>
-            {" "}to save your requests
+            {t("recoger.alreadyAccount")}{" "}
+            <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-700">{t("recoger.signInLink")}</Link>
+            {" "}{t("recoger.toSaveRequests")}
           </p>
         </form>
       </div>
