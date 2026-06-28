@@ -376,7 +376,20 @@ function PickupActionCard({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setPhotoDataUrl(ev.target?.result as string);
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setPhotoDataUrl(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = src;
+    };
     reader.readAsDataURL(file);
   };
 
