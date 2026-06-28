@@ -32,6 +32,7 @@ export async function GET(
         estimatedWeight: true,
         dimensions: true,
         packageContents: true,
+        packageItems: true,
         preferredDate: true,
         preferredTimeWindow: true,
         specialInstructions: true,

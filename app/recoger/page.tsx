@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import LocationPicker from "@/components/Form/LocationPicker";
@@ -62,6 +62,9 @@ const TIME_WINDOWS = [
   { value: "17:00-20:00", labelKey: "twEvening" },
 ];
 
+type BoxItem = { packageType: string; estimatedWeight: string };
+const DEFAULT_ITEM: BoxItem = { packageType: "Caja 20x20x20", estimatedWeight: "" };
+
 const EMPTY = {
   // Sender
   contactName: "",
@@ -82,9 +85,7 @@ const EMPTY = {
   recipientCity: "",
   recipientCountry: "HN",
   recipientState: "",
-  // Package
-  packageType: "Caja 20x20x20",
-  estimatedWeight: "",
+  // Package (shared across boxes)
   packageContents: "",
   // Schedule
   preferredDate: "",
@@ -115,12 +116,20 @@ export default function RecogerPage() {
   const { t } = useT();
   const { data: session } = useSession();
   const [form, setForm] = useState(EMPTY);
+  const [items, setItems] = useState<BoxItem[]>([{ ...DEFAULT_ITEM }]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const addItem = useCallback(() =>
+    setItems(prev => [...prev, { ...DEFAULT_ITEM }]), []);
+  const removeItem = useCallback((i: number) =>
+    setItems(prev => prev.filter((_, idx) => idx !== i)), []);
+  const updateItem = useCallback((i: number, field: keyof BoxItem, value: string) =>
+    setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item)), []);
 
   useEffect(() => {
     fetch("/api/pricing")
@@ -130,22 +139,31 @@ export default function RecogerPage() {
   }, []);
 
   const isLoggedIn = !!session;
-  const activeRule = pricingRules.find(
-    r => r.country === form.recipientCountry && r.packageType === form.packageType
-  );
-  const estimatedPrice = calcPrice(form.packageType, form.estimatedWeight, activeRule);
+  const ruleFor = (packageType: string) =>
+    pricingRules.find(r => r.country === form.recipientCountry && r.packageType === packageType);
+  const priceOf = (item: BoxItem) =>
+    calcPrice(item.packageType, item.estimatedWeight, ruleFor(item.packageType));
+  const totalPrice = items.reduce((sum, item) => sum + priceOf(item), 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const selectedBox = BOX_SIZES.find((b) => b.value === form.packageType);
+    const firstItem = items[0];
+    const firstBox = BOX_SIZES.find((b) => b.value === firstItem.packageType);
+    const packageItemsData = items.map(item => ({
+      packageType: item.packageType,
+      estimatedWeight: item.estimatedWeight ? parseFloat(item.estimatedWeight) : null,
+      dimensions: BOX_SIZES.find(b => b.value === item.packageType)?.dimensions || "",
+    }));
     const payload = {
       ...form,
-      dimensions: selectedBox?.dimensions || "",
+      packageType: firstItem.packageType,
+      estimatedWeight: firstItem.estimatedWeight ? parseFloat(firstItem.estimatedWeight) : null,
+      dimensions: firstBox?.dimensions || "",
+      packageItems: JSON.stringify(packageItemsData),
       destinationCountry: form.recipientCountry,
-      estimatedWeight: form.estimatedWeight ? parseFloat(form.estimatedWeight) : null,
       recipientState: form.recipientState || null,
     };
 
@@ -393,72 +411,93 @@ export default function RecogerPage() {
               <h2 className="font-bold text-slate-900">{t("recoger.packageSection")}</h2>
             </div>
 
-            {/* Box size selector */}
-            <div>
-              <p className="text-sm font-semibold text-slate-700 mb-2.5">{t("recoger.boxSize")} <span className="text-red-500">*</span></p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {BOX_SIZES.map((box) => {
-                  const active = form.packageType === box.value;
-                  const label = box.value === "Documento" ? t("recoger.boxDoc") : `Box ${box.dimensions}`;
-                  const desc = t(`recoger.${box.descKey}`);
-                  return (
-                    <button
-                      key={box.value}
-                      type="button"
-                      onClick={() => set("packageType", box.value)}
-                      className={`relative flex flex-col items-center py-3 px-2 rounded-xl border-2 transition-all text-center ${
-                        active
-                          ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
+            {/* Items list */}
+            <div className="space-y-2.5">
+              <p className="text-sm font-semibold text-slate-700">{t("recoger.boxes")} <span className="text-red-500">*</span></p>
+              {items.map((item, i) => (
+                <div key={i} className="flex items-end gap-2.5 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  {/* Box icon */}
+                  <div className="mb-0.5 shrink-0">
+                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {item.packageType === "Documento"
+                        ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      }
+                    </svg>
+                  </div>
+                  {/* Box type */}
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">
+                      {items.length > 1 ? `${t("recoger.box")} ${i + 1}` : t("recoger.boxSize")}
+                    </label>
+                    <select
+                      value={item.packageType}
+                      onChange={e => updateItem(i, "packageType", e.target.value)}
+                      className={inputCls + " bg-white py-2"}
+                      required
                     >
-                      {active && (
-                        <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center">
-                          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </span>
-                      )}
-                      <svg className={`w-7 h-7 mb-1.5 ${active ? "text-indigo-600" : "text-slate-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {box.value === "Documento" ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        )}
+                      {BOX_SIZES.map(b => (
+                        <option key={b.value} value={b.value}>
+                          {b.value === "Documento" ? t("recoger.boxDoc") : b.value}
+                          {b.dimensions ? ` (${b.dimensions})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Weight */}
+                  <div className="w-32 shrink-0">
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">{t("recoger.weightLabel")}</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        className={inputCls + " pr-10 py-2"}
+                        value={item.estimatedWeight}
+                        onChange={e => updateItem(i, "estimatedWeight", e.target.value)}
+                        placeholder="15"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">lbs</span>
+                    </div>
+                  </div>
+                  {/* Remove */}
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      className="mb-0.5 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                      title={t("recoger.removeBox")}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      <span className={`text-xs font-bold leading-tight ${active ? "text-indigo-700" : "text-slate-700"}`}>{label}</span>
-                      <span className={`text-xs mt-0.5 ${active ? "text-indigo-500" : "text-slate-400"}`}>{desc}</span>
                     </button>
-                  );
-                })}
-              </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Add box button */}
+              <button
+                type="button"
+                onClick={addItem}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all text-sm font-semibold"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t("recoger.addBox")}
+              </button>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label={t("recoger.weightLabel")} hint={t("recoger.weightHint")}>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    className={inputCls + " pr-12"}
-                    value={form.estimatedWeight}
-                    onChange={e => set("estimatedWeight", e.target.value)}
-                    placeholder="15"
-                  />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">lbs</span>
-                </div>
-              </Field>
-              <Field label={t("recoger.contents")} required>
-                <input
-                  className={inputCls}
-                  value={form.packageContents}
-                  onChange={e => set("packageContents", e.target.value)}
-                  placeholder="Clothing, shoes, appliances..."
-                  required
-                />
-              </Field>
-            </div>
+            <Field label={t("recoger.contents")} required>
+              <input
+                className={inputCls}
+                value={form.packageContents}
+                onChange={e => set("packageContents", e.target.value)}
+                placeholder="Clothing, shoes, appliances..."
+                required
+              />
+            </Field>
           </section>
 
           {/* ── Fecha y hora ── */}
@@ -500,26 +539,34 @@ export default function RecogerPage() {
           </section>
 
           {/* Price estimate */}
-          {form.packageType && (
+          {items.length > 0 && (
             <section className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl border border-indigo-200 p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-0.5">{t("recoger.priceEstimate")}</p>
-                  <p className="text-3xl font-black text-slate-900">${estimatedPrice.toFixed(2)}</p>
+                  <p className="text-3xl font-black text-slate-900">${totalPrice.toFixed(2)}</p>
                   <p className="text-xs text-slate-500 mt-1">{t("recoger.priceNote")}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <div className="text-xs text-slate-500 space-y-1">
-                    <div className="flex items-center justify-end gap-2">
-                      <span>{t("recoger.priceBase")}:</span>
-                      <span className="font-bold text-slate-700">${(activeRule?.basePrice ?? BOX_BASE_FALLBACK[form.packageType] ?? 45).toFixed(2)}</span>
-                    </div>
-                    {parseFloat(form.estimatedWeight) > (activeRule?.weightThreshold ?? 20) && (
-                      <div className="flex items-center justify-end gap-2">
-                        <span>{t("recoger.priceExtraWeight")}:</span>
-                        <span className="font-bold text-slate-700">
-                          +${((parseFloat(form.estimatedWeight) - (activeRule?.weightThreshold ?? 20)) * (activeRule?.weightRate ?? 1.0)).toFixed(2)}
-                        </span>
+                    {items.map((item, i) => {
+                      const rule = ruleFor(item.packageType);
+                      const p = priceOf(item);
+                      return (
+                        <div key={i} className="flex items-center justify-end gap-2">
+                          <span>
+                            {items.length > 1
+                              ? `${t("recoger.box")} ${i + 1} (${item.packageType})`
+                              : t("recoger.priceBase")}:
+                          </span>
+                          <span className="font-bold text-slate-700">${p.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
+                    {items.length > 1 && (
+                      <div className="flex items-center justify-end gap-2 border-t border-indigo-200 pt-1 mt-1">
+                        <span className="font-semibold text-slate-600">{t("recoger.total")}:</span>
+                        <span className="font-black text-indigo-700">${totalPrice.toFixed(2)}</span>
                       </div>
                     )}
                   </div>

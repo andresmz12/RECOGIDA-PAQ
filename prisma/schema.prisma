@@ -67,6 +67,7 @@ model PickupRequest {
   estimatedWeight     Float?
   dimensions          String?
   packageContents     String?
+  packageItems        String?
   preferredDate       DateTime
   preferredTimeWindow String
   specialInstructions String?

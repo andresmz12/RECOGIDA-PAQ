@@ -10,6 +10,12 @@ const COUNTRY: Record<string, string> = {
   VE: "Venezuela", MX: "Mexico", CO: "Colombia", US: "United States",
 };
 
+interface BoxItem {
+  packageType: string;
+  estimatedWeight: number | null;
+  dimensions: string;
+}
+
 interface Pickup {
   trackingCode: string;
   status: string;
@@ -33,6 +39,7 @@ interface Pickup {
   estimatedWeight?: number;
   dimensions?: string;
   packageContents?: string;
+  packageItems?: string;
   preferredDate: string;
   preferredTimeWindow: string;
   specialInstructions?: string;
@@ -184,10 +191,36 @@ export default function GuiaPage() {
 
         {/* Package */}
         <Section title={t("guia.packageSection")}>
-          <Row label={t("guia.boxType")} value={data.packageType} />
-          <Row label={t("guia.dimensions")} value={data.dimensions} />
-          <Row label={t("guia.estimatedWeight")} value={data.estimatedWeight ? `${data.estimatedWeight} lbs` : undefined} />
-          <Row label={t("guia.contents")} value={data.packageContents} />
+          {(() => {
+            const boxes: BoxItem[] = data.packageItems
+              ? (() => { try { return JSON.parse(data.packageItems); } catch { return null; } })()
+              : null;
+            if (boxes && boxes.length > 1) {
+              return (
+                <>
+                  {boxes.map((box, i) => (
+                    <div key={i} className={i > 0 ? "mt-2 pt-2 border-t border-slate-100" : ""}>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">{t("guia.box")} {i + 1}</p>
+                      <Row label={t("guia.boxType")} value={box.packageType} />
+                      {box.dimensions && <Row label={t("guia.dimensions")} value={box.dimensions} />}
+                      {box.estimatedWeight != null && <Row label={t("guia.estimatedWeight")} value={`${box.estimatedWeight} lbs`} />}
+                    </div>
+                  ))}
+                  <div className="mt-2 pt-2 border-t border-slate-100">
+                    <Row label={t("guia.contents")} value={data.packageContents} />
+                  </div>
+                </>
+              );
+            }
+            return (
+              <>
+                <Row label={t("guia.boxType")} value={data.packageType} />
+                <Row label={t("guia.dimensions")} value={data.dimensions} />
+                <Row label={t("guia.estimatedWeight")} value={data.estimatedWeight ? `${data.estimatedWeight} lbs` : undefined} />
+                <Row label={t("guia.contents")} value={data.packageContents} />
+              </>
+            );
+          })()}
           {data.specialInstructions && (
             <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-xs font-semibold text-amber-800 mb-0.5">{t("guia.specialInstructions")}</p>

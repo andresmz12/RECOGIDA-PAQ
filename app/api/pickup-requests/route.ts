@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       estimatedWeight,
       dimensions,
       packageContents,
+      packageItems,
       // Preferences
       preferredDate,
       preferredTimeWindow,
@@ -152,6 +153,7 @@ export async function POST(request: NextRequest) {
         estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight) : null,
         dimensions: dimensions || null,
         packageContents: packageContents || null,
+        packageItems: packageItems ?? null,
         // Preferences
         preferredDate: new Date(preferredDate),
         preferredTimeWindow,
