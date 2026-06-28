@@ -28,6 +28,23 @@ const ROLE_COLORS: Record<string, string> = {
   CUSTOMER: "bg-emerald-100 text-emerald-700",
 };
 const EMPTY = { email: "", password: "", name: "", phone: "", role: "CUSTOMER" };
+const PAGE_SIZE = 15;
+
+const AVATAR_COLORS = [
+  "from-indigo-500 to-violet-600",
+  "from-rose-500 to-pink-600",
+  "from-emerald-500 to-teal-600",
+  "from-amber-500 to-orange-600",
+  "from-sky-500 to-cyan-600",
+  "from-fuchsia-500 to-purple-600",
+  "from-lime-500 to-green-600",
+  "from-red-500 to-rose-600",
+];
+function avatarGradient(name: string): string {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffffff;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
 
 export default function UsuariosPage() {
   const { data: session, status } = useSession();
@@ -43,6 +60,7 @@ export default function UsuariosPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [userPage, setUserPage] = useState(1);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -85,6 +103,21 @@ export default function UsuariosPage() {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     return matchSearch && (!roleFilter || u.role === roleFilter);
   });
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((userPage - 1) * PAGE_SIZE, userPage * PAGE_SIZE);
+
+  const exportUsersCSV = () => {
+    const rows = [
+      ["Name", "Email", "Phone", "Role", "Created"],
+      ...users.map((u) => [u.name, u.email, u.phone ?? "", u.role, new Date(u.createdAt).toLocaleDateString("en-US")]),
+    ];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `usuarios-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
 
   return (
     <DashboardLayout>
@@ -100,9 +133,14 @@ export default function UsuariosPage() {
               <span className="font-bold">{users.length}</span> {t("usuarios.registeredUsers")}
             </p>
           </div>
-          <Button onClick={openCreate} variant="primary" size="lg">
-            + {t("usuarios.newUser")}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={exportUsersCSV} variant="outline" size="lg">
+              ↓ CSV
+            </Button>
+            <Button onClick={openCreate} variant="primary" size="lg">
+              + {t("usuarios.newUser")}
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -118,7 +156,7 @@ export default function UsuariosPage() {
                   type="text"
                   placeholder={t("usuarios.searchPlaceholder")}
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setUserPage(1); }}
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 />
               </div>
@@ -127,7 +165,7 @@ export default function UsuariosPage() {
               <label className="block text-sm font-semibold text-slate-700 mb-2">{t("usuarios.role")}</label>
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+                onChange={(e) => { setRoleFilter(e.target.value); setUserPage(1); }}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-colors"
               >
                 <option value="">{t("usuarios.allRoles")}</option>
@@ -165,11 +203,11 @@ export default function UsuariosPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filtered.map((u) => (
+                  {paginated.map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50/50 transition-colors duration-150">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shrink-0">
+                          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient(u.name)} flex items-center justify-center text-white font-bold shrink-0`}>
                             {u.name[0]?.toUpperCase()}
                           </div>
                           <div>
@@ -218,6 +256,42 @@ export default function UsuariosPage() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 px-2">
+            <p className="text-sm text-slate-500">
+              {(userPage - 1) * PAGE_SIZE + 1}–{Math.min(userPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+                disabled={userPage === 1}
+                className="px-3 py-1.5 text-sm font-semibold border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                <button
+                  key={pg}
+                  onClick={() => setUserPage(pg)}
+                  className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                    pg === userPage ? "bg-indigo-600 text-white" : "border border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {pg}
+                </button>
+              ))}
+              <button
+                onClick={() => setUserPage((p) => Math.min(totalPages, p + 1))}
+                disabled={userPage === totalPages}
+                className="px-3 py-1.5 text-sm font-semibold border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showModal && (

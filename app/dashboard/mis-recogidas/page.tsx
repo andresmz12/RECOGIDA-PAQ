@@ -61,9 +61,16 @@ export default function MisRecogidasPage() {
     loadPickups();
   }, [status, session, statusFilter]);
 
+  // Auto-refresh every 60 seconds
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const interval = setInterval(() => loadPickups(), 60_000);
+    return () => clearInterval(interval);
+  }, [status, session, statusFilter]);
+
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(""), 3500);
+    setTimeout(() => setToast(""), 6000);
   };
 
   const handleAction = async (id: string, newStatus: string, notes?: string) => {

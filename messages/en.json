@@ -432,7 +432,10 @@
     "ctaButton": "Request my first pickup",
     "footerPanel": "Control Panel",
     "footerRequest": "Request Pickup",
-    "footerTrack": "Track Shipment"
+    "footerTrack": "Track Shipment",
+    "trackEyebrow": "Real-time tracking",
+    "trackSectionTitle": "Have a tracking code?",
+    "trackPlaceholder": "e.g. OGC-A7B3K9"
   },
   "recoger": {
     "title": "Request a pickup",
@@ -526,7 +529,9 @@
     "descPickedUp": "Your package has been successfully picked up!",
     "descCancelled": "This request has been cancelled.",
     "trackingNotFound": "Tracking code not found",
-    "errorLoad": "Error loading tracking information"
+    "errorLoad": "Error loading tracking information",
+    "share": "Share",
+    "linkCopied": "Link copied!"
   },
   "auth": {
     "forgotTitle": "Forgot password?",

@@ -2,8 +2,9 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -40,23 +41,36 @@ const PackageIcon = () => (
   </svg>
 );
 
-export default function SolicitudesPage() {
+function SolicitudesPageInner() {
   const { data: session, status } = useSession();
   const { t, lang } = useT();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [pickups, setPickups] = useState<PickupRequest[]>([]);
   const [couriers, setCouriers] = useState<Courier[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [stateFilter, setStateFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
+  const [stateFilter, setStateFilter] = useState(searchParams.get("state") ?? "");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [page, setPage] = useState(Number(searchParams.get("page") ?? "1"));
   const [savingId, setSavingId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: string; type: "status" | "courier"; x: number; y: number } | null>(null);
   const limit = 20;
 
   const role = (session?.user as any)?.role;
   const canEdit = role === "ADMIN" || role === "DISPATCHER";
+
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter) params.set("status", statusFilter);
+    if (stateFilter) params.set("state", stateFilter);
+    if (search) params.set("search", search);
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    router.replace(`/dashboard/solicitudes${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [statusFilter, stateFilter, search, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportCSV = async () => {
     let url = `/api/pickup-requests?limit=2000`;
@@ -438,5 +452,13 @@ export default function SolicitudesPage() {
         </>
       )}
     </DashboardLayout>
+  );
+}
+
+export default function SolicitudesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
+      <SolicitudesPageInner />
+    </Suspense>
   );
 }

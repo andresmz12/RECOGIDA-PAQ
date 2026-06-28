@@ -88,6 +88,7 @@ function MapaPageInner() {
   const [isOptimized, setIsOptimized] = useState(false);
   const [selected, setSelected] = useState<Pickup | null>(null);
   const [showRouteModal, setShowRouteModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Auto-trigger route modal if ?mode=route
   useEffect(() => {
@@ -376,6 +377,48 @@ function MapaPageInner() {
           )}
         </div>
 
+        {/* Mobile sidebar toggle */}
+        <div className="md:hidden px-4 py-2 border-b border-slate-200 bg-white">
+          <button
+            onClick={() => setSidebarOpen((o) => !o)}
+            className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+            {t("map.requests")} ({(isOptimized ? optimizedRoute : pickups).length})
+          </button>
+        </div>
+
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-40 flex" onClick={() => setSidebarOpen(false)}>
+            <div className="absolute inset-0 bg-black/30" />
+            <div className="relative ml-auto w-80 max-w-full bg-white h-full overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+                  {isOptimized ? t("map.routeOptimizedTitle") : t("map.requests")}
+                </p>
+                <button onClick={() => setSidebarOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {(isOptimized ? optimizedRoute : pickups).map((p, i) => (
+                  <div key={p.id} className="px-4 py-3">
+                    {isOptimized && <span className="inline-flex w-5 h-5 rounded-full bg-violet-600 text-white text-xs font-black items-center justify-center mr-2">{i + 1}</span>}
+                    <p className="font-mono font-bold text-slate-900 text-xs">{p.trackingCode}</p>
+                    <p className="text-slate-700 text-xs">{p.contactName}</p>
+                    <p className="text-slate-500 text-xs truncate">{p.pickupAddress}, {p.pickupCity}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-1 overflow-hidden">
           {/* Map */}
           <div className="flex-1 p-3 min-w-0">
@@ -389,8 +432,8 @@ function MapaPageInner() {
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="w-72 border-l border-slate-200 bg-white overflow-y-auto shrink-0 flex flex-col">
+          {/* Sidebar — hidden on mobile, visible on md+ */}
+          <div className="hidden md:flex w-72 border-l border-slate-200 bg-white overflow-y-auto shrink-0 flex-col">
             <div className="px-4 py-2.5 border-b border-slate-100 shrink-0 bg-slate-50/80 sticky top-0">
               <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
                 {isOptimized ? t("map.routeOptimizedTitle") : t("map.requests")} ({displayPickups.length})
