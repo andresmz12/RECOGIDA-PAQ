@@ -438,18 +438,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Stats ────────────────────────────────────────────────── */}
-      <section className="py-16 md:py-20 bg-navy-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            <StatCounter value={10000} suffix="+" label={t("landing.statPackages")} />
-            <StatCounter value={50} suffix="+" label={t("landing.statCities")} />
-            <StatCounter value={99} suffix=".2%" label={t("landing.statSuccess")} />
-            <StatCounter value={24} suffix="h" label={t("landing.statResponse")} />
-          </div>
-        </div>
-      </section>
-
       {/* ── Track section ────────────────────────────────────────── */}
       <section id="track" className="py-16 bg-slate-50 border-y border-slate-200">
         <div className="max-w-xl mx-auto px-6 text-center">

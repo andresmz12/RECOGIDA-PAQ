@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import LocationPicker from "@/components/Form/LocationPicker";
@@ -10,21 +10,33 @@ import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-// Estimated price table (approximate – final price confirmed by team)
-const BOX_BASE: Record<string, number> = {
+// Fallback prices used when no pricing rule is configured in DB
+const BOX_BASE_FALLBACK: Record<string, number> = {
   "Documento": 15,
   "Caja 18x18x18": 35,
   "Caja 20x20x20": 45,
   "Caja 22x22x22": 55,
   "Caja 24x24x24": 65,
 };
-const WEIGHT_THRESHOLD = 20; // lbs included in base
-const WEIGHT_RATE = 1.0;     // $ per extra lb
 
-function calcPrice(packageType: string, weightStr: string) {
-  const base = BOX_BASE[packageType] ?? 45;
+interface PricingRule {
+  country: string;
+  packageType: string;
+  basePrice: number;
+  weightThreshold: number;
+  weightRate: number;
+}
+
+function calcPrice(
+  packageType: string,
+  weightStr: string,
+  rule?: PricingRule,
+) {
+  const base = rule?.basePrice ?? BOX_BASE_FALLBACK[packageType] ?? 45;
+  const threshold = rule?.weightThreshold ?? 20;
+  const rate = rule?.weightRate ?? 1.0;
   const lbs = parseFloat(weightStr) || 0;
-  const extra = Math.max(0, lbs - WEIGHT_THRESHOLD) * WEIGHT_RATE;
+  const extra = Math.max(0, lbs - threshold) * rate;
   return base + extra;
 }
 
@@ -106,11 +118,22 @@ export default function RecogerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
+  const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then(r => r.json())
+      .then(d => { if (d.pricing) setPricingRules(d.pricing); })
+      .catch(() => {});
+  }, []);
+
   const isLoggedIn = !!session;
-  const estimatedPrice = calcPrice(form.packageType, form.estimatedWeight);
+  const activeRule = pricingRules.find(
+    r => r.country === form.recipientCountry && r.packageType === form.packageType
+  );
+  const estimatedPrice = calcPrice(form.packageType, form.estimatedWeight, activeRule);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -489,13 +512,13 @@ export default function RecogerPage() {
                   <div className="text-xs text-slate-500 space-y-1">
                     <div className="flex items-center justify-end gap-2">
                       <span>{t("recoger.priceBase")}:</span>
-                      <span className="font-bold text-slate-700">${BOX_BASE[form.packageType] ?? 45}</span>
+                      <span className="font-bold text-slate-700">${(activeRule?.basePrice ?? BOX_BASE_FALLBACK[form.packageType] ?? 45).toFixed(2)}</span>
                     </div>
-                    {parseFloat(form.estimatedWeight) > WEIGHT_THRESHOLD && (
+                    {parseFloat(form.estimatedWeight) > (activeRule?.weightThreshold ?? 20) && (
                       <div className="flex items-center justify-end gap-2">
                         <span>{t("recoger.priceExtraWeight")}:</span>
                         <span className="font-bold text-slate-700">
-                          +${((parseFloat(form.estimatedWeight) - WEIGHT_THRESHOLD) * WEIGHT_RATE).toFixed(2)}
+                          +${((parseFloat(form.estimatedWeight) - (activeRule?.weightThreshold ?? 20)) * (activeRule?.weightRate ?? 1.0)).toFixed(2)}
                         </span>
                       </div>
                     )}

@@ -108,6 +108,20 @@ model Comment {
   createdAt       DateTime      @default(now())
 }
 
+model Pricing {
+  id              String   @id @default(cuid())
+  country         String
+  packageType     String
+  basePrice       Float
+  weightThreshold Float    @default(20)
+  weightRate      Float    @default(1.0)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([country, packageType])
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   email     String
