@@ -262,12 +262,12 @@ export default function RecogerPage() {
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-800 text-sm font-medium transition-colors">
+          <button onClick={() => window.history.length > 1 ? window.history.back() : window.location.href = "/"} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 text-sm font-medium transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             {t("recoger.back")}
-          </Link>
+          </button>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
               style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
@@ -275,9 +275,18 @@ export default function RecogerPage() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
-              {t("recoger.signIn")}
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/mi-cuenta" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700 flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">
+                  {(session?.user?.name?.[0] ?? "U").toUpperCase()}
+                </div>
+                <span className="hidden sm:inline">{session?.user?.name?.split(" ")[0]}</span>
+              </Link>
+            ) : (
+              <Link href="/login" className="text-sm text-indigo-600 font-semibold hover:text-indigo-700">
+                {t("recoger.signIn")}
+              </Link>
+            )}
           </div>
         </div>
       </div>
