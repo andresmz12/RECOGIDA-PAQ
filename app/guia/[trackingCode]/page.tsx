@@ -89,10 +89,19 @@ export default function GuiaPage() {
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body { margin: 0; }
           @page { margin: 1.2cm; }
-          .guia-banner { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .guia-banner * { color: inherit !important; }
+          .guia-banner {
+            background: #f1f5f9 !important;
+            border: 2px solid #1e293b !important;
+            border-radius: 12px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .guia-banner .guia-tc-label { color: #64748b !important; }
+          .guia-banner .guia-tc-code { color: #1e293b !important; }
+          .guia-banner .guia-st-label { color: #64748b !important; }
+          .guia-banner .guia-st-value { color: #1e293b !important; }
         }
       `}</style>
 
@@ -132,12 +141,12 @@ export default function GuiaPage() {
         {/* Tracking code banner */}
         <div className="guia-banner bg-slate-900 rounded-xl p-4 mb-5 flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.trackingCode")}</p>
-            <p className="text-2xl font-mono font-black text-indigo-300">{data.trackingCode}</p>
+            <p className="guia-tc-label text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.trackingCode")}</p>
+            <p className="guia-tc-code text-2xl font-mono font-black text-indigo-300">{data.trackingCode}</p>
           </div>
           <div className="text-right">
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.status")}</p>
-            <p className="text-white font-bold text-sm">{t(`status.${data.status}`)}</p>
+            <p className="guia-st-label text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.status")}</p>
+            <p className="guia-st-value text-white font-bold text-sm">{t(`status.${data.status}`)}</p>
           </div>
         </div>
 
