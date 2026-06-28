@@ -60,21 +60,6 @@ export default function LoginPage() {
             {t("login.heroLine1")}<br />
             <span className="text-accent-400">{t("login.heroAccent")}</span>
           </h1>
-          <p className="text-lg text-navy-100/60 leading-relaxed">
-            {t("login.heroSubtitle")}
-          </p>
-          <div className="mt-12 grid grid-cols-3 gap-6">
-            {[
-              { v: "10K+", l: t("login.statPickups") },
-              { v: "99.2%", l: t("login.statSuccess") },
-              { v: "< 24h", l: t("login.statResponse") },
-            ].map((s) => (
-              <div key={s.l} className="text-center">
-                <p className="text-3xl font-extrabold text-accent-400">{s.v}</p>
-                <p className="text-sm text-white/50 mt-1">{s.l}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
