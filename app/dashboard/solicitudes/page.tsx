@@ -67,10 +67,15 @@ function SolicitudesPageInner() {
   const role = (session?.user as any)?.role;
   const canEdit = role === "ADMIN" || role === "DISPATCHER";
 
-  // Debounce search input
+  // Debounce search input — skip on initial mount to preserve URL page
+  const searchMountedRef = useRef(false);
   useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
-    return () => clearTimeout(t);
+    if (!searchMountedRef.current) { searchMountedRef.current = true; return; }
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
   }, [search]);
 
   // Sync filters to URL (skip initial mount — state was already read from URL)
@@ -197,7 +202,7 @@ function SolicitudesPageInner() {
     if (!bulkCourierId || selectedIds.size === 0) return;
     setBulkSaving(true);
     try {
-      await Promise.all(
+      const results = await Promise.all(
         Array.from(selectedIds).map((id) => {
           const current = pickups.find((p) => p.id === id)?.status ?? "";
           const body: Record<string, unknown> = { assignedCourierId: bulkCourierId };
@@ -209,6 +214,8 @@ function SolicitudesPageInner() {
           });
         })
       );
+      const failed = results.filter((r) => !r.ok).length;
+      if (failed > 0) console.error(`Bulk assign: ${failed} request(s) failed`);
       setBulkCourierId("");
       await load();
     } finally {

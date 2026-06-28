@@ -34,7 +34,7 @@ export default function EtiquetaPage() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/track/${code}`)
+    fetch(`/api/label/${code}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(setData)
       .catch(() => setError(true));

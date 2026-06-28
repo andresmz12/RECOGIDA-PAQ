@@ -22,14 +22,33 @@ export async function middleware(req: NextRequest) {
     if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
       return NextResponse.redirect(new URL("/mi-cuenta", req.url));
     }
-    if (pathname.startsWith("/dashboard/usuarios") && role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+    // /dashboard/usuarios list and user creation: ADMIN only
+    // /dashboard/usuarios/[id] profile view: ADMIN + DISPATCHER
+    if (pathname.startsWith("/dashboard/usuarios")) {
+      const isProfileView = /^\/dashboard\/usuarios\/[^/]+/.test(pathname);
+      if (!isProfileView && role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+      if (isProfileView && !["ADMIN", "DISPATCHER"].includes(role)) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
     }
     if (pathname.startsWith("/dashboard/rutas") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
     if (pathname.startsWith("/dashboard/mis-recogidas") && role !== "COURIER") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+  }
+
+  // Label print routes - require any authenticated staff
+  if (pathname.startsWith("/etiqueta")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    const role = token.role as string;
+    if (!["ADMIN", "DISPATCHER", "COURIER"].includes(role)) {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
   }
 
@@ -47,5 +66,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/mi-cuenta/:path*"],
+  matcher: ["/dashboard/:path*", "/mi-cuenta/:path*", "/etiqueta/:path*"],
 };
