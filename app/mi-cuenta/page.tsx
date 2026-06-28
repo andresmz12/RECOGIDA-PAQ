@@ -76,14 +76,19 @@ function StatusStepper({ status }: { status: string }) {
   );
 }
 
+interface Profile { name: string; phone: string; currentPassword: string; newPassword: string; confirmPassword: string; }
+
 export default function MiCuentaPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
   const { t } = useT();
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
-  const [tab, setTab] = useState<"active" | "history">("active");
+  const [tab, setTab] = useState<"active" | "history" | "profile">("active");
+  const [profile, setProfile] = useState<Profile>({ name: "", phone: "", currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -106,6 +111,40 @@ export default function MiCuentaPage() {
   useEffect(() => {
     if (status === "authenticated") fetchPickups();
   }, [status]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/auth/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setProfile(prev => ({ ...prev, name: d.name ?? "", phone: d.phone ?? "" })); })
+      .catch(() => {});
+  }, [status]);
+
+  const saveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
+      setProfileMsg({ type: "err", text: t("account.passwordMismatch") });
+      return;
+    }
+    setProfileLoading(true);
+    setProfileMsg(null);
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profile.name, phone: profile.phone, currentPassword: profile.currentPassword || undefined, newPassword: profile.newPassword || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setProfileMsg({ type: "err", text: data.error ?? t("account.saveError") }); return; }
+      await updateSession({ name: data.name });
+      setProfile(prev => ({ ...prev, currentPassword: "", newPassword: "", confirmPassword: "" }));
+      setProfileMsg({ type: "ok", text: t("account.saveSuccess") });
+    } catch {
+      setProfileMsg({ type: "err", text: t("account.saveError") });
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const handleCancel = async (pickup: Pickup) => {
     if (!confirm(t("account.cancelConfirm", { code: pickup.trackingCode }))) return;
@@ -192,27 +231,76 @@ export default function MiCuentaPage() {
         {/* Tab bar */}
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex gap-1 border-b border-white/10">
-            {(["active", "history"] as const).map(tabKey => (
-              <button
-                key={tabKey}
-                onClick={() => setTab(tabKey)}
-                className={`px-5 py-3 text-sm font-semibold capitalize transition-all border-b-2 -mb-px ${
-                  tab === tabKey
-                    ? "text-white border-indigo-400"
-                    : "text-white/40 border-transparent hover:text-white/70"
-                }`}
-              >
-                {tabKey === "active"
-                  ? `${t("account.activeTab")}${active.length > 0 ? ` (${active.length})` : ""}`
-                  : `${t("account.historyTab")}${done.length > 0 ? ` (${done.length})` : ""}`}
-              </button>
-            ))}
+            <button onClick={() => setTab("active")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "active" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+              {t("account.activeTab")}{active.length > 0 ? ` (${active.length})` : ""}
+            </button>
+            <button onClick={() => setTab("history")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "history" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+              {t("account.historyTab")}{done.length > 0 ? ` (${done.length})` : ""}
+            </button>
+            <button onClick={() => setTab("profile")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+              {t("account.profileTab")}
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Profile tab */}
+      {tab === "profile" && (
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <form onSubmit={saveProfile} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
+            <h2 className="text-lg font-bold text-slate-900">{t("account.editProfile")}</h2>
+
+            {profileMsg && (
+              <div className={`px-4 py-3 rounded-xl text-sm font-semibold ${profileMsg.type === "ok" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                {profileMsg.text}
+              </div>
+            )}
+
+            {/* Read-only email */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.email")}</label>
+              <input type="email" value={session?.user?.email ?? ""} disabled className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-400 cursor-not-allowed" />
+              <p className="text-xs text-slate-400 mt-1">{t("account.emailReadOnly")}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.fullName")}</label>
+              <input type="text" value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} required className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.phone")}</label>
+              <input type="tel" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="+1 (305) 555-0000" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+
+            <div className="border-t border-slate-100 pt-5">
+              <h3 className="text-sm font-bold text-slate-700 mb-4">{t("account.changePassword")}</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.currentPassword")}</label>
+                  <input type="password" value={profile.currentPassword} onChange={e => setProfile(p => ({ ...p, currentPassword: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.newPassword")}</label>
+                  <input type="password" value={profile.newPassword} onChange={e => setProfile(p => ({ ...p, newPassword: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.confirmPassword")}</label>
+                  <input type="password" value={profile.confirmPassword} onChange={e => setProfile(p => ({ ...p, confirmPassword: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">{t("account.passwordLeaveBlank")}</p>
+            </div>
+
+            <button type="submit" disabled={profileLoading} className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60" style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
+              {profileLoading ? t("account.saving") : t("account.saveProfile")}
+            </button>
+          </form>
+        </div>
+      )}
+
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className={`max-w-3xl mx-auto px-4 py-6 ${tab === "profile" ? "hidden" : ""}`}>
         <div className="flex items-center justify-between mb-5">
           <p className="text-slate-500 text-sm font-medium">
             {loading ? t("account.loadingShipments") : displayed.length === 0
