@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -61,8 +61,10 @@ function SolicitudesPageInner() {
   const role = (session?.user as any)?.role;
   const canEdit = role === "ADMIN" || role === "DISPATCHER";
 
-  // Sync filters to URL
+  // Sync filters to URL (skip initial mount — state was already read from URL)
+  const mountedRef = useRef(false);
   useEffect(() => {
+    if (!mountedRef.current) { mountedRef.current = true; return; }
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
     if (stateFilter) params.set("state", stateFilter);

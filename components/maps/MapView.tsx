@@ -26,7 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "#ef4444",
 };
 
-export default function MapView({ points, center, routePolyline }: MapViewProps) {
+export default function MapView({ points, center, routePolyline, focusPoint }: MapViewProps & { focusPoint?: [number, number] | null }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<any>(null);
   const LRef         = useRef<any>(null);
@@ -67,6 +67,12 @@ export default function MapView({ points, center, routePolyline }: MapViewProps)
       }
     };
   }, []);
+
+  // Pan/zoom to focusPoint when a sidebar item is selected
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !focusPoint) return;
+    mapRef.current.setView(focusPoint, 14, { animate: true });
+  }, [focusPoint, mapReady]);
 
   // Update markers + polyline when data changes
   useEffect(() => {

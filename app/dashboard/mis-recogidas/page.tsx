@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -45,11 +45,16 @@ export default function MisRecogidasPage() {
   const courierId = (session?.user as any)?.id;
   const locale = lang === "en" ? "en-US" : "es-CO";
 
+  // Keep latest values accessible inside the interval without stale closure
+  const latestRef = useRef({ courierId, statusFilter });
+  useEffect(() => { latestRef.current = { courierId, statusFilter }; });
+
   const loadPickups = async () => {
-    if (!courierId) return;
+    const { courierId: cid, statusFilter: sf } = latestRef.current;
+    if (!cid) return;
     setLoading(true);
-    let url = `/api/pickup-requests?limit=100&courierId=${courierId}`;
-    if (statusFilter) url += `&status=${statusFilter}`;
+    let url = `/api/pickup-requests?limit=100&courierId=${cid}`;
+    if (sf) url += `&status=${sf}`;
     const res = await fetch(url);
     const data = await res.json();
     setPickups(data.data ?? []);
@@ -59,14 +64,14 @@ export default function MisRecogidasPage() {
   useEffect(() => {
     if (status !== "authenticated") return;
     loadPickups();
-  }, [status, session, statusFilter]);
+  }, [status, session, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-refresh every 60 seconds
+  // Auto-refresh every 60 seconds — uses ref so it always reads latest filters
   useEffect(() => {
     if (status !== "authenticated") return;
     const interval = setInterval(() => loadPickups(), 60_000);
     return () => clearInterval(interval);
-  }, [status, session, statusFilter]);
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showToast = (msg: string) => {
     setToast(msg);

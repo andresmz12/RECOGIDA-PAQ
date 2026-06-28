@@ -428,7 +428,11 @@ function MapaPageInner() {
                 <p className="text-slate-500 text-sm">{t("common.loading")}</p>
               </div>
             ) : (
-              <MapView points={mapPoints} routePolyline={routePolyline} />
+              <MapView
+                points={mapPoints}
+                routePolyline={routePolyline}
+                focusPoint={selected?.lat && selected?.lng ? [selected.lat, selected.lng] : null}
+              />
             )}
           </div>
 
