@@ -51,7 +51,10 @@ export default function RutasPage() {
 
   const [couriers, setCouriers] = useState<Courier[]>([]);
   const [selectedCourier, setSelectedCourier] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  });
   const [routeData, setRouteData] = useState<RouteData | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -215,6 +218,9 @@ export default function RutasPage() {
                   <div className="text-5xl mb-4 opacity-40">📭</div>
                   <p className="font-bold text-slate-700 text-lg">{t("rutas.noPickups")}</p>
                   <p className="text-slate-500 text-sm mt-1">{t("rutas.noPickupsDesc")}</p>
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 mt-4 inline-block">
+                    {t("rutas.onlyAssigned")}
+                  </p>
                 </div>
               ) : (
                 <>

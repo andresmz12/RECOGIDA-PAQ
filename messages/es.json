@@ -252,6 +252,7 @@
     "stopsAssigned": "asignadas",
     "noPickups": "Sin recogidas asignadas",
     "noPickupsDesc": "No hay solicitudes para este courier en esta fecha",
+    "onlyAssigned": "Solo se muestran recogidas asignadas a este courier. Las solicitudes PENDIENTES no aparecen aquí.",
     "sender": "Remitente",
     "recipient": "Destinatario",
     "instructions": "Instrucciones",

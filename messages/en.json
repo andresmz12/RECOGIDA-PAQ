@@ -252,6 +252,7 @@
     "stopsAssigned": "assigned",
     "noPickups": "No pickups assigned",
     "noPickupsDesc": "No requests for this courier on this date",
+    "onlyAssigned": "Only pickups assigned to this courier are shown. PENDING requests do not appear here.",
     "sender": "Sender",
     "recipient": "Recipient",
     "instructions": "Instructions",
