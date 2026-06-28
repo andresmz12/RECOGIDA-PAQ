@@ -221,6 +221,7 @@
     "assign": "Assign",
     "saving": "Saving…",
     "exportCSV": "Export CSV",
+    "printPDF": "Print PDF",
     "bulkAssign": "Assign courier to {{count}} selected",
     "bulkAssignCourier": "Assign to courier",
     "bulkClear": "Clear selection",

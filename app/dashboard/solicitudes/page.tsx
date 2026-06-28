@@ -93,6 +93,27 @@ function SolicitudesPageInner() {
     router.replace(`/dashboard/solicitudes${qs ? `?${qs}` : ""}`, { scroll: false });
   }, [statusFilter, stateFilter, debouncedSearch, dateFrom, dateTo, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [printRows, setPrintRows] = useState<any[]>([]);
+  const [printing, setPrinting] = useState(false);
+
+  const printPDF = async () => {
+    setPrinting(true);
+    try {
+      let url = `/api/pickup-requests?limit=2000`;
+      if (statusFilter) url += `&status=${statusFilter}`;
+      if (stateFilter) url += `&state=${stateFilter}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (dateFrom) url += `&dateFrom=${dateFrom}`;
+      if (dateTo) url += `&dateTo=${dateTo}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setPrintRows(data.data ?? []);
+      setTimeout(() => { window.print(); setPrintRows([]); }, 100);
+    } finally {
+      setPrinting(false);
+    }
+  };
+
   const exportCSV = async () => {
     let url = `/api/pickup-requests?limit=2000`;
     if (statusFilter) url += `&status=${statusFilter}`;
@@ -227,6 +248,70 @@ function SolicitudesPageInner() {
 
   return (
     <DashboardLayout>
+      {/* Print styles */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #sol-print-area, #sol-print-area * { visibility: visible !important; }
+          #sol-print-area { position: fixed; top: 0; left: 0; width: 100%; padding: 20px; }
+        }
+      `}</style>
+
+      {/* Hidden print area */}
+      {printRows.length > 0 && (
+        <div id="sol-print-area" style={{ display: "none" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, paddingBottom: 12, borderBottom: "2px solid #cbd5e1" }}>
+            <div>
+              <p style={{ fontSize: 18, fontWeight: 900, margin: 0 }}>O&apos;Globo Cargo</p>
+              <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>{t("solicitudes.title")}</p>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 10, color: "#94a3b8" }}>
+              <p style={{ margin: 0 }}>{t("rutas.generated")}: {new Date().toLocaleString(locale)}</p>
+              {statusFilter && <p style={{ margin: "2px 0 0" }}>{t("solicitudes.estado")}: {t(`status.${statusFilter}`)}</p>}
+              {dateFrom && <p style={{ margin: "2px 0 0" }}>{t("solicitudes.dateFrom")}: {dateFrom}{dateTo ? ` → ${dateTo}` : ""}</p>}
+              <p style={{ margin: "4px 0 0", fontWeight: 700, color: "#1e293b" }}>{printRows.length} {t("solicitudes.title").toLowerCase()}</p>
+            </div>
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+            <thead>
+              <tr style={{ background: "#f1f5f9", borderBottom: "2px solid #cbd5e1" }}>
+                {["#", t("solicitudes.code"), t("solicitudes.contact"), t("solicitudes.origin"), t("solicitudes.estado"), "Courier", t("solicitudes.date")].map((h) => (
+                  <th key={h} style={{ padding: "6px 8px", textAlign: "left", fontWeight: 700, color: "#475569", textTransform: "uppercase", fontSize: 9, letterSpacing: 1 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {printRows.map((p: any, i: number) => (
+                <tr key={p.id} style={{ borderBottom: "1px solid #e2e8f0", background: i % 2 === 0 ? "#fff" : "#f8fafc" }}>
+                  <td style={{ padding: "6px 8px", color: "#94a3b8", fontSize: 9 }}>{i + 1}</td>
+                  <td style={{ padding: "6px 8px", fontFamily: "monospace", fontWeight: 700, color: "#1d4f86" }}>{p.trackingCode}</td>
+                  <td style={{ padding: "6px 8px" }}>
+                    <div style={{ fontWeight: 600 }}>{p.contactName}</div>
+                    <div style={{ color: "#94a3b8", fontSize: 9 }}>{p.contactEmail}</div>
+                  </td>
+                  <td style={{ padding: "6px 8px" }}>{p.pickupCity}{p.pickupState ? `, ${p.pickupState}` : ""}</td>
+                  <td style={{ padding: "6px 8px" }}>
+                    <span style={{
+                      padding: "2px 6px", borderRadius: 99, fontWeight: 600, fontSize: 9,
+                      background: p.status === "PICKED_UP" ? "#d1fae5" : p.status === "ASSIGNED" ? "#dbeafe" : p.status === "SCHEDULED" ? "#ede9fe" : p.status === "CANCELLED" ? "#f1f5f9" : "#fef3c7",
+                      color: p.status === "PICKED_UP" ? "#065f46" : p.status === "ASSIGNED" ? "#1e40af" : p.status === "SCHEDULED" ? "#4c1d95" : p.status === "CANCELLED" ? "#64748b" : "#92400e",
+                    }}>{t(`status.${p.status}`)}</span>
+                  </td>
+                  <td style={{ padding: "6px 8px", fontWeight: 600 }}>{p.assignedCourier?.name ?? "—"}</td>
+                  <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
+                    {new Date(p.preferredDate).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: 16, paddingTop: 10, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", fontSize: 9, color: "#94a3b8" }}>
+            <span>O&apos;Globo Cargo — Confidencial</span>
+            <span>{t("rutas.total")}: {printRows.length}</span>
+          </div>
+        </div>
+      )}
+
       <div className="p-6 md:p-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -238,15 +323,27 @@ function SolicitudesPageInner() {
           </div>
           <div className="flex items-center gap-2">
             {canEdit && (
-              <button
-                onClick={exportCSV}
-                className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {t("solicitudes.exportCSV")}
-              </button>
+              <>
+                <button
+                  onClick={printPDF}
+                  disabled={printing}
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  {printing ? "…" : t("solicitudes.printPDF")}
+                </button>
+                <button
+                  onClick={exportCSV}
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {t("solicitudes.exportCSV")}
+                </button>
+              </>
             )}
             <Link
               href="/recoger"
