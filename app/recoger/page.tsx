@@ -138,6 +138,23 @@ export default function RecogerPage() {
       .catch(() => {});
   }, []);
 
+  // Pre-fill contact info from session when user is logged in
+  useEffect(() => {
+    if (!session?.user) return;
+    setForm(prev => ({
+      ...prev,
+      contactName: prev.contactName || (session.user as any).name || "",
+      contactEmail: prev.contactEmail || session.user.email || "",
+    }));
+    // Try to fetch phone from user profile
+    fetch("/api/auth/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.phone) setForm(prev => ({ ...prev, contactPhone: prev.contactPhone || d.phone }));
+      })
+      .catch(() => {});
+  }, [session]);
+
   const isLoggedIn = !!session;
   const ruleFor = (packageType: string) =>
     pricingRules.find(r => r.country === form.recipientCountry && r.packageType === packageType);

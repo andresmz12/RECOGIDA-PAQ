@@ -141,7 +141,7 @@ export default function AddressAutocomplete({
           className={className}
         />
         {/* search icon */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" title="Escribe tu dirección y selecciona una sugerencia para auto-llenar ciudad, estado y ZIP">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
