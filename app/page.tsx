@@ -224,20 +224,6 @@ function TrackingMockup() {
       </div>
 
       {/* Mini status card — bottom left */}
-      <div
-        className="absolute -bottom-3 -left-6 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-2.5 z-20 border border-slate-100"
-        style={{ animation: "floatBadge 8s ease-in-out infinite", animationDelay: "0.6s" }}
-      >
-        <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-slate-800">3 recogidas hoy</p>
-          <p className="text-xs text-slate-400">1 pendiente de asignar</p>
-        </div>
-      </div>
     </div>
   );
 }
