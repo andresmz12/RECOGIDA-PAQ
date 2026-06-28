@@ -23,25 +23,23 @@ interface Props {
   required?: boolean;
 }
 
-function parseFeature(f: any): Suggestion | null {
-  const p = f.properties ?? {};
-  const [lng, lat] = f.geometry?.coordinates ?? [0, 0];
-  if (!lat || !lng) return null;
+function parseNominatim(r: any): Suggestion | null {
+  if (!r.lat || !r.lon) return null;
+  const a = r.address ?? {};
 
-  const parts: string[] = [];
-  if (p.housenumber) parts.push(p.housenumber);
-  if (p.street) parts.push(p.street);
-  const address = parts.join(" ") || p.name || "";
+  const streetNum = a.house_number ?? "";
+  const street = a.road ?? a.pedestrian ?? a.footway ?? "";
+  const address = [streetNum, street].filter(Boolean).join(" ") || r.display_name?.split(",")[0] || "";
 
-  const city = p.city || p.town || p.village || p.county || "";
-  const state = p.state || "";
-  const country = p.country || "";
-  const postcode = p.postcode || "";
+  const city = a.city || a.town || a.village || a.municipality || a.county || "";
+  const state = a.state || "";
+  const postcode = a.postcode || "";
+  const country = a.country_code?.toUpperCase() || a.country || "";
 
-  const labelParts = [address || p.name, city, state, country].filter(Boolean);
+  const labelParts = [address, city, state, country].filter(Boolean);
   const label = labelParts.join(", ");
 
-  return { label, address: address || p.name || "", city, state, postcode, country, lat, lng };
+  return { label, address, city, state, postcode, country, lat: parseFloat(r.lat), lng: parseFloat(r.lon) };
 }
 
 export default function AddressAutocomplete({
@@ -83,23 +81,22 @@ export default function AddressAutocomplete({
 
     debounceRef.current = setTimeout(async () => {
       try {
-        let url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=en`;
-        if (countryCode) url += `&countrycodes=${countryCode}`;
+        let url = `/api/geocode?q=${encodeURIComponent(q)}`;
+        if (countryCode) url += `&country=${countryCode}`;
 
-        const res = await fetch(url, {
-          headers: { "User-Agent": "OGloboCargo/1.0" },
-        });
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const parsed = (data.features ?? [])
-          .map(parseFeature)
-          .filter((s: Suggestion | null): s is Suggestion => s !== null && Boolean(s.label));
+        const parsed = (Array.isArray(data) ? data : [])
+          .map(parseNominatim)
+          .filter((s): s is Suggestion => s !== null && Boolean(s.address));
         setSuggestions(parsed);
         setOpen(parsed.length > 0);
       } catch {
         setSuggestions([]);
         setOpen(false);
       }
-    }, 350);
+    }, 400);
   };
 
   const pick = (s: Suggestion) => {
