@@ -402,6 +402,7 @@
     "title": "Shipment Guide",
     "printBtn": "Print / Download PDF",
     "scanToTrack": "Scan to track",
+    "scanGuide": "Scan to view guide",
     "trackingCode": "Tracking Code",
     "status": "Status",
     "created": "Created",

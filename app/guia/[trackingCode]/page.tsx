@@ -79,7 +79,7 @@ export default function GuiaPage() {
   );
 
   const locale = lang === "en" ? "en-US" : "es-ES";
-  const trackingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/rastreo/${trackingCode}`;
+  const trackingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/guia/${trackingCode}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackingUrl)}`;
   const date = new Date(data.preferredDate).toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const created = new Date(data.createdAt).toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
@@ -89,8 +89,10 @@ export default function GuiaPage() {
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { margin: 0; }
-          @page { margin: 1cm; }
+          body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { margin: 1.2cm; }
+          .guia-banner { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .guia-banner * { color: inherit !important; }
         }
       `}</style>
 
@@ -123,12 +125,12 @@ export default function GuiaPage() {
           </div>
           <div className="text-right">
             <img src={qrUrl} alt="QR tracking" className="w-24 h-24 border border-slate-200 rounded-lg" />
-            <p className="text-xs text-slate-400 mt-1">{t("guia.scanToTrack")}</p>
+            <p className="text-xs text-slate-400 mt-1">{t("guia.scanGuide")}</p>
           </div>
         </div>
 
         {/* Tracking code banner */}
-        <div className="bg-slate-900 rounded-xl p-4 mb-5 flex items-center justify-between">
+        <div className="guia-banner bg-slate-900 rounded-xl p-4 mb-5 flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.trackingCode")}</p>
             <p className="text-2xl font-mono font-black text-indigo-300">{data.trackingCode}</p>
