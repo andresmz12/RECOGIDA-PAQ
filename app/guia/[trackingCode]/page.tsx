@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useT } from "@/lib/i18n-context";
 
 const COUNTRY: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",
@@ -59,6 +60,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function GuiaPage() {
   const { trackingCode } = useParams<{ trackingCode: string }>();
+  const { t, lang } = useT();
   const [data, setData] = useState<Pickup | null>(null);
   const [error, setError] = useState("");
 
@@ -73,13 +75,14 @@ export default function GuiaPage() {
     <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>
   );
   if (!data) return (
-    <div className="min-h-screen flex items-center justify-center text-slate-400">Loading...</div>
+    <div className="min-h-screen flex items-center justify-center text-slate-400">{t("common.loading")}</div>
   );
 
+  const locale = lang === "en" ? "en-US" : "es-ES";
   const trackingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/rastreo/${trackingCode}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackingUrl)}`;
-  const date = new Date(data.preferredDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-  const created = new Date(data.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  const date = new Date(data.preferredDate).toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const created = new Date(data.createdAt).toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
 
   return (
     <>
@@ -91,9 +94,9 @@ export default function GuiaPage() {
         }
       `}</style>
 
-      {/* Print button */}
+      {/* Print bar */}
       <div className="no-print bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
-        <span className="font-bold text-sm">Shipment Guide · {trackingCode}</span>
+        <span className="font-bold text-sm">{t("guia.title")} · {trackingCode}</span>
         <button
           onClick={() => window.print()}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
@@ -101,7 +104,7 @@ export default function GuiaPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
-          Print / Download PDF
+          {t("guia.printBtn")}
         </button>
       </div>
 
@@ -115,24 +118,24 @@ export default function GuiaPage() {
                 style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
               <span className="font-black text-slate-900 text-lg">O&apos;Globo Cargo</span>
             </div>
-            <p className="text-slate-500 text-xs">International Package Pickup · Shipping Guide</p>
-            <p className="text-slate-400 text-xs mt-0.5">Created: {created}</p>
+            <p className="text-slate-500 text-xs">{t("guia.title")}</p>
+            <p className="text-slate-400 text-xs mt-0.5">{t("guia.created")}: {created}</p>
           </div>
           <div className="text-right">
             <img src={qrUrl} alt="QR tracking" className="w-24 h-24 border border-slate-200 rounded-lg" />
-            <p className="text-xs text-slate-400 mt-1">Scan to track</p>
+            <p className="text-xs text-slate-400 mt-1">{t("guia.scanToTrack")}</p>
           </div>
         </div>
 
         {/* Tracking code banner */}
         <div className="bg-slate-900 rounded-xl p-4 mb-5 flex items-center justify-between">
           <div>
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">Tracking Code</p>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.trackingCode")}</p>
             <p className="text-2xl font-mono font-black text-indigo-300">{data.trackingCode}</p>
           </div>
           <div className="text-right">
-            <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">Status</p>
-            <p className="text-white font-bold text-sm">{data.status}</p>
+            <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("guia.status")}</p>
+            <p className="text-white font-bold text-sm">{t(`status.${data.status}`)}</p>
           </div>
         </div>
 
@@ -143,40 +146,40 @@ export default function GuiaPage() {
           </svg>
           <div>
             <p className="font-bold text-slate-900 text-sm">{date}</p>
-            <p className="text-slate-600 text-xs">Preferred time: {data.preferredTimeWindow}</p>
+            <p className="text-slate-600 text-xs">{t("guia.preferredTime")}: {data.preferredTimeWindow}</p>
           </div>
         </div>
 
         {/* Sender */}
-        <Section title="Sender / Origin">
-          <Row label="Full Name" value={data.contactName} />
-          <Row label="Phone" value={data.contactPhone} />
-          <Row label="Email" value={data.contactEmail} />
-          <Row label="Pickup Address" value={data.pickupAddress} />
-          <Row label="City, State" value={`${data.pickupCity}, ${data.pickupState} ${data.pickupPostalCode}`} />
-          <Row label="Country" value={COUNTRY[data.pickupCountry] ?? data.pickupCountry} />
+        <Section title={t("guia.senderSection")}>
+          <Row label={t("guia.fullName")} value={data.contactName} />
+          <Row label={t("guia.phone")} value={data.contactPhone} />
+          <Row label={t("guia.email")} value={data.contactEmail} />
+          <Row label={t("guia.pickupAddress")} value={data.pickupAddress} />
+          <Row label={t("guia.cityState")} value={`${data.pickupCity}, ${data.pickupState} ${data.pickupPostalCode}`} />
+          <Row label={t("guia.country")} value={COUNTRY[data.pickupCountry] ?? data.pickupCountry} />
         </Section>
 
         {/* Recipient */}
-        <Section title="Recipient / Destination">
-          <Row label="Full Name" value={data.recipientName} />
-          <Row label="Primary Phone" value={data.recipientPhone} />
-          <Row label="Secondary Phone" value={data.recipientPhoneSecondary} />
-          <Row label="Email" value={data.recipientEmail} />
-          <Row label="Delivery Address" value={data.recipientAddress} />
-          <Row label="City / Dept." value={`${data.recipientCity}${data.recipientState ? `, ${data.recipientState}` : ""}`} />
-          <Row label="Country" value={COUNTRY[data.recipientCountry] ?? data.recipientCountry} />
+        <Section title={t("guia.recipientSection")}>
+          <Row label={t("guia.fullName")} value={data.recipientName} />
+          <Row label={t("guia.phone")} value={data.recipientPhone} />
+          <Row label={t("guia.secondaryPhone")} value={data.recipientPhoneSecondary} />
+          <Row label={t("guia.email")} value={data.recipientEmail} />
+          <Row label={t("guia.deliveryAddress")} value={data.recipientAddress} />
+          <Row label={t("guia.cityDept")} value={`${data.recipientCity}${data.recipientState ? `, ${data.recipientState}` : ""}`} />
+          <Row label={t("guia.country")} value={COUNTRY[data.recipientCountry] ?? data.recipientCountry} />
         </Section>
 
         {/* Package */}
-        <Section title="Package Information">
-          <Row label="Box / Type" value={data.packageType} />
-          <Row label="Dimensions" value={data.dimensions} />
-          <Row label="Estimated Weight" value={data.estimatedWeight ? `${data.estimatedWeight} lbs` : undefined} />
-          <Row label="Contents" value={data.packageContents} />
+        <Section title={t("guia.packageSection")}>
+          <Row label={t("guia.boxType")} value={data.packageType} />
+          <Row label={t("guia.dimensions")} value={data.dimensions} />
+          <Row label={t("guia.estimatedWeight")} value={data.estimatedWeight ? `${data.estimatedWeight} lbs` : undefined} />
+          <Row label={t("guia.contents")} value={data.packageContents} />
           {data.specialInstructions && (
             <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-xs font-semibold text-amber-800 mb-0.5">Special Instructions</p>
+              <p className="text-xs font-semibold text-amber-800 mb-0.5">{t("guia.specialInstructions")}</p>
               <p className="text-xs text-amber-700">{data.specialInstructions}</p>
             </div>
           )}
@@ -185,11 +188,9 @@ export default function GuiaPage() {
         {/* Footer */}
         <div className="border-t border-slate-200 pt-4 mt-2">
           <p className="text-xs text-slate-400 text-center">
-            Track your shipment at: <span className="text-indigo-600 font-semibold">{trackingUrl}</span>
+            {t("guia.trackAt")} <span className="text-indigo-600 font-semibold">{trackingUrl}</span>
           </p>
-          <p className="text-xs text-slate-300 text-center mt-1">
-            O&apos;Globo Cargo · International Shipping Services
-          </p>
+          <p className="text-xs text-slate-300 text-center mt-1">{t("guia.footer")}</p>
         </div>
       </div>
     </>
