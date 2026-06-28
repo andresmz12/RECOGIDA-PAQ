@@ -53,13 +53,25 @@ function SolicitudesPageInner() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
   const [stateFilter, setStateFilter] = useState(searchParams.get("state") ?? "");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [dateFrom, setDateFrom] = useState(searchParams.get("dateFrom") ?? "");
+  const [dateTo, setDateTo] = useState(searchParams.get("dateTo") ?? "");
   const [page, setPage] = useState(Number(searchParams.get("page") ?? "1"));
   const [savingId, setSavingId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: string; type: "status" | "courier"; x: number; y: number } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCourierId, setBulkCourierId] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
   const limit = 20;
 
   const role = (session?.user as any)?.role;
   const canEdit = role === "ADMIN" || role === "DISPATCHER";
+
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   // Sync filters to URL (skip initial mount — state was already read from URL)
   const mountedRef = useRef(false);
@@ -68,11 +80,13 @@ function SolicitudesPageInner() {
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
     if (stateFilter) params.set("state", stateFilter);
-    if (search) params.set("search", search);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     router.replace(`/dashboard/solicitudes${qs ? `?${qs}` : ""}`, { scroll: false });
-  }, [statusFilter, stateFilter, search, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusFilter, stateFilter, debouncedSearch, dateFrom, dateTo, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportCSV = async () => {
     let url = `/api/pickup-requests?limit=2000`;
@@ -106,12 +120,15 @@ function SolicitudesPageInner() {
       let url = `/api/pickup-requests?page=${page}&limit=${limit}`;
       if (statusFilter) url += `&status=${statusFilter}`;
       if (stateFilter) url += `&state=${stateFilter}`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+      if (dateFrom) url += `&dateFrom=${dateFrom}`;
+      if (dateTo) url += `&dateTo=${dateTo}`;
       if (role === "COURIER") url += `&courierId=${(session?.user as any)?.id}`;
       const res = await fetch(url);
       const data = await res.json();
       setPickups(data.data ?? []);
       setTotal(data.pagination?.total ?? 0);
+      setSelectedIds(new Set());
     } finally {
       setLoading(false);
     }
@@ -120,7 +137,7 @@ function SolicitudesPageInner() {
   useEffect(() => {
     if (status !== "authenticated") return;
     load();
-  }, [status, session, statusFilter, stateFilter, search, page, role]);
+  }, [status, session, statusFilter, stateFilter, debouncedSearch, dateFrom, dateTo, page, role]);
 
   useEffect(() => {
     if (!canEdit) return;
@@ -163,6 +180,42 @@ function SolicitudesPageInner() {
     patchPickup(id, body);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === pickups.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(pickups.map((p) => p.id)));
+  };
+
+  const bulkAssign = async () => {
+    if (!bulkCourierId || selectedIds.size === 0) return;
+    setBulkSaving(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) => {
+          const current = pickups.find((p) => p.id === id)?.status ?? "";
+          const body: Record<string, unknown> = { assignedCourierId: bulkCourierId };
+          if (current === "PENDING") body.status = "ASSIGNED";
+          return fetch(`/api/pickup-requests/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        })
+      );
+      setBulkCourierId("");
+      await load();
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const menuPickup = menu ? pickups.find((p) => p.id === menu.id) : null;
 
   return (
@@ -202,8 +255,8 @@ function SolicitudesPageInner() {
 
         {/* Filters */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
+          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+            <div className="flex-1 relative min-w-48">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -211,7 +264,7 @@ function SolicitudesPageInner() {
                 type="text"
                 placeholder={t("solicitudes.searchPlaceholder")}
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50/50"
               />
             </div>
@@ -237,8 +290,56 @@ function SolicitudesPageInner() {
                 <option key={s} value={s}>{t(`status.${s}`)}</option>
               ))}
             </select>
+            {/* Date range */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 shrink-0">{t("solicitudes.dateFrom")}</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                className="px-2 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-700 transition-all"
+              />
+              <span className="text-xs text-slate-500 shrink-0">{t("solicitudes.dateTo")}</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                className="px-2 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 text-slate-700 transition-all"
+              />
+            </div>
           </div>
         </div>
+
+        {/* Bulk assign bar */}
+        {canEdit && selectedIds.size > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-3 animate-in slide-in-from-bottom-4">
+            <span className="text-sm font-semibold">{selectedIds.size} {lang === "en" ? "selected" : "seleccionadas"}</span>
+            <div className="w-px h-5 bg-white/20" />
+            <select
+              value={bulkCourierId}
+              onChange={(e) => setBulkCourierId(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-lg text-sm px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+            >
+              <option value="">{t("solicitudes.bulkAssignCourier")}</option>
+              {couriers.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <button
+              onClick={bulkAssign}
+              disabled={!bulkCourierId || bulkSaving}
+              className="px-3 py-1.5 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              {bulkSaving ? "…" : t("solicitudes.assign")}
+            </button>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-white/60 hover:text-white text-sm transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -246,6 +347,16 @@ function SolicitudesPageInner() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80">
+                  {canEdit && (
+                    <th className="pl-5 pr-2 py-3.5 w-8">
+                      <input
+                        type="checkbox"
+                        checked={pickups.length > 0 && selectedIds.size === pickups.length}
+                        onChange={toggleSelectAll}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                    </th>
+                  )}
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.code")}</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.contact")}</th>
                   <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("solicitudes.origin")}</th>
@@ -258,11 +369,11 @@ function SolicitudesPageInner() {
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   Array.from({ length: 8 }).map((_, i) => (
-                    <SkeletonTableRow key={i} cols={7} />
+                    <SkeletonTableRow key={i} cols={canEdit ? 8 : 7} />
                   ))
                 ) : pickups.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={canEdit ? 8 : 7}>
                       <EmptyState
                         icon={<PackageIcon />}
                         title={t("solicitudes.noRequests")}
@@ -284,7 +395,17 @@ function SolicitudesPageInner() {
                   </tr>
                 ) : (
                   pickups.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors duration-100 group">
+                    <tr key={p.id} className={`hover:bg-slate-50/60 transition-colors duration-100 group ${selectedIds.has(p.id) ? "bg-indigo-50/40" : ""}`}>
+                      {canEdit && (
+                        <td className="pl-5 pr-2 py-3.5 w-8">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(p.id)}
+                            onChange={() => toggleSelect(p.id)}
+                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-5 py-3.5">
                         <span className="font-mono font-bold text-indigo-600 text-xs bg-indigo-50 px-2.5 py-1 rounded-md">
                           {p.trackingCode}

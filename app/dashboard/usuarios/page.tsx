@@ -229,6 +229,17 @@ export default function UsuariosPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 justify-end">
+                          {u.role === "COURIER" && (
+                            <a
+                              href={`/dashboard/usuarios/${u.id}`}
+                              className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              title={t("usuarios.viewProfile")}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                            </a>
+                          )}
                           <button
                             onClick={() => openEdit(u)}
                             className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

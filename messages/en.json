@@ -130,7 +130,8 @@
     "notSpecified": "Not specified",
     "openingRoute": "Opening route in Google Maps…",
     "noStopsForRoute": "No active pickups to build a route.",
-    "noPickupsForDate": "No pickups for this date."
+    "noPickupsForDate": "No pickups for this date.",
+    "addPhoto": "Add proof photo (optional)"
   },
   "account": {
     "home": "Home",
@@ -217,7 +218,12 @@
     "changeStatus": "Change status",
     "assign": "Assign",
     "saving": "Saving…",
-    "exportCSV": "Export CSV"
+    "exportCSV": "Export CSV",
+    "bulkAssign": "Assign courier to {{count}} selected",
+    "bulkAssignCourier": "Assign to courier",
+    "bulkClear": "Clear selection",
+    "dateFrom": "From",
+    "dateTo": "To"
   },
   "cal": {
     "title": "Pickup Calendar",
@@ -287,7 +293,15 @@
     "passwordOptional": "New password (optional)",
     "passwordMin": "Minimum 6 characters",
     "phone": "Phone",
-    "failedSave": "Failed to save user."
+    "failedSave": "Failed to save user.",
+    "viewProfile": "View profile",
+    "profileTitle": "Courier Profile",
+    "totalPickups": "Total pickups",
+    "completed": "Completed",
+    "inProgress": "In progress",
+    "successRate": "Success rate",
+    "recentPickups": "Recent pickups",
+    "noPickupsYet": "No pickups yet"
   },
   "login": {
     "title": "Sign in",

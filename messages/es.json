@@ -108,6 +108,7 @@
     "addNote": "Agregar nota (opcional)",
     "onMyWay": "En camino — Notificar al cliente",
     "confirmPickup": "Confirmar recogida — Paquete en mano",
+    "addPhoto": "Agregar foto de evidencia (opcional)",
     "pickupCompleted": "Recogida completada",
     "customerNotifiedEmail": "El cliente fue notificado por correo",
     "onTheWayBanner": "EN CAMINO — El cliente ha sido notificado",
@@ -217,7 +218,12 @@
     "changeStatus": "Cambiar estado",
     "assign": "Asignar",
     "saving": "Guardando…",
-    "exportCSV": "Exportar CSV"
+    "exportCSV": "Exportar CSV",
+    "bulkAssign": "Asignar courier a {{count}} seleccionadas",
+    "bulkAssignCourier": "Asignar a courier",
+    "bulkClear": "Limpiar selección",
+    "dateFrom": "Desde",
+    "dateTo": "Hasta"
   },
   "cal": {
     "title": "Calendario de Recogidas",
@@ -287,7 +293,15 @@
     "passwordOptional": "Nueva contraseña (opcional)",
     "passwordMin": "Mínimo 6 caracteres",
     "phone": "Teléfono",
-    "failedSave": "No se pudo guardar el usuario."
+    "failedSave": "No se pudo guardar el usuario.",
+    "viewProfile": "Ver perfil",
+    "profileTitle": "Perfil del Courier",
+    "totalPickups": "Total de recogidas",
+    "completed": "Completadas",
+    "inProgress": "En progreso",
+    "successRate": "Tasa de éxito",
+    "recentPickups": "Recogidas recientes",
+    "noPickupsYet": "Sin recogidas aún"
   },
   "login": {
     "title": "Iniciar sesión",

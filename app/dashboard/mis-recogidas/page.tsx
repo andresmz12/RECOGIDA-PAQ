@@ -78,9 +78,10 @@ export default function MisRecogidasPage() {
     setTimeout(() => setToast(""), 6000);
   };
 
-  const handleAction = async (id: string, newStatus: string, notes?: string) => {
+  const handleAction = async (id: string, newStatus: string, notes?: string, proofPhotoUrl?: string) => {
     const body: any = { status: newStatus };
     if (notes) body.notes = notes;
+    if (proofPhotoUrl) body.proofPhotoUrl = proofPhotoUrl;
     const res = await fetch(`/api/pickup-requests/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -361,19 +362,30 @@ function PickupActionCard({
   locale,
 }: {
   pickup: PickupRequest;
-  onAction: (id: string, status: string, notes?: string) => void;
+  onAction: (id: string, status: string, notes?: string, proofPhotoUrl?: string) => void;
   locale: string;
 }) {
   const { t } = useT();
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [acting, setActing] = useState(false);
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoDataUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const act = async (newStatus: string) => {
     setActing(true);
-    await onAction(pickup.id, newStatus, notes || undefined);
+    await onAction(pickup.id, newStatus, notes || undefined, photoDataUrl || undefined);
     setNotes("");
     setShowNotes(false);
+    setPhotoDataUrl(null);
     setActing(false);
   };
 
@@ -503,6 +515,40 @@ function PickupActionCard({
                 rows={3}
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all"
               />
+            )}
+
+            {/* Photo proof — shown when courier is on the way */}
+            {isOnTheWay && (
+              <div className="rounded-xl border-2 border-dashed border-slate-200 p-3 bg-slate-50">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
+                {photoDataUrl ? (
+                  <div className="relative">
+                    <img src={photoDataUrl} alt="proof" className="w-full max-h-40 object-cover rounded-lg" />
+                    <button
+                      onClick={() => setPhotoDataUrl(null)}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
+                    >✕</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-indigo-600 text-sm font-medium py-2 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {t("pickups.addPhoto")}
+                  </button>
+                )}
+              </div>
             )}
 
             <div className="flex gap-3">

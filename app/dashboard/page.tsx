@@ -101,6 +101,7 @@ export default function DashboardPage() {
   const [recent, setRecent] = useState<RecentPickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayPickups, setTodayPickups] = useState<RecentPickup[]>([]);
+  const [courierStats, setCourierStats] = useState<any[]>([]);
 
   const role   = (session?.user as any)?.role as string;
   const name   = session?.user?.name?.split(" ")[0] ?? "";
@@ -114,10 +115,12 @@ export default function DashboardPage() {
         fetch("/api/stats").then((r) => r.json()),
         fetch("/api/pickup-requests?limit=6").then((r) => r.json()),
         fetch(`/api/pickup-requests?date=${today}&limit=20`).then((r) => r.json()),
-      ]).then(([s, rec, tod]) => {
+        fetch("/api/stats/couriers").then((r) => r.json()),
+      ]).then(([s, rec, tod, cs]) => {
         setStats(s);
         setRecent(rec.data ?? []);
         setTodayPickups(tod.data ?? []);
+        setCourierStats(cs.couriers ?? []);
       }).finally(() => setLoading(false));
     } else if (role === "COURIER") {
       const today = new Date().toISOString().split("T")[0];
@@ -365,6 +368,32 @@ export default function DashboardPage() {
                 <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label={t("nav.rutasPdf")}     desc={t("dashboard.exportRoutes")}  hoverColor="hover:border-rose-200 hover:bg-rose-50/50" />
               </div>
             </div>
+
+            {/* Courier stats */}
+            {!loading && courierStats.length > 0 && (
+              <div>
+                <h2 className="text-base font-bold text-slate-900 mb-3">{t("dashboard.couriersToday")}</h2>
+                <div className="space-y-2">
+                  {courierStats.map((c) => (
+                    <a key={c.id} href={`/dashboard/usuarios/${c.id}`} className="block bg-white border border-slate-200 rounded-xl px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-semibold text-slate-900 text-sm truncate">{c.name}</p>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${c.todayCount > 0 ? "bg-indigo-100 text-indigo-700" : "bg-slate-100 text-slate-500"}`}>
+                          {c.todayCount} {lang === "en" ? "today" : "hoy"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${c.successRate}%` }} />
+                        </div>
+                        <span className="text-xs text-slate-400 shrink-0">{c.successRate}%</span>
+                        <span className="text-xs text-slate-400 shrink-0">{c.inProgress} {lang === "en" ? "active" : "activas"}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Today's pickups list */}
             {!loading && todayPickups.length > 0 && (

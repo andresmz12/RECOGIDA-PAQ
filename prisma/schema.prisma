@@ -80,6 +80,7 @@ model PickupRequest {
   callAttempts        Int             @default(0)
   lastCallId          String?
   lastCallAt          DateTime?
+  proofPhotoUrl       String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 }
