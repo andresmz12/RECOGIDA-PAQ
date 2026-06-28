@@ -202,6 +202,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { t } = useT();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -246,7 +247,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-slate-50">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 bg-slate-900 fixed inset-y-0 left-0 flex-col z-40">
+      <aside className={`hidden lg:flex bg-slate-900 fixed inset-y-0 left-0 flex-col z-40 transition-all duration-300 ${sidebarOpen ? "w-60" : "w-0 overflow-hidden"}`}>
         <SidebarContent
           session={session}
           role={role}
@@ -286,13 +287,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Right side */}
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? "lg:ml-60" : "lg:ml-0"}`}>
         {/* Top bar */}
         <header className="h-14 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 shrink-0">
           <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            {/* Desktop sidebar toggle */}
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="hidden lg:flex p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+              title={sidebarOpen ? "Cerrar menú" : "Abrir menú"}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
