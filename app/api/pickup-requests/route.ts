@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/client";
 import { generateTrackingCode } from "@/lib/utils";
+import { isValidEmail, isValidUSPhone, isValidIntlPhone } from "@/lib/validation";
 import { sendPickupConfirmationEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -68,6 +69,32 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate formats: sender (pickup) is always US; recipient is international.
+    if (!isValidUSPhone(contactPhone)) {
+      return NextResponse.json(
+        { error: "Enter a valid US phone number for the sender (10 digits)." },
+        { status: 400 }
+      );
+    }
+    if (contactEmail && !isValidEmail(contactEmail)) {
+      return NextResponse.json(
+        { error: "Enter a valid sender email address." },
+        { status: 400 }
+      );
+    }
+    if (!isValidIntlPhone(recipientPhone)) {
+      return NextResponse.json(
+        { error: "Enter a valid recipient phone number." },
+        { status: 400 }
+      );
+    }
+    if (recipientEmail && !isValidEmail(recipientEmail)) {
+      return NextResponse.json(
+        { error: "Enter a valid recipient email address." },
         { status: 400 }
       );
     }

@@ -33,6 +33,9 @@ export async function PATCH(req: NextRequest) {
   if (phone !== undefined) updateData.phone = phone.trim() || null;
 
   if (newPassword) {
+    if (newPassword.length < 6) {
+      return NextResponse.json({ error: "New password must be at least 6 characters" }, { status: 400 });
+    }
     if (!currentPassword) {
       return NextResponse.json({ error: "Current password required" }, { status: 400 });
     }

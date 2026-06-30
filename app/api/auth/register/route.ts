@@ -3,17 +3,24 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { isValidUSPhone } from "@/lib/validation";
 
 const schema = z.object({
   email: z.string().email("Valid email required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   name: z.string().min(1, "Name is required.").max(100),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || isValidUSPhone(v),
+      "Enter a valid US phone number (10 digits)."
+    ),
 });
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-  const rl = rateLimit(`register:${ip}`, { limit: 5, windowMs: 60_000 });
+  const rl = await rateLimit(`register:${ip}`, { limit: 5, windowMs: 60_000 });
   if (!rl.ok) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
   }

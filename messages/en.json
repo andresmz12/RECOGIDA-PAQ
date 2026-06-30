@@ -565,7 +565,10 @@
     "priceEstimate": "Estimated price",
     "priceNote": "Approximate price · Team will confirm the final price",
     "priceBase": "Base price",
-    "priceExtraWeight": "Extra weight"
+    "priceExtraWeight": "Extra weight",
+    "errorPhone": "Enter a valid US phone number for the sender (10 digits).",
+    "errorEmail": "Enter a valid sender email address.",
+    "errorRecipientPhone": "Enter a valid recipient phone number."
   },
   "rastreo": {
     "loading": "Loading tracking information...",

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendStatusUpdateEmail } from "@/lib/email";
 import { triggerCourierCall } from "@/lib/call-service";
+import { maybeUploadImage } from "@/lib/storage";
 
 export async function GET(
   request: NextRequest,
@@ -122,6 +123,11 @@ export async function PATCH(
 
     const oldStatus = pickupRequest.status;
 
+    // Offload an inline proof photo to object storage when configured; falls
+    // back to storing the value as-is so nothing breaks without Cloudinary.
+    const storedProof =
+      proofPhotoUrl !== undefined ? await maybeUploadImage(proofPhotoUrl) : undefined;
+
     // Update the request
     await (prisma.pickupRequest.update as any)({
       where: { id: params.id },
@@ -130,7 +136,7 @@ export async function PATCH(
         ...(assignedCourierId && { assignedCourierId }),
         ...(preferredDate && { preferredDate: new Date(preferredDate) }),
         ...(preferredTimeWindow && { preferredTimeWindow }),
-        ...(proofPhotoUrl !== undefined && { proofPhotoUrl }),
+        ...(storedProof !== undefined && { proofPhotoUrl: storedProof }),
       },
     });
 

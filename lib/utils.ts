@@ -14,8 +14,8 @@ export function generateTrackingCode(): string {
   return code;
 }
 
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("es-ES", {
+export function formatDate(date: Date, locale: string = "en-US"): string {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",

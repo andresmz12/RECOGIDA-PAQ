@@ -9,6 +9,7 @@ import LocationPicker from "@/components/Form/LocationPicker";
 import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { isValidEmail, isValidUSPhone, isValidIntlPhone } from "@/lib/validation";
 
 // Fallback prices used when no pricing rule is configured in DB
 const BOX_BASE_FALLBACK: Record<string, number> = {
@@ -165,6 +166,21 @@ export default function RecogerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Validate formats before hitting the API (sender is US, recipient intl).
+    if (!isValidUSPhone(form.contactPhone)) {
+      setError(t("recoger.errorPhone"));
+      return;
+    }
+    if (!isValidEmail(form.contactEmail)) {
+      setError(t("recoger.errorEmail"));
+      return;
+    }
+    if (!isValidIntlPhone(form.recipientPhone)) {
+      setError(t("recoger.errorRecipientPhone"));
+      return;
+    }
+
     setLoading(true);
 
     const firstItem = items[0];
@@ -210,7 +226,7 @@ export default function RecogerPage() {
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
-        style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+        style={{ background: "linear-gradient(135deg, #0c1b2e 0%, #142b45 55%, #0d2240 100%)" }}>
         <div className="w-full max-w-md text-center">
           <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-900/40">
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,7 +287,7 @@ export default function RecogerPage() {
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
               style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
-            <span className="font-bold text-slate-900 text-sm">O'Globo Cargo</span>
+            <span className="font-bold text-slate-900 text-sm">O&apos;Globo Cargo</span>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
@@ -323,7 +339,7 @@ export default function RecogerPage() {
                 <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} placeholder="Jane Doe" required />
               </Field>
               <Field label={t("recoger.phone")} required>
-                <input className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} placeholder="+1 (305) 555-0000" required />
+                <input type="tel" inputMode="tel" autoComplete="tel" className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} placeholder="+1 (305) 555-0000" required />
               </Field>
             </div>
             <Field label={t("recoger.email")} required>
@@ -392,7 +408,7 @@ export default function RecogerPage() {
                 <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="Maria Lopez" required />
               </Field>
               <Field label={t("recoger.primaryPhone")} required>
-                <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
+                <input type="tel" inputMode="tel" className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
               </Field>
             </div>
 

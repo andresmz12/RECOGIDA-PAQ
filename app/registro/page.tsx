@@ -12,11 +12,7 @@ import Alert from "@/components/ui/Alert";
 import Card from "@/components/ui/Card";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-function validateUSPhone(phone: string): boolean {
-  const digits = phone.replace(/\D/g, "");
-  return digits.length === 10 || (digits.length === 11 && digits[0] === "1");
-}
+import { isValidUSPhone, isValidEmail } from "@/lib/validation";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -38,8 +34,8 @@ export default function RegistroPage() {
     setSuccess("");
 
     if (!formData.name.trim()) { setError(t("registro2.errorName")); return; }
-    if (!formData.email.includes("@")) { setError(t("registro2.errorEmail")); return; }
-    if (formData.phone && !validateUSPhone(formData.phone)) {
+    if (!isValidEmail(formData.email)) { setError(t("registro2.errorEmail")); return; }
+    if (formData.phone && !isValidUSPhone(formData.phone)) {
       setError(t("registro2.errorPhone")); return;
     }
     if (formData.password.length < 6) { setError(t("registro2.errorMinPw")); return; }

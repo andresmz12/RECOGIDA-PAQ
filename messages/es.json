@@ -565,7 +565,10 @@
     "priceEstimate": "Precio estimado",
     "priceNote": "Precio aproximado · El equipo confirmará el precio final",
     "priceBase": "Precio base",
-    "priceExtraWeight": "Peso extra"
+    "priceExtraWeight": "Peso extra",
+    "errorPhone": "Ingresa un teléfono de EE. UU. válido para el remitente (10 dígitos).",
+    "errorEmail": "Ingresa un correo válido del remitente.",
+    "errorRecipientPhone": "Ingresa un teléfono válido del destinatario."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

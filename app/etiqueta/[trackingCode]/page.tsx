@@ -126,7 +126,7 @@ export default function EtiquetaPage() {
         {/* Header */}
         <div style={{ background: "#1e1b4b", color: "white", padding: "8px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontWeight: "bold", fontSize: "13pt", letterSpacing: "0.02em" }}>O'GLOBO CARGO</div>
+            <div style={{ fontWeight: "bold", fontSize: "13pt", letterSpacing: "0.02em" }}>O&apos;GLOBO CARGO</div>
             <div style={{ fontSize: "8pt", opacity: 0.8 }}>International Logistics</div>
           </div>
           <div style={{ textAlign: "right" }}>
