@@ -28,6 +28,14 @@ function resolveCallStatus(event: string, outcome: string | undefined): "CONFIRM
   return "CONFIRMED"; // unknown positive-leaning outcomes default to confirmed
 }
 
+// ZyraVoice reports back the number it dialed in E.164 form (e.g. "+13055550000")
+// while contactPhone is stored exactly as the customer typed it
+// (e.g. "+1 (305) 555-0000"). Compare on the last 10 significant digits so the
+// match works regardless of formatting or the +1 country prefix.
+function phoneKey(phone: string): string {
+  return phone.replace(/\D/g, "").slice(-10);
+}
+
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const signature = request.headers.get("X-ZyraVoice-Signature");
@@ -53,10 +61,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const pickupRequest = await prisma.pickupRequest.findFirst({
+    const target = phoneKey(phone);
+
+    // Fast path: exact stored match. Fall back to a digit-normalized scan of
+    // recently-called requests so reformatted / E.164 numbers still match.
+    let pickupRequest = await prisma.pickupRequest.findFirst({
       where: { contactPhone: phone },
       orderBy: { createdAt: "desc" },
     });
+
+    if (!pickupRequest && target.length >= 7) {
+      const recent = await prisma.pickupRequest.findMany({
+        where: { lastCallId: { not: null } },
+        orderBy: { lastCallAt: "desc" },
+        take: 200,
+        select: { id: true, contactPhone: true },
+      });
+      const match = recent.find((r) => phoneKey(r.contactPhone) === target);
+      if (match) {
+        pickupRequest = await prisma.pickupRequest.findUnique({ where: { id: match.id } });
+      }
+    }
 
     if (pickupRequest) {
       const callStatus = resolveCallStatus(event, outcome);

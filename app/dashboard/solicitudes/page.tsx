@@ -314,14 +314,14 @@ function SolicitudesPageInner() {
 
       <div className="p-6 md:p-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">{t("solicitudes.title")}</h1>
             <p className="text-sm text-slate-500 mt-0.5">
               {loading ? t("common.loading") : `${total} ${t("solicitudes.title").toLowerCase()}`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {canEdit && (
               <>
                 <button
