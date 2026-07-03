@@ -574,7 +574,8 @@
     "discountApplied": "Código {{code}} aplicado: −{{percent}}%",
     "discountInvalid": "Código no válido o inactivo.",
     "discountRow": "Descuento ({{code}})",
-    "discountOptional": "¿Tienes un código? Ingrésalo aquí."
+    "discountOptional": "¿Tienes un código? Ingrésalo aquí.",
+    "dateNotice": "La fecha y hora que elijas son una preferencia, no una cita confirmada. Nuestro equipo se comunicará contigo para coordinar y validar el día y horario exacto de la recogida."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

@@ -584,6 +584,12 @@ export default function RecogerPage() {
                 </select>
               </Field>
             </div>
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+              <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs text-amber-800 leading-relaxed">{t("recoger.dateNotice")}</p>
+            </div>
             <Field label={t("recoger.specialInstructions")} hint={t("recoger.specialInstructionsHint")}>
               <textarea
                 className={inputCls + " resize-none"}

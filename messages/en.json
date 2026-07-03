@@ -574,7 +574,8 @@
     "discountApplied": "Code {{code}} applied: −{{percent}}%",
     "discountInvalid": "Invalid or inactive code.",
     "discountRow": "Discount ({{code}})",
-    "discountOptional": "Have a code? Enter it here."
+    "discountOptional": "Have a code? Enter it here.",
+    "dateNotice": "The date and time you choose are a preference, not a confirmed appointment. Our team will contact you to coordinate and confirm the exact pickup day and time."
   },
   "rastreo": {
     "loading": "Loading tracking information...",
