@@ -15,10 +15,10 @@ export async function GET(
         preferredTimeWindow: true,
         updatedAt: true,
         statusHistory: {
+          // Public endpoint: never expose internal staff notes here
           select: {
             fromStatus: true,
             toStatus: true,
-            notes: true,
             createdAt: true,
           },
           orderBy: { createdAt: "asc" },

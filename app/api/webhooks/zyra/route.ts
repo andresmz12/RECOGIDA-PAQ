@@ -7,7 +7,14 @@ const NEGATIVE_OUTCOMES = new Set(["no_answer", "voicemail", "not_interested", "
 
 function verifySignature(body: string, header: string | null): boolean {
   const secret = process.env.ZYRA_WEBHOOK_SECRET;
-  if (!secret) return true; // skip validation if secret not configured
+  if (!secret) {
+    // Fail closed in production: without a secret anyone could forge webhooks
+    if (process.env.NODE_ENV === "production") {
+      console.error("[webhook/zyra] ZYRA_WEBHOOK_SECRET is not set — rejecting webhook. Configure it in Railway.");
+      return false;
+    }
+    return true; // local development convenience only
+  }
   if (!header) return false;
   const expected = crypto
     .createHmac("sha256", secret)

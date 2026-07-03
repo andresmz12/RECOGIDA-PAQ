@@ -17,6 +17,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   const { name, phone, role, password } = await req.json();
 
+  const validRoles = ["ADMIN", "DISPATCHER", "COURIER", "CUSTOMER"];
+  if (role && !validRoles.includes(role)) {
+    return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
+  }
+  if (password && (typeof password !== "string" || password.length < 6)) {
+    return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+  }
+
   const data: any = {};
   if (name) data.name = name;
   if (phone !== undefined) data.phone = phone || null;

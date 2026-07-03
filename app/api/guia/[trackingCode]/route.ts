@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { trackingCode: string } }
 ) {
   try {
+    // This endpoint returns full waybill PII keyed only by the tracking
+    // code, so throttle hard to make code enumeration infeasible.
+    const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+    const rl = rateLimit(`guia:${ip}`, { limit: 10, windowMs: 60_000 });
+    if (!rl.ok) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const p = await prisma.pickupRequest.findUnique({
       where: { trackingCode: params.trackingCode },
       select: {

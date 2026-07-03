@@ -7,6 +7,15 @@ const FROM = process.env.SENDGRID_FROM_EMAIL || "noreply@oglobocargo.com";
 const FROM_NAME = "O'Globo Cargo";
 const BASE_URL = process.env.NEXTAUTH_URL || "";
 
+// Escape user-supplied values before interpolating them into email HTML
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // ── Shared building blocks ────────────────────────────────────────
 // Email clients (esp. Outlook) ignore CSS gradients, so every gradient
 // is paired with a solid background-color fallback. Layout is table-based
@@ -94,7 +103,7 @@ function detailsTable(rows: Array<[string, string]>): string {
       ([label, value]) => `
       <tr>
         <td style="padding:9px 0;font-size:13px;color:#64748b;width:42%;vertical-align:top;">${label}</td>
-        <td style="padding:9px 0;font-size:13px;color:#0f172a;font-weight:600;vertical-align:top;">${value}</td>
+        <td style="padding:9px 0;font-size:13px;color:#0f172a;font-weight:600;vertical-align:top;">${esc(value)}</td>
       </tr>`
     )
     .join("");
@@ -152,7 +161,7 @@ export async function sendPickupConfirmationEmail(
         subject: `Recogida Confirmada — ${trackingCode}`,
         title: "Solicitud de Recogida Confirmada",
         preheader: `Tu código de rastreo es ${trackingCode}. Rastrea tu recogida en cualquier momento.`,
-        hi: `Hola <strong>${contactName}</strong>,`,
+        hi: `Hola <strong>${esc(contactName)}</strong>,`,
         hiText: `Hola ${contactName},`,
         received: "Tu solicitud de recogida fue recibida y está siendo procesada. Usa el código de abajo para rastrear tu envío en cualquier momento.",
         receivedText: "Tu solicitud de recogida fue recibida y está siendo procesada.",
@@ -169,7 +178,7 @@ export async function sendPickupConfirmationEmail(
         subject: `Pickup Confirmed — ${trackingCode}`,
         title: "Pickup Request Confirmed",
         preheader: `Your tracking code is ${trackingCode}. Track your pickup anytime.`,
-        hi: `Hi <strong>${contactName}</strong>,`,
+        hi: `Hi <strong>${esc(contactName)}</strong>,`,
         hiText: `Hi ${contactName},`,
         received: "Your pickup request has been received and is being processed. Use the code below to track your shipment at any time.",
         receivedText: "Your pickup request has been received and is being processed.",
@@ -259,7 +268,7 @@ export async function sendStatusUpdateEmail(
     ? {
         subject: `Actualización de Envío — ${trackingCode}`,
         title: "Actualización de Envío",
-        hi: `Hola <strong>${contactName}</strong>,`,
+        hi: `Hola <strong>${esc(contactName)}</strong>,`,
         hiText: `Hola ${contactName},`,
         scheduledDate: "Fecha programada",
         cta: "Ver detalles completos →",
@@ -269,7 +278,7 @@ export async function sendStatusUpdateEmail(
     : {
         subject: `Shipment Update — ${trackingCode}`,
         title: "Shipment Update",
-        hi: `Hi <strong>${contactName}</strong>,`,
+        hi: `Hi <strong>${esc(contactName)}</strong>,`,
         hiText: `Hi ${contactName},`,
         scheduledDate: "Scheduled date",
         cta: "View Full Details →",
@@ -343,7 +352,7 @@ export async function sendWelcomeEmail(
         subject: "¡Bienvenido a O'Globo Cargo!",
         title: "¡Tu cuenta está lista!",
         preheader: "Tu cuenta de O'Globo Cargo fue creada exitosamente.",
-        hi: `Hola <strong>${name}</strong>,`,
+        hi: `Hola <strong>${esc(name)}</strong>,`,
         created: "Tu cuenta de O'Globo Cargo fue creada exitosamente. Desde tu panel puedes:",
         features: [
           "Solicitar recogidas de paquetes internacionales",
@@ -367,7 +376,7 @@ export async function sendWelcomeEmail(
         subject: "Welcome to O'Globo Cargo!",
         title: "Your account is ready!",
         preheader: "Your O'Globo Cargo account was created successfully.",
-        hi: `Hi <strong>${name}</strong>,`,
+        hi: `Hi <strong>${esc(name)}</strong>,`,
         created: "Your O'Globo Cargo account was created successfully. From your dashboard you can:",
         features: [
           "Request international package pickups",
@@ -447,7 +456,7 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${BASE_URL}/reset-password/${token}`;
 
   const body = `
-    <p style="font-size:15px;line-height:1.6;margin-top:0;">Hi <strong>${name}</strong>,</p>
+    <p style="font-size:15px;line-height:1.6;margin-top:0;">Hi <strong>${esc(name)}</strong>,</p>
     <p style="font-size:15px;line-height:1.6;color:#475569;">We received a request to reset the password for your O'Globo Cargo account. Click the button below to set a new one.</p>
     ${button(resetUrl, "Reset Password →")}
     <p style="font-size:13px;color:#64748b;margin-top:18px;line-height:1.6;">This link expires in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email.</p>

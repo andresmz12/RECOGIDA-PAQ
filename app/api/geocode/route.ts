@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q");
@@ -8,9 +9,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([]);
   }
 
+  // Throttle: this proxies to Nominatim, and abuse could get our IP banned
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  const rl = rateLimit(`geocode:${ip}`, { limit: 30, windowMs: 60_000 });
+  if (!rl.ok) {
+    return NextResponse.json([], { status: 429 });
+  }
+
   try {
     let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6`;
-    if (country) url += `&countrycodes=${country}`;
+    if (country) url += `&countrycodes=${encodeURIComponent(country)}`;
 
     const res = await fetch(url, {
       headers: {

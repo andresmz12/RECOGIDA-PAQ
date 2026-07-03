@@ -19,8 +19,8 @@ export async function GET(
     const pickupRequest = await prisma.pickupRequest.findUnique({
       where: { id: params.id },
       include: {
-        user: true,
-        assignedCourier: true,
+        user: { select: { id: true, name: true, email: true, phone: true, role: true } },
+        assignedCourier: { select: { id: true, name: true, email: true, phone: true, role: true } },
         statusHistory: {
           orderBy: { createdAt: "desc" },
         },
@@ -79,6 +79,11 @@ export async function PATCH(
 
     const body = await request.json();
     const { status, assignedCourierId, notes, preferredDate, preferredTimeWindow, proofPhotoUrl } = body;
+
+    const VALID_STATUSES = ["PENDING", "ASSIGNED", "SCHEDULED", "EN_CAMINO", "PICKED_UP", "CANCELLED"];
+    if (status && !VALID_STATUSES.includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
 
     const pickupRequest = await prisma.pickupRequest.findUnique({
       where: { id: params.id },
@@ -171,8 +176,8 @@ export async function PATCH(
     const finalRequest = await prisma.pickupRequest.findUnique({
       where: { id: params.id },
       include: {
-        user: true,
-        assignedCourier: true,
+        user: { select: { id: true, name: true, email: true, phone: true, role: true } },
+        assignedCourier: { select: { id: true, name: true, email: true, phone: true, role: true } },
         statusHistory: {
           orderBy: { createdAt: "desc" },
         },

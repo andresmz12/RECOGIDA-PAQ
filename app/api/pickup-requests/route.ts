@@ -7,9 +7,21 @@ import { sendPickupConfirmationEmail, sendWelcomeEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { triggerConfirmationCall } from "@/lib/call-service";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Each request triggers emails and an automated voice call — throttle
+    // to stop bots from generating cost and junk data.
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const rl = rateLimit(`pickup:${ip}`, { limit: 5, windowMs: 60_000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again in a minute." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -309,8 +321,8 @@ export async function GET(request: NextRequest) {
     const pickups = await prisma.pickupRequest.findMany({
       where,
       include: {
-        user: true,
-        assignedCourier: true,
+        user: { select: { id: true, name: true, email: true, phone: true, role: true } },
+        assignedCourier: { select: { id: true, name: true, email: true, phone: true, role: true } },
         statusHistory: true,
       },
       orderBy: { createdAt: "desc" },

@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
   }
 
+  if (typeof password !== "string" || password.length < 6) {
+    return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return NextResponse.json({ error: "Email ya registrado" }, { status: 400 });
 
