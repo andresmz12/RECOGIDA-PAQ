@@ -10,7 +10,8 @@
     "precios": "Precios",
     "navegacion": "Navegación",
     "cerrarSesion": "Cerrar sesión",
-    "panelControl": "Panel de Control"
+    "panelControl": "Panel de Control",
+    "descuentos": "Descuentos"
   },
   "roles": {
     "ADMIN": "Administrador",
@@ -27,7 +28,8 @@
     "usuarios": "Usuarios",
     "rutasPdf": "Rutas PDF",
     "precios": "Precios",
-    "calendario": "Calendario"
+    "calendario": "Calendario",
+    "descuentos": "Códigos de Descuento"
   },
   "common": {
     "loading": "Cargando...",
@@ -566,7 +568,13 @@
     "priceEstimate": "Precio estimado",
     "priceNote": "Precio aproximado · El equipo confirmará el precio final",
     "priceBase": "Precio base",
-    "priceExtraWeight": "Peso extra"
+    "priceExtraWeight": "Peso extra",
+    "discountLabel": "Código de descuento",
+    "discountApply": "Aplicar",
+    "discountApplied": "Código {{code}} aplicado: −{{percent}}%",
+    "discountInvalid": "Código no válido o inactivo.",
+    "discountRow": "Descuento ({{code}})",
+    "discountOptional": "¿Tienes un código? Ingrésalo aquí."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

@@ -146,14 +146,16 @@ export async function PATCH(
         },
       });
 
-      // Send email notification
+      // Send email notification in the language the customer used on the form
       if (pickupRequest.contactEmail) {
+        const customerLang = (pickupRequest as any).lang === "en" ? "en" : "es";
         await sendStatusUpdateEmail(
           pickupRequest.contactEmail,
           pickupRequest.trackingCode,
           pickupRequest.contactName,
           status,
-          pickupRequest.preferredDate
+          pickupRequest.preferredDate,
+          customerLang
         );
       }
 

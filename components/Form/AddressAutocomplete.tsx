@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { US_STATES } from "@/lib/countries";
 
 interface Suggestion {
   label: string;
@@ -23,6 +24,16 @@ interface Props {
   required?: boolean;
 }
 
+// Nominatim returns US states by full name ("Illinois"); the form selects
+// expect the 2-letter code ("IL"), so normalize before handing it back.
+function usStateCode(state: string): string {
+  if (!state) return "";
+  const upper = state.trim().toUpperCase();
+  if (US_STATES.some((s) => s.code === upper)) return upper;
+  const match = US_STATES.find((s) => s.name.toUpperCase() === upper);
+  return match ? match.code : state;
+}
+
 function parseNominatim(r: any): Suggestion | null {
   if (!r.lat || !r.lon) return null;
   const a = r.address ?? {};
@@ -32,9 +43,10 @@ function parseNominatim(r: any): Suggestion | null {
   const address = [streetNum, street].filter(Boolean).join(" ") || r.display_name?.split(",")[0] || "";
 
   const city = a.city || a.town || a.village || a.municipality || a.county || "";
-  const state = a.state || "";
-  const postcode = a.postcode || "";
   const country = a.country_code?.toUpperCase() || a.country || "";
+  const rawState = a.state || "";
+  const state = country === "US" ? usStateCode(rawState) : rawState;
+  const postcode = a.postcode || "";
 
   const labelParts = [address, city, state, country].filter(Boolean);
   const label = labelParts.join(", ");

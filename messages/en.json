@@ -10,7 +10,8 @@
     "precios": "Pricing",
     "navegacion": "Navigation",
     "cerrarSesion": "Sign out",
-    "panelControl": "Control Panel"
+    "panelControl": "Control Panel",
+    "descuentos": "Discounts"
   },
   "roles": {
     "ADMIN": "Administrator",
@@ -27,7 +28,8 @@
     "usuarios": "Users",
     "rutasPdf": "Routes PDF",
     "precios": "Pricing",
-    "calendario": "Calendar"
+    "calendario": "Calendar",
+    "descuentos": "Discount Codes"
   },
   "common": {
     "loading": "Loading...",
@@ -566,7 +568,13 @@
     "priceEstimate": "Estimated price",
     "priceNote": "Approximate price · Team will confirm the final price",
     "priceBase": "Base price",
-    "priceExtraWeight": "Extra weight"
+    "priceExtraWeight": "Extra weight",
+    "discountLabel": "Discount code",
+    "discountApply": "Apply",
+    "discountApplied": "Code {{code}} applied: −{{percent}}%",
+    "discountInvalid": "Invalid or inactive code.",
+    "discountRow": "Discount ({{code}})",
+    "discountOptional": "Have a code? Enter it here."
   },
   "rastreo": {
     "loading": "Loading tracking information...",

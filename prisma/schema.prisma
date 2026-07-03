@@ -78,6 +78,9 @@ model PickupRequest {
   assignedCourier     User?           @relation("CourierAssignments", fields: [assignedCourierId], references: [id])
   statusHistory       StatusHistory[]
   comments            Comment[]
+  discountCode        String?
+  discountPercent     Float?
+  lang                String?
   callStatus          String?
   callAttempts        Int             @default(0)
   lastCallId          String?
@@ -122,6 +125,15 @@ model Pricing {
   updatedAt       DateTime @updatedAt
 
   @@unique([country, packageType])
+}
+
+model DiscountCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  percent   Float
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model PasswordResetToken {

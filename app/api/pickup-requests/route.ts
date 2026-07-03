@@ -49,7 +49,12 @@ export async function POST(request: NextRequest) {
       password,
       acceptedTerms,
       userId,
+      // Discount & language
+      discountCode,
+      lang,
     } = body;
+
+    const emailLang: "en" | "es" = lang === "en" ? "en" : "es";
 
     // Validate required fields
     if (
@@ -127,7 +132,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        sendWelcomeEmail(newUser.email, newUser.name, "es").catch((err) =>
+        sendWelcomeEmail(newUser.email, newUser.name, emailLang).catch((err) =>
           console.error("[pickup-requests] sendWelcomeEmail error:", err)
         );
 
@@ -135,6 +140,15 @@ export async function POST(request: NextRequest) {
       } else {
         linkUserId = existingUser.id;
       }
+    }
+
+    // Validate discount code server-side — never trust a percent from the client
+    let appliedDiscount: { code: string; percent: number } | null = null;
+    if (discountCode && typeof discountCode === "string") {
+      const found = await (prisma as any).discountCode.findFirst({
+        where: { code: { equals: discountCode.trim(), mode: "insensitive" }, active: true },
+      });
+      if (found) appliedDiscount = { code: found.code, percent: found.percent };
     }
 
     // Create pickup request
@@ -173,6 +187,9 @@ export async function POST(request: NextRequest) {
         specialInstructions: specialInstructions || null,
         notes: notes || null,
         status: "PENDING",
+        discountCode: appliedDiscount?.code ?? null,
+        discountPercent: appliedDiscount?.percent ?? null,
+        lang: emailLang,
     };
     const pickupRequest = await prisma.pickupRequest.create({ data: createData });
 
@@ -195,7 +212,9 @@ export async function POST(request: NextRequest) {
         pickupCity,
         destination: [recipientCity, destinationCountry].filter(Boolean).join(", "),
         packageType,
-      });
+        discountCode: appliedDiscount?.code,
+        discountPercent: appliedDiscount?.percent,
+      }, emailLang);
     }
 
     // Trigger voice confirmation call in background (non-blocking)

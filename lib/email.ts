@@ -79,9 +79,10 @@ function button(href: string, label: string): string {
   </table>`;
 }
 
-function trackingBox(trackingCode: string): string {
+function trackingBox(trackingCode: string, lang: "en" | "es" = "en"): string {
+  const label = lang === "es" ? "Código de Rastreo" : "Tracking Code";
   return `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:22px;margin:26px 0;text-align:center;">
-    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Tracking Code</p>
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">${label}</p>
     <p style="margin:0;font-size:26px;font-weight:800;color:#1d4f86;font-family:'Courier New',monospace;letter-spacing:1px;">${trackingCode}</p>
   </div>`;
 }
@@ -102,8 +103,8 @@ function detailsTable(rows: Array<[string, string]>): string {
   </table>`;
 }
 
-function fmtDate(d: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
+function fmtDate(d: Date, lang: "en" | "es" = "en"): string {
+  return new Intl.DateTimeFormat(lang === "es" ? "es-US" : "en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   }).format(d);
 }
@@ -139,48 +140,90 @@ export async function sendPickupConfirmationEmail(
     pickupCity?: string;
     destination?: string;
     packageType?: string;
-  }
+    discountCode?: string;
+    discountPercent?: number;
+  },
+  lang: "en" | "es" = "en"
 ) {
   const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
 
+  const copy = lang === "es"
+    ? {
+        subject: `Recogida Confirmada — ${trackingCode}`,
+        title: "Solicitud de Recogida Confirmada",
+        preheader: `Tu código de rastreo es ${trackingCode}. Rastrea tu recogida en cualquier momento.`,
+        hi: `Hola <strong>${contactName}</strong>,`,
+        hiText: `Hola ${contactName},`,
+        received: "Tu solicitud de recogida fue recibida y está siendo procesada. Usa el código de abajo para rastrear tu envío en cualquier momento.",
+        receivedText: "Tu solicitud de recogida fue recibida y está siendo procesada.",
+        cta: "Rastrear mi envío →",
+        followUp: "Recibirás un correo cada vez que cambie el estado de tu recogida.",
+        trackText: `Rastrea tu envío: ${trackingUrl}`,
+        trackingCodeLabel: "Código de rastreo",
+        labels: {
+          date: "Fecha de recogida", window: "Ventana horaria", address: "Dirección de recogida",
+          destination: "Destino", pkg: "Paquete", discount: "Descuento",
+        },
+      }
+    : {
+        subject: `Pickup Confirmed — ${trackingCode}`,
+        title: "Pickup Request Confirmed",
+        preheader: `Your tracking code is ${trackingCode}. Track your pickup anytime.`,
+        hi: `Hi <strong>${contactName}</strong>,`,
+        hiText: `Hi ${contactName},`,
+        received: "Your pickup request has been received and is being processed. Use the code below to track your shipment at any time.",
+        receivedText: "Your pickup request has been received and is being processed.",
+        cta: "Track My Shipment →",
+        followUp: "You'll receive an email every time your pickup status changes.",
+        trackText: `Track your shipment: ${trackingUrl}`,
+        trackingCodeLabel: "Tracking code",
+        labels: {
+          date: "Pickup date", window: "Time window", address: "Pickup address",
+          destination: "Destination", pkg: "Package", discount: "Discount",
+        },
+      };
+
   const rows: Array<[string, string]> = [];
-  if (details?.preferredDate) rows.push(["Pickup date", fmtDate(details.preferredDate)]);
-  if (details?.preferredTimeWindow) rows.push(["Time window", details.preferredTimeWindow]);
+  if (details?.preferredDate) rows.push([copy.labels.date, fmtDate(details.preferredDate, lang)]);
+  if (details?.preferredTimeWindow) rows.push([copy.labels.window, details.preferredTimeWindow]);
   if (details?.pickupAddress) {
     const addr = [details.pickupAddress, details.pickupCity].filter(Boolean).join(", ");
-    rows.push(["Pickup address", addr]);
+    rows.push([copy.labels.address, addr]);
   }
-  if (details?.destination) rows.push(["Destination", details.destination]);
-  if (details?.packageType) rows.push(["Package", details.packageType]);
+  if (details?.destination) rows.push([copy.labels.destination, details.destination]);
+  if (details?.packageType) rows.push([copy.labels.pkg, details.packageType]);
+  if (details?.discountCode && details?.discountPercent) {
+    rows.push([copy.labels.discount, `${details.discountCode} (−${details.discountPercent}%)`]);
+  }
 
   const body = `
-    <p style="font-size:15px;line-height:1.6;margin-top:0;">Hi <strong>${contactName}</strong>,</p>
-    <p style="font-size:15px;line-height:1.6;color:#475569;">Your pickup request has been received and is being processed. Use the code below to track your shipment at any time.</p>
-    ${trackingBox(trackingCode)}
+    <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
+    <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.received}</p>
+    ${trackingBox(trackingCode, lang)}
     ${detailsTable(rows)}
-    ${button(trackingUrl, "Track My Shipment →")}
-    <p style="font-size:13px;color:#64748b;margin-top:24px;line-height:1.6;">You'll receive an email every time your pickup status changes.</p>
+    ${button(trackingUrl, copy.cta)}
+    <p style="font-size:13px;color:#64748b;margin-top:24px;line-height:1.6;">${copy.followUp}</p>
   `;
 
   const html = layout({
-    title: "Pickup Request Confirmed",
-    preheader: `Your tracking code is ${trackingCode}. Track your pickup anytime.`,
+    title: copy.title,
+    preheader: copy.preheader,
     body,
   });
 
   const text = [
-    `Hi ${contactName},`,
+    copy.hiText,
     ``,
-    `Your pickup request has been received and is being processed.`,
-    `Tracking code: ${trackingCode}`,
+    copy.receivedText,
+    `${copy.trackingCodeLabel}: ${trackingCode}`,
     ...rows.map(([l, v]) => `${l}: ${v}`),
     ``,
-    `Track your shipment: ${trackingUrl}`,
+    copy.trackText,
     ``,
     `O'Globo Cargo — International Logistics`,
   ].join("\n");
 
-  await sendEmail(email, `Pickup Confirmed — ${trackingCode}`, html, text);
+  await sendEmail(email, copy.subject, html, text);
 }
 
 // ── Status update ─────────────────────────────────────────────────
@@ -189,11 +232,12 @@ export async function sendStatusUpdateEmail(
   trackingCode: string,
   contactName: string,
   newStatus: PickupStatus,
-  preferredDate?: Date
+  preferredDate?: Date,
+  lang: "en" | "es" = "en"
 ) {
   const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
 
-  const STATUS_MESSAGES: Record<PickupStatus, { headline: string; body: string; emoji: string }> = {
+  const STATUS_MESSAGES_EN: Record<PickupStatus, { headline: string; body: string; emoji: string }> = {
     PENDING:   { headline: "Awaiting assignment",   emoji: "🕓", body: "Your request is in our system and will be assigned to a courier soon." },
     ASSIGNED:  { headline: "Courier assigned",      emoji: "📋", body: "A courier has been assigned to your pickup request." },
     SCHEDULED: { headline: "Courier is on the way", emoji: "🚚", body: "Your courier is heading to the pickup address. Make sure someone is available." },
@@ -202,6 +246,38 @@ export async function sendStatusUpdateEmail(
     CANCELLED: { headline: "Request cancelled",     emoji: "⚠️", body: "Your pickup request has been cancelled. Contact us if you have any questions." },
   };
 
+  const STATUS_MESSAGES_ES: Record<PickupStatus, { headline: string; body: string; emoji: string }> = {
+    PENDING:   { headline: "En espera de asignación",    emoji: "🕓", body: "Tu solicitud está en nuestro sistema y pronto será asignada a un mensajero." },
+    ASSIGNED:  { headline: "Mensajero asignado",         emoji: "📋", body: "Un mensajero fue asignado a tu solicitud de recogida." },
+    SCHEDULED: { headline: "El mensajero va en camino",  emoji: "🚚", body: "Tu mensajero se dirige a la dirección de recogida. Asegúrate de que alguien esté disponible." },
+    EN_CAMINO: { headline: "El mensajero va en camino",  emoji: "🚚", body: "Tu mensajero va en camino a recoger tu paquete. Por favor mantente disponible." },
+    PICKED_UP: { headline: "¡Paquete recogido!",         emoji: "✅", body: "Tu paquete fue recogido exitosamente y ya va en camino." },
+    CANCELLED: { headline: "Solicitud cancelada",        emoji: "⚠️", body: "Tu solicitud de recogida fue cancelada. Contáctanos si tienes alguna pregunta." },
+  };
+
+  const copy = lang === "es"
+    ? {
+        subject: `Actualización de Envío — ${trackingCode}`,
+        title: "Actualización de Envío",
+        hi: `Hola <strong>${contactName}</strong>,`,
+        hiText: `Hola ${contactName},`,
+        scheduledDate: "Fecha programada",
+        cta: "Ver detalles completos →",
+        trackingCodeLabel: "Código de rastreo",
+        viewText: "Ver detalles",
+      }
+    : {
+        subject: `Shipment Update — ${trackingCode}`,
+        title: "Shipment Update",
+        hi: `Hi <strong>${contactName}</strong>,`,
+        hiText: `Hi ${contactName},`,
+        scheduledDate: "Scheduled date",
+        cta: "View Full Details →",
+        trackingCodeLabel: "Tracking code",
+        viewText: "View details",
+      };
+
+  const STATUS_MESSAGES = lang === "es" ? STATUS_MESSAGES_ES : STATUS_MESSAGES_EN;
   const { headline, body: msgBody, emoji } = STATUS_MESSAGES[newStatus];
 
   const statusColor: Record<PickupStatus, string> = {
@@ -213,43 +289,43 @@ export async function sendStatusUpdateEmail(
   if (preferredDate && (newStatus === "ASSIGNED" || newStatus === "SCHEDULED" || newStatus === "EN_CAMINO")) {
     dateHtml = `
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin:20px 0;">
-        <p style="margin:0;font-size:13px;color:#1d4ed8;"><strong>Scheduled date:</strong> ${fmtDate(preferredDate)}</p>
+        <p style="margin:0;font-size:13px;color:#1d4ed8;"><strong>${copy.scheduledDate}:</strong> ${fmtDate(preferredDate, lang)}</p>
       </div>`;
   }
 
   const body = `
-    <p style="font-size:15px;line-height:1.6;margin-top:0;">Hi <strong>${contactName}</strong>,</p>
+    <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
     <div style="border-left:4px solid ${statusColor[newStatus]};padding:14px 20px;margin:20px 0;background:#f8fafc;border-radius:0 8px 8px 0;">
       <p style="margin:0 0 4px;font-weight:700;font-size:16px;color:#0f172a;">${emoji} ${headline}</p>
       <p style="margin:0;font-size:14px;color:#475569;line-height:1.5;">${msgBody}</p>
     </div>
     ${dateHtml}
-    ${trackingBox(trackingCode)}
-    ${button(trackingUrl, "View Full Details →")}
+    ${trackingBox(trackingCode, lang)}
+    ${button(trackingUrl, copy.cta)}
   `;
 
   const html = layout({
-    title: "Shipment Update",
+    title: copy.title,
     preheader: `${headline} — ${trackingCode}`,
     body,
   });
 
   const text = [
-    `Hi ${contactName},`,
+    copy.hiText,
     ``,
     `${headline}`,
     `${msgBody}`,
     preferredDate && (newStatus === "ASSIGNED" || newStatus === "SCHEDULED" || newStatus === "EN_CAMINO")
-      ? `Scheduled date: ${fmtDate(preferredDate)}`
+      ? `${copy.scheduledDate}: ${fmtDate(preferredDate, lang)}`
       : "",
     ``,
-    `Tracking code: ${trackingCode}`,
-    `View details: ${trackingUrl}`,
+    `${copy.trackingCodeLabel}: ${trackingCode}`,
+    `${copy.viewText}: ${trackingUrl}`,
     ``,
     `O'Globo Cargo — International Logistics`,
   ].filter(Boolean).join("\n");
 
-  await sendEmail(email, `Shipment Update — ${trackingCode}`, html, text);
+  await sendEmail(email, copy.subject, html, text);
 }
 
 // ── Welcome (account created) ─────────────────────────────────────
@@ -275,6 +351,10 @@ export async function sendWelcomeEmail(
           "Ver el historial de todas tus solicitudes",
         ],
         cta: "Ir a Mi Cuenta →",
+        promoTitle: "🎉 ¡Regalo de bienvenida!",
+        promoBody: "Obtén un <strong>10% de descuento</strong> en tu primer envío usando este código al solicitar tu recogida:",
+        promoCode: "Oglobo2026",
+        promoTextLine: "🎉 Regalo de bienvenida: 10% de descuento en tu primer envío con el código Oglobo2026.",
         pickupNote: `¿Listo para tu primer envío? <a href="${pickupUrl}" style="color:#1d4f86;font-weight:600;">Solicita una recogida aquí</a>.`,
         terms: `Al crear tu cuenta aceptaste nuestros <a href="${termsUrl}" style="color:#64748b;">Términos y Condiciones</a>.`,
         hiText: `Hola ${name},`,
@@ -295,6 +375,10 @@ export async function sendWelcomeEmail(
           "See the history of all your requests",
         ],
         cta: "Go to My Account →",
+        promoTitle: "🎉 Welcome gift!",
+        promoBody: "Get <strong>10% off</strong> your first shipment by using this code when requesting your pickup:",
+        promoCode: "Oglobo2026",
+        promoTextLine: "🎉 Welcome gift: 10% off your first shipment with code Oglobo2026.",
         pickupNote: `Ready for your first shipment? <a href="${pickupUrl}" style="color:#1d4f86;font-weight:600;">Request a pickup here</a>.`,
         terms: `By creating your account you accepted our <a href="${termsUrl}" style="color:#64748b;">Terms and Conditions</a>.`,
         hiText: `Hi ${name},`,
@@ -319,6 +403,11 @@ export async function sendWelcomeEmail(
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 24px;">
       ${featureList}
     </table>
+    <div style="background:#fffbeb;border:2px dashed #f59e0b;border-radius:10px;padding:20px;margin:0 0 24px;text-align:center;">
+      <p style="margin:0 0 6px;font-weight:800;font-size:15px;color:#92400e;">${copy.promoTitle}</p>
+      <p style="margin:0 0 12px;font-size:14px;color:#78350f;line-height:1.5;">${copy.promoBody}</p>
+      <p style="margin:0;font-size:24px;font-weight:800;color:#b45309;font-family:'Courier New',monospace;letter-spacing:1px;">${copy.promoCode}</p>
+    </div>
     ${button(accountUrl, copy.cta)}
     <p style="font-size:14px;color:#475569;margin-top:24px;line-height:1.6;">${copy.pickupNote}</p>
     <p style="font-size:12px;color:#94a3b8;margin-top:24px;line-height:1.6;">${copy.terms}</p>
@@ -335,6 +424,8 @@ export async function sendWelcomeEmail(
     ``,
     copy.createdText,
     ...copy.features.map((f) => `- ${f}`),
+    ``,
+    copy.promoTextLine,
     ``,
     copy.ctaText,
     copy.pickupText,

@@ -113,7 +113,7 @@ const inputCls =
   "w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-200 text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all";
 
 export default function RecogerPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { data: session } = useSession();
   const [form, setForm] = useState(EMPTY);
   const [items, setItems] = useState<BoxItem[]>([{ ...DEFAULT_ITEM }]);
@@ -121,6 +121,10 @@ export default function RecogerPage() {
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
+  const [discountInput, setDiscountInput] = useState("");
+  const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
+  const [discountError, setDiscountError] = useState("");
+  const [checkingDiscount, setCheckingDiscount] = useState(false);
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -161,6 +165,30 @@ export default function RecogerPage() {
   const priceOf = (item: BoxItem) =>
     calcPrice(item.packageType, item.estimatedWeight, ruleFor(item.packageType));
   const totalPrice = items.reduce((sum, item) => sum + priceOf(item), 0);
+  const discountAmount = discount ? (totalPrice * discount.percent) / 100 : 0;
+  const finalPrice = totalPrice - discountAmount;
+
+  const applyDiscount = async () => {
+    const code = discountInput.trim();
+    setDiscountError("");
+    if (!code) return;
+    setCheckingDiscount(true);
+    try {
+      const res = await fetch(`/api/discounts?code=${encodeURIComponent(code)}`);
+      const data = await res.json();
+      if (data.valid) {
+        setDiscount({ code: data.code, percent: data.percent });
+      } else {
+        setDiscount(null);
+        setDiscountError(t("recoger.discountInvalid"));
+      }
+    } catch {
+      setDiscount(null);
+      setDiscountError(t("recoger.discountInvalid"));
+    } finally {
+      setCheckingDiscount(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,6 +210,8 @@ export default function RecogerPage() {
       packageItems: JSON.stringify(packageItemsData),
       destinationCountry: form.recipientCountry,
       recipientState: form.recipientState || null,
+      discountCode: discount?.code || null,
+      lang,
     };
 
     try {
@@ -351,7 +381,9 @@ export default function RecogerPage() {
                     ...prev,
                     pickupAddress: s.address || s.label,
                     pickupCity: s.city || prev.pickupCity,
-                    pickupState: s.state || prev.pickupState,
+                    // Only accept a valid 2-letter code — otherwise the select
+                    // falls back to showing the wrong state
+                    pickupState: US_STATES.includes(s.state) ? s.state : prev.pickupState,
                     pickupPostalCode: s.postcode || prev.pickupPostalCode,
                   }));
                 }}
@@ -569,7 +601,14 @@ export default function RecogerPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-0.5">{t("recoger.priceEstimate")}</p>
-                  <p className="text-3xl font-black text-slate-900">${totalPrice.toFixed(2)}</p>
+                  {discount ? (
+                    <p className="text-3xl font-black text-slate-900">
+                      ${finalPrice.toFixed(2)}{" "}
+                      <span className="text-base font-semibold text-slate-400 line-through">${totalPrice.toFixed(2)}</span>
+                    </p>
+                  ) : (
+                    <p className="text-3xl font-black text-slate-900">${totalPrice.toFixed(2)}</p>
+                  )}
                   <p className="text-xs text-slate-500 mt-1">{t("recoger.priceNote")}</p>
                 </div>
                 <div className="text-right shrink-0">
@@ -588,14 +627,54 @@ export default function RecogerPage() {
                         </div>
                       );
                     })}
-                    {items.length > 1 && (
+                    {discount && (
+                      <div className="flex items-center justify-end gap-2 text-emerald-600">
+                        <span>{t("recoger.discountRow", { code: discount.code })}:</span>
+                        <span className="font-bold">−${discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {(items.length > 1 || discount) && (
                       <div className="flex items-center justify-end gap-2 border-t border-indigo-200 pt-1 mt-1">
                         <span className="font-semibold text-slate-600">{t("recoger.total")}:</span>
-                        <span className="font-black text-indigo-700">${totalPrice.toFixed(2)}</span>
+                        <span className="font-black text-indigo-700">${finalPrice.toFixed(2)}</span>
                       </div>
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Discount code */}
+              <div className="mt-4 pt-4 border-t border-indigo-200/70">
+                <label className="block text-xs font-semibold text-indigo-500 uppercase tracking-wide mb-1.5">
+                  {t("recoger.discountLabel")}
+                </label>
+                <div className="flex gap-2 max-w-sm">
+                  <input
+                    className={inputCls + " bg-white"}
+                    value={discountInput}
+                    onChange={e => { setDiscountInput(e.target.value); setDiscountError(""); }}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); applyDiscount(); } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={applyDiscount}
+                    disabled={checkingDiscount || !discountInput.trim()}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors shrink-0"
+                  >
+                    {checkingDiscount ? "..." : t("recoger.discountApply")}
+                  </button>
+                </div>
+                {discount && (
+                  <p className="text-xs font-semibold text-emerald-600 mt-1.5">
+                    ✓ {t("recoger.discountApplied", { code: discount.code, percent: discount.percent })}
+                  </p>
+                )}
+                {discountError && (
+                  <p className="text-xs font-semibold text-red-500 mt-1.5">{discountError}</p>
+                )}
+                {!discount && !discountError && (
+                  <p className="text-xs text-slate-400 mt-1.5">{t("recoger.discountOptional")}</p>
+                )}
               </div>
             </section>
           )}
