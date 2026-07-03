@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 const { execSync, spawn } = require("child_process");
-const fs = require("fs");
-const path = require("path");
 
 async function main() {
   console.log("🚀 Starting O'Globo Cargo...\n");
@@ -65,20 +63,9 @@ async function main() {
     process.exit(1);
   }
 
-  // Seed test users if they don't exist (first time setup)
-  const seedScript = path.join(__dirname, "create-test-users.js");
-  if (fs.existsSync(seedScript)) {
-    console.log("👥 Creating test users if not present...");
-    try {
-      execSync(`node ${seedScript}`, {
-        stdio: "inherit",
-        env: process.env,
-      });
-    } catch (err) {
-      console.warn("⚠️  Could not create test users:", err.message);
-    }
-    console.log();
-  }
+  // NOTE: test users are no longer seeded on startup — users deleted from
+  // the database must stay deleted across deploys. For local development
+  // seed them manually with: node scripts/create-test-users.js
 
   // Start Next.js
   console.log("🌐 Starting Next.js server...\n");

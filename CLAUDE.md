@@ -38,7 +38,9 @@ npm start       # Start production server (uses scripts/start.js)
 The build/start scripts handle:
 - Generating Prisma client with dummy DATABASE_URL (build time)
 - Running migrations automatically (startup)
-- Creating test users on first run (startup)
+
+Note: test users are NOT seeded on startup — users deleted from the database
+must stay deleted across deploys. Seed locally with `node scripts/create-test-users.js`.
 
 ## Architecture Overview
 
