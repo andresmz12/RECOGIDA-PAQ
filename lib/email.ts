@@ -485,3 +485,62 @@ export async function sendPasswordResetEmail(
 
   await sendEmail(email, "Reset your O'Globo Cargo password", html, text);
 }
+
+// ── Password changed (security alert) ─────────────────────────────
+export async function sendPasswordChangedEmail(
+  email: string,
+  name: string,
+  lang: "en" | "es" = "es"
+) {
+  const resetUrl = `${BASE_URL}/forgot-password`;
+
+  const copy = lang === "es"
+    ? {
+        subject: "Tu contraseña de O'Globo Cargo fue cambiada",
+        title: "Contraseña actualizada",
+        preheader: "Tu contraseña fue cambiada. Si no fuiste tú, actúa de inmediato.",
+        hi: `Hola <strong>${esc(name)}</strong>,`,
+        hiText: `Hola ${name},`,
+        changed: "Te confirmamos que la contraseña de tu cuenta de O'Globo Cargo acaba de ser cambiada.",
+        warning: "¿No fuiste tú? Restablece tu contraseña de inmediato con el botón de abajo y contáctanos — alguien podría tener acceso a tu cuenta.",
+        cta: "Restablecer contraseña →",
+        resetText: `Si no fuiste tú, restablece tu contraseña aquí: ${resetUrl}`,
+      }
+    : {
+        subject: "Your O'Globo Cargo password was changed",
+        title: "Password updated",
+        preheader: "Your password was changed. If this wasn't you, act immediately.",
+        hi: `Hi <strong>${esc(name)}</strong>,`,
+        hiText: `Hi ${name},`,
+        changed: "This confirms that the password for your O'Globo Cargo account was just changed.",
+        warning: "Wasn't you? Reset your password immediately using the button below and contact us — someone may have access to your account.",
+        cta: "Reset Password →",
+        resetText: `If this wasn't you, reset your password here: ${resetUrl}`,
+      };
+
+  const body = `
+    <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
+    <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.changed}</p>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px 18px;margin:20px 0;">
+      <p style="margin:0;font-size:13px;color:#991b1b;line-height:1.5;"><strong>${copy.warning}</strong></p>
+    </div>
+    ${button(resetUrl, copy.cta)}
+  `;
+
+  const html = layout({
+    title: copy.title,
+    preheader: copy.preheader,
+    body,
+  });
+
+  const text = [
+    copy.hiText,
+    ``,
+    copy.changed,
+    copy.resetText,
+    ``,
+    `O'Globo Cargo — International Logistics`,
+  ].join("\n");
+
+  await sendEmail(email, copy.subject, html, text);
+}

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendPasswordChangedEmail } from "@/lib/email";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -37,12 +38,18 @@ export async function POST(request: NextRequest) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { email: record.email },
     data: { password: hashedPassword },
+    select: { email: true, name: true },
   });
 
   await prisma.passwordResetToken.delete({ where: { token } });
+
+  // Security alert so the owner notices if someone else reset their password
+  sendPasswordChangedEmail(user.email, user.name).catch((err) =>
+    console.error("[reset-password] sendPasswordChangedEmail error:", err)
+  );
 
   return NextResponse.json({ message: "Password updated successfully." });
 }
