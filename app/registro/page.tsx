@@ -24,6 +24,7 @@ export default function RegistroPage() {
   const [formData, setFormData] = useState({
     email: "", password: "", confirmPassword: "", name: "", phone: "",
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -44,13 +45,14 @@ export default function RegistroPage() {
     }
     if (formData.password.length < 6) { setError(t("registro2.errorMinPw")); return; }
     if (formData.password !== formData.confirmPassword) { setError(t("registro2.errorMatchPw")); return; }
+    if (!acceptTerms) { setError(t("registro2.errorTerms")); return; }
 
     setIsLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password, name: formData.name, phone: formData.phone }),
+        body: JSON.stringify({ email: formData.email, password: formData.password, name: formData.name, phone: formData.phone, acceptedTerms: acceptTerms }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || t("registro2.errorFailed")); setIsLoading(false); return; }
@@ -118,6 +120,23 @@ export default function RegistroPage() {
               icon={<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
               iconPosition="left" />
 
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                disabled={isLoading}
+                required
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-slate-600">
+                {t("registro2.termsAccept")}{" "}
+                <Link href="/terminos" target="_blank" className="text-indigo-600 hover:text-indigo-700 font-semibold underline">
+                  {t("registro2.termsLink")}
+                </Link>
+              </span>
+            </label>
+
             <Button type="submit" variant="primary" size="lg" loading={isLoading} className="w-full mt-6">
               {isLoading ? t("registro2.creating") : t("registro2.createBtn")}
             </Button>
@@ -134,7 +153,9 @@ export default function RegistroPage() {
           </div>
         </Card>
 
-        <p className="text-center text-slate-400 text-xs mt-8">{t("registro2.terms")}</p>
+        <p className="text-center text-slate-400 text-xs mt-8">
+          <Link href="/terminos" className="hover:text-slate-200 underline">{t("registro2.terms")}</Link>
+        </p>
       </div>
     </div>
   );

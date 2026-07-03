@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       // Account
       createAccount,
       password,
+      acceptedTerms,
       userId,
     } = body;
 
@@ -106,6 +107,13 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        if (acceptedTerms !== true) {
+          return NextResponse.json(
+            { error: "You must accept the Terms and Conditions to create an account" },
+            { status: 400 }
+          );
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await prisma.user.create({
@@ -115,6 +123,7 @@ export async function POST(request: NextRequest) {
             name: contactName,
             phone: contactPhone,
             role: "CUSTOMER",
+            termsAcceptedAt: new Date(),
           },
         });
 

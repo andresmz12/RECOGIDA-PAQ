@@ -499,7 +499,8 @@
     "footerTrack": "Rastrear Envío",
     "trackEyebrow": "Rastreo en tiempo real",
     "trackSectionTitle": "¿Tienes un código de rastreo?",
-    "trackPlaceholder": "Ej: OGC-A7B3K9"
+    "trackPlaceholder": "Ej: OGC-A7B3K9",
+    "footerTerms": "Términos y Condiciones"
   },
   "recoger": {
     "title": "Solicitar una recogida",
@@ -643,7 +644,7 @@
     "createBtn": "Crear cuenta",
     "haveAccount": "¿Ya tienes cuenta?",
     "noAccount": "Continuar sin cuenta",
-    "terms": "Al crear una cuenta, aceptas nuestros términos de servicio.",
+    "terms": "Al crear una cuenta, aceptas nuestros Términos y Condiciones.",
     "successTitle": "¡Cuenta creada!",
     "successMsg": "¡Cuenta creada! Iniciando sesión...",
     "errorName": "El nombre completo es obligatorio.",
@@ -652,6 +653,9 @@
     "errorMinPw": "La contraseña debe tener al menos 6 caracteres.",
     "errorMatchPw": "Las contraseñas no coinciden.",
     "errorFailed": "Error en el registro.",
-    "errorGeneric": "Ocurrió un error. Intenta de nuevo."
+    "errorGeneric": "Ocurrió un error. Intenta de nuevo.",
+    "termsAccept": "He leído y acepto los",
+    "termsLink": "Términos y Condiciones",
+    "errorTerms": "Debes aceptar los Términos y Condiciones para crear tu cuenta."
   }
 }

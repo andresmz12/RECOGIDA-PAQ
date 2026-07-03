@@ -559,6 +559,9 @@ export default function Home() {
             <Link href="/rastreo/demo" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               {t("landing.footerTrack")}
             </Link>
+            <Link href="/terminos" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
+              {t("landing.footerTerms")}
+            </Link>
           </div>
         </div>
       </footer>

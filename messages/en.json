@@ -499,7 +499,8 @@
     "footerTrack": "Track Shipment",
     "trackEyebrow": "Real-time tracking",
     "trackSectionTitle": "Have a tracking code?",
-    "trackPlaceholder": "e.g. OGC-A7B3K9"
+    "trackPlaceholder": "e.g. OGC-A7B3K9",
+    "footerTerms": "Terms and Conditions"
   },
   "recoger": {
     "title": "Request a pickup",
@@ -643,7 +644,7 @@
     "createBtn": "Create Account",
     "haveAccount": "Already have an account?",
     "noAccount": "Continue without an account",
-    "terms": "By creating an account, you agree to our terms of service.",
+    "terms": "By creating an account, you agree to our Terms and Conditions.",
     "successTitle": "Account created!",
     "successMsg": "Account created! Signing you in...",
     "errorName": "Full name is required.",
@@ -652,6 +653,9 @@
     "errorMinPw": "Password must be at least 6 characters.",
     "errorMatchPw": "Passwords do not match.",
     "errorFailed": "Registration failed.",
-    "errorGeneric": "An error occurred. Please try again."
+    "errorGeneric": "An error occurred. Please try again.",
+    "termsAccept": "I have read and accept the",
+    "termsLink": "Terms and Conditions",
+    "errorTerms": "You must accept the Terms and Conditions to create your account."
   }
 }

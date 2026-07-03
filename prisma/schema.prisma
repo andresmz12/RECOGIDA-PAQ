@@ -37,6 +37,7 @@ model User {
   pickupRequests     PickupRequest[] @relation("CustomerRequests")
   courierAssignments PickupRequest[] @relation("CourierAssignments")
   comments           Comment[]       @relation("AuthoredComments")
+  termsAcceptedAt    DateTime?
   createdAt          DateTime        @default(now())
 }
 

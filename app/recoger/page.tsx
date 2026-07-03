@@ -271,7 +271,7 @@ export default function RecogerPage() {
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs text-white shadow-md"
               style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>OG</div>
-            <span className="font-bold text-slate-900 text-sm">O'Globo Cargo</span>
+            <span className="font-bold text-slate-900 text-sm">O&apos;Globo Cargo</span>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />

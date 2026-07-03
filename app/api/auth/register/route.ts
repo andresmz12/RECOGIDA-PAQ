@@ -9,6 +9,9 @@ const schema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
   name: z.string().min(1, "Name is required.").max(100),
   phone: z.string().optional(),
+  acceptedTerms: z
+    .boolean()
+    .refine((v) => v === true, "You must accept the Terms and Conditions."),
 });
 
 export async function POST(request: NextRequest) {
@@ -37,7 +40,14 @@ export async function POST(request: NextRequest) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
-    data: { email, password: hashedPassword, name, phone: phone || null, role: "CUSTOMER" },
+    data: {
+      email,
+      password: hashedPassword,
+      name,
+      phone: phone || null,
+      role: "CUSTOMER",
+      termsAcceptedAt: new Date(),
+    },
   });
 
   return NextResponse.json({ id: user.id, email: user.email, name: user.name, role: user.role });
