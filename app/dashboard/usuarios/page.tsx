@@ -331,7 +331,6 @@ export default function UsuariosPage() {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                    placeholder={t("usuarios.emailPlaceholder")}
                   />
                 </div>
               )}
@@ -343,7 +342,6 @@ export default function UsuariosPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder={t("usuarios.fullNamePlaceholder")}
                 />
               </div>
 
@@ -368,7 +366,7 @@ export default function UsuariosPage() {
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="+1 (555) 000-0000"
+                 
                 />
               </div>
 

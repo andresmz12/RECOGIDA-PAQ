@@ -270,7 +270,7 @@ export default function MiCuentaPage() {
 
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">{t("account.phone")}</label>
-              <input type="tel" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} placeholder="+1 (305) 555-0000" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="tel" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
 
             <div className="border-t border-slate-100 pt-5">

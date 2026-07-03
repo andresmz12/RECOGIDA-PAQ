@@ -98,25 +98,25 @@ export default function RegistroPage() {
           {error && <div className="mb-6"><Alert type="error" title="Error" message={error} dismissible onDismiss={() => setError("")} /></div>}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <Input type="text" label={t("registro2.fullName")} name="name" placeholder="Jane Doe" value={formData.name} onChange={handleChange} required disabled={isLoading}
+            <Input type="text" label={t("registro2.fullName")} name="name" value={formData.name} onChange={handleChange} required disabled={isLoading}
               icon={<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>}
               iconPosition="left" />
 
-            <Input type="email" label={t("registro2.email")} name="email" placeholder="you@email.com" value={formData.email} onChange={handleChange} required disabled={isLoading}
+            <Input type="email" label={t("registro2.email")} name="email" value={formData.email} onChange={handleChange} required disabled={isLoading}
               icon={<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>}
               iconPosition="left" />
 
-            <Input type="tel" label={t("registro2.phoneLabel")} name="phone" placeholder="(555) 123-4567" value={formData.phone} onChange={handleChange} disabled={isLoading}
+            <Input type="tel" label={t("registro2.phoneLabel")} name="phone" value={formData.phone} onChange={handleChange} disabled={isLoading}
               helperText={t("registro2.phoneHelper")}
               icon={<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.82l.847 4.235a1 1 0 01-.964 1.144h-2.58a6 6 0 009.552 5.611a1 1 0 01.997 1.752 8 8 0 01-7.552-3.986V19a1 1 0 01-1-1v-2.757l-3.601-1.066A1 1 0 012 13.757V3z" /></svg>}
               iconPosition="left" />
 
-            <Input type="password" label={t("registro2.password")} name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required disabled={isLoading}
+            <Input type="password" label={t("registro2.password")} name="password" value={formData.password} onChange={handleChange} required disabled={isLoading}
               helperText={t("registro2.passwordHelper")}
               icon={<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
               iconPosition="left" />
 
-            <Input type="password" label={t("registro2.confirmPassword")} name="confirmPassword" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required disabled={isLoading}
+            <Input type="password" label={t("registro2.confirmPassword")} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required disabled={isLoading}
               icon={<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
               iconPosition="left" />
 

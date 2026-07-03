@@ -320,14 +320,14 @@ export default function RecogerPage() {
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("recoger.fullName")} required>
-                <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} placeholder="Jane Doe" required />
+                <input className={inputCls} value={form.contactName} onChange={e => set("contactName", e.target.value)} required />
               </Field>
               <Field label={t("recoger.phone")} required>
-                <input className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} placeholder="+1 (305) 555-0000" required />
+                <input className={inputCls} value={form.contactPhone} onChange={e => set("contactPhone", e.target.value)} required />
               </Field>
             </div>
             <Field label={t("recoger.email")} required>
-              <input type="email" className={inputCls} value={form.contactEmail} onChange={e => set("contactEmail", e.target.value)} placeholder="you@email.com" required />
+              <input type="email" className={inputCls} value={form.contactEmail} onChange={e => set("contactEmail", e.target.value)} required />
             </Field>
           </section>
 
@@ -355,7 +355,6 @@ export default function RecogerPage() {
                     pickupPostalCode: s.postcode || prev.pickupPostalCode,
                   }));
                 }}
-                placeholder="123 NW 7th St, Miami..."
                 countryCode="us"
                 required
                 className={inputCls + " pr-9"}
@@ -363,7 +362,7 @@ export default function RecogerPage() {
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field label={t("recoger.city")} required>
-                <input className={inputCls} value={form.pickupCity} onChange={e => set("pickupCity", e.target.value)} placeholder="Miami" required />
+                <input className={inputCls} value={form.pickupCity} onChange={e => set("pickupCity", e.target.value)} required />
               </Field>
               <Field label={t("recoger.state")} required>
                 <select className={inputCls + " bg-white"} value={form.pickupState} onChange={e => set("pickupState", e.target.value)} required>
@@ -371,7 +370,7 @@ export default function RecogerPage() {
                 </select>
               </Field>
               <Field label={t("recoger.zip")} required>
-                <input className={inputCls} value={form.pickupPostalCode} onChange={e => set("pickupPostalCode", e.target.value)} placeholder="33101" required />
+                <input className={inputCls} value={form.pickupPostalCode} onChange={e => set("pickupPostalCode", e.target.value)} required />
               </Field>
             </div>
           </section>
@@ -389,24 +388,24 @@ export default function RecogerPage() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("recoger.recipientName")} required>
-                <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} placeholder="Maria Lopez" required />
+                <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} required />
               </Field>
               <Field label={t("recoger.primaryPhone")} required>
-                <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} placeholder="+504 9999-9999" required />
+                <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} required />
               </Field>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("recoger.secondaryPhone")} hint={t("recoger.secondaryPhoneHint")}>
-                <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} placeholder="+504 8888-8888" />
+                <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} />
               </Field>
               <Field label={t("recoger.recipientEmail")} hint={t("recoger.recipientEmailHint")}>
-                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} placeholder="recipient@email.com" />
+                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} />
               </Field>
             </div>
 
             <Field label={t("recoger.deliveryAddress")} required>
-              <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} placeholder="Col. Centro, Calle Principal #12" required />
+              <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} required />
             </Field>
 
             <LocationPicker
@@ -481,7 +480,7 @@ export default function RecogerPage() {
                         className={inputCls + " pr-10 py-2"}
                         value={item.estimatedWeight}
                         onChange={e => updateItem(i, "estimatedWeight", e.target.value)}
-                        placeholder="15"
+                       
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">lbs</span>
                     </div>
@@ -520,7 +519,7 @@ export default function RecogerPage() {
                 className={inputCls}
                 value={form.packageContents}
                 onChange={e => set("packageContents", e.target.value)}
-                placeholder="Clothing, shoes, appliances..."
+               
                 required
               />
             </Field>
