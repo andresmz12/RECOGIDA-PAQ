@@ -41,6 +41,29 @@ function useCounter(target: number, active: boolean, duration = 1600) {
   return val;
 }
 
+// Smoothly tweens toward a changing target (used by the live quote price)
+function useTweened(target: number, duration = 450) {
+  const [val, setVal] = useState(target);
+  const fromRef = useRef(target);
+  useEffect(() => {
+    const from = fromRef.current;
+    if (from === target) return;
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const v = from + (target - from) * eased;
+      setVal(v);
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); fromRef.current = target; };
+  }, [target, duration]);
+  return val;
+}
+
 /* ─── Reusable reveal wrapper ────────────────────────────────────── */
 
 function Reveal({
@@ -228,6 +251,200 @@ function TrackingMockup() {
   );
 }
 
+/* ─── Interactive quote calculator ───────────────────────────────── */
+
+const QUOTE_BOXES = [
+  { value: "Documento",     labelKey: "quoteBoxDoc", size: "" },
+  { value: "Caja 18x18x18", labelKey: "",            size: '18"' },
+  { value: "Caja 20x20x20", labelKey: "",            size: '20"' },
+  { value: "Caja 22x22x22", labelKey: "",            size: '22"' },
+  { value: "Caja 24x24x24", labelKey: "",            size: '24"' },
+];
+
+const QUOTE_FALLBACK: Record<string, number> = {
+  "Documento": 15,
+  "Caja 18x18x18": 35,
+  "Caja 20x20x20": 45,
+  "Caja 22x22x22": 55,
+  "Caja 24x24x24": 65,
+};
+
+const DESTINATIONS = [
+  { code: "HN", flag: "🇭🇳", name: "Honduras" },
+  { code: "GT", flag: "🇬🇹", name: "Guatemala" },
+  { code: "SV", flag: "🇸🇻", name: "El Salvador" },
+  { code: "NI", flag: "🇳🇮", name: "Nicaragua" },
+  { code: "DO", flag: "🇩🇴", name: "Rep. Dominicana" },
+  { code: "PA", flag: "🇵🇦", name: "Panamá" },
+  { code: "CR", flag: "🇨🇷", name: "Costa Rica" },
+  { code: "VE", flag: "🇻🇪", name: "Venezuela" },
+  { code: "MX", flag: "🇲🇽", name: "México" },
+  { code: "CO", flag: "🇨🇴", name: "Colombia" },
+];
+
+interface QuoteRule {
+  country: string;
+  packageType: string;
+  basePrice: number;
+  weightThreshold: number;
+  weightRate: number;
+}
+
+function QuoteCalculator({ t }: { t: (k: string) => string }) {
+  const [rules, setRules] = useState<QuoteRule[]>([]);
+  const [box, setBox] = useState("Caja 20x20x20");
+  const [weight, setWeight] = useState(10);
+  const [dest, setDest] = useState("HN");
+
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then((r) => r.json())
+      .then((d) => { if (d.pricing) setRules(d.pricing); })
+      .catch(() => {});
+  }, []);
+
+  const rule = rules.find((r) => r.country === dest && r.packageType === box);
+  const base = rule?.basePrice ?? QUOTE_FALLBACK[box] ?? 45;
+  const threshold = rule?.weightThreshold ?? 20;
+  const rate = rule?.weightRate ?? 1.0;
+  const isDoc = box === "Documento";
+  const price = base + (isDoc ? 0 : Math.max(0, weight - threshold) * rate);
+  const shown = useTweened(price);
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-navy-50 overflow-hidden">
+      <div className="grid lg:grid-cols-[1fr_320px]">
+        {/* Controls */}
+        <div className="p-8 md:p-10 space-y-8">
+          <div>
+            <p className="text-sm font-bold text-navy-900 mb-3">{t("landing.quoteBox")}</p>
+            <div className="flex flex-wrap gap-2">
+              {QUOTE_BOXES.map((b) => (
+                <button
+                  key={b.value}
+                  type="button"
+                  onClick={() => setBox(b.value)}
+                  className={`px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
+                    box === b.value
+                      ? "border-navy-700 bg-navy-700 text-white shadow-md"
+                      : "border-slate-200 text-slate-600 hover:border-navy-300 hover:text-navy-700"
+                  }`}
+                >
+                  {b.size ? (
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      {b.size}
+                    </span>
+                  ) : (
+                    t(`landing.${b.labelKey}`)
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {!isDoc && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold text-navy-900">{t("landing.quoteWeight")}</p>
+                <span className="text-sm font-extrabold text-navy-700 bg-navy-50 px-3 py-1 rounded-lg tabular-nums">
+                  {weight} lbs
+                </span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={100}
+                value={weight}
+                onChange={(e) => setWeight(parseInt(e.target.value))}
+                className="w-full accent-navy-700 cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-slate-400 mt-1">
+                <span>1 lb</span><span>50 lbs</span><span>100 lbs</span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <p className="text-sm font-bold text-navy-900 mb-3">{t("landing.quoteDest")}</p>
+            <div className="flex flex-wrap gap-2">
+              {DESTINATIONS.map((d) => (
+                <button
+                  key={d.code}
+                  type="button"
+                  onClick={() => setDest(d.code)}
+                  className={`px-3 py-2 rounded-xl border-2 text-sm font-semibold transition-all flex items-center gap-1.5 ${
+                    dest === d.code
+                      ? "border-navy-700 bg-navy-700 text-white shadow-md"
+                      : "border-slate-200 text-slate-600 hover:border-navy-300 hover:text-navy-700"
+                  }`}
+                >
+                  <span className="text-base leading-none">{d.flag}</span>
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Price panel */}
+        <div
+          className="p-8 md:p-10 flex flex-col justify-center items-center text-center"
+          style={{ background: "linear-gradient(160deg, #142b45, #0c1b2e)" }}
+        >
+          <p className="text-navy-200/60 text-xs font-bold uppercase tracking-widest mb-3">{t("landing.quoteEstimate")}</p>
+          <p className="text-5xl font-extrabold text-white tabular-nums tracking-tight mb-1">
+            ${shown.toFixed(2)}
+          </p>
+          <p className="text-navy-200/50 text-xs mb-8">{t("landing.quoteDisclaimer")}</p>
+          <Link
+            href="/recoger"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-accent-500 hover:bg-accent-400 text-navy-950 font-bold rounded-xl transition-all shadow-lg text-sm w-full justify-center"
+          >
+            {t("landing.quoteCta")}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── FAQ accordion ──────────────────────────────────────────────── */
+
+function FaqItem({ q, a, open, onToggle }: { q: string; a: React.ReactNode; open: boolean; onToggle: () => void }) {
+  return (
+    <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden transition-shadow hover:shadow-md">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
+      >
+        <span className="font-bold text-navy-900 text-sm md:text-base">{q}</span>
+        <span
+          className={`shrink-0 w-8 h-8 rounded-full bg-navy-50 flex items-center justify-center transition-transform duration-300 ${open ? "rotate-45" : ""}`}
+        >
+          <svg className="w-4 h-4 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+          </svg>
+        </span>
+      </button>
+      <div
+        className="grid transition-all duration-300 ease-in-out"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          <p className="px-6 pb-5 text-sm text-slate-600 leading-relaxed">{a}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────────────── */
 
 export default function Home() {
@@ -235,7 +452,16 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [trackCode, setTrackCode] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
@@ -264,10 +490,17 @@ export default function Home() {
           0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
           50% { transform: translate(-35px, 25px) scale(1.12); opacity: 0.35; }
         }
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .marquee-track { animation: marquee 32s linear infinite; }
+        .marquee-track:hover { animation-play-state: paused; }
+        html { scroll-behavior: smooth; }
       `}</style>
 
       {/* ── Navbar ───────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+      <nav className={`sticky top-0 z-50 border-b bg-white/85 backdrop-blur-md transition-shadow duration-300 ${scrolled ? "border-slate-200 shadow-md shadow-slate-900/5" : "border-slate-200/80"}`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <GlobeMark className="w-9 h-9" />
@@ -276,6 +509,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navFeatures")}</a>
             <a href="#how" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navHow")}</a>
+            <a href="#quote" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navQuote")}</a>
             <a href="#track" className="text-slate-600 hover:text-navy-700 text-sm font-medium transition-colors">{t("landing.navTrack")}</a>
           </div>
           <div className="flex items-center gap-3">
@@ -315,6 +549,7 @@ export default function Home() {
           <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-3">
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-slate-700 font-medium py-2">{t("landing.navFeatures")}</a>
             <a href="#how" onClick={() => setMobileMenuOpen(false)} className="block text-slate-700 font-medium py-2">{t("landing.navHow")}</a>
+            <a href="#quote" onClick={() => setMobileMenuOpen(false)} className="block text-slate-700 font-medium py-2">{t("landing.navQuote")}</a>
             <a href="#track" onClick={() => setMobileMenuOpen(false)} className="block text-slate-700 font-medium py-2">{t("landing.navTrack")}</a>
             <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block text-slate-700 font-medium py-2">{t("landing.navLogin")}</Link>
             <Link href="/recoger" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-navy-700 text-white font-semibold py-2.5 rounded-lg">{t("landing.navRequest")}</Link>
@@ -424,6 +659,16 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Stats strip ──────────────────────────────────────────── */}
+      <section className="py-14" style={{ background: "#0c1b2e" }}>
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10">
+          <StatCounter value={10} suffix="+" label={t("landing.statCountries")} />
+          <StatCounter value={50} suffix="+" label={t("landing.statStates")} />
+          <StatCounter value={24} suffix="/7" label={t("landing.statTracking")} />
+          <StatCounter value={100} suffix="%" label={t("landing.statTrackable")} />
+        </div>
+      </section>
+
       {/* ── Track section ────────────────────────────────────────── */}
       <section id="track" className="py-16 bg-slate-50 border-y border-slate-200">
         <div className="max-w-xl mx-auto px-6 text-center">
@@ -502,6 +747,74 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-navy-900 mb-3">{t(`landing.${item.key}Title`)}</h3>
                   <p className="text-slate-600 text-sm leading-relaxed max-w-xs">{t(`landing.${item.key}Desc`)}</p>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Quote calculator ─────────────────────────────────────── */}
+      <section id="quote" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-6">
+          <Reveal className="text-center mb-12">
+            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">{t("landing.quoteEyebrow")}</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 mb-4 tracking-tight">{t("landing.quoteTitle")}</h2>
+            <p className="text-lg text-slate-600 max-w-xl mx-auto">{t("landing.quoteSubtitle")}</p>
+          </Reveal>
+          <Reveal delay={120}>
+            <QuoteCalculator t={t} />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── Destinations marquee ─────────────────────────────────── */}
+      <section className="py-14 overflow-hidden" style={{ background: "linear-gradient(135deg, #0c1b2e, #142b45)" }}>
+        <p className="text-center text-navy-200/60 text-xs font-bold uppercase tracking-widest mb-8">
+          {t("landing.destTitle")}
+        </p>
+        <div className="relative">
+          <div className="marquee-track flex gap-4 w-max">
+            {[...DESTINATIONS, ...DESTINATIONS].map((d, i) => (
+              <div
+                key={`${d.code}-${i}`}
+                className="flex items-center gap-2.5 bg-white/10 border border-white/10 rounded-full px-5 py-2.5 backdrop-blur-sm"
+              >
+                <span className="text-xl leading-none">{d.flag}</span>
+                <span className="text-white/80 text-sm font-semibold whitespace-nowrap">{d.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32 bg-slate-50">
+        <div className="max-w-3xl mx-auto px-6">
+          <Reveal className="text-center mb-12">
+            <p className="text-navy-600 text-xs font-bold uppercase tracking-widest mb-4">{t("landing.faqEyebrow")}</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-navy-900 tracking-tight">{t("landing.faqTitle")}</h2>
+          </Reveal>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((n, i) => (
+              <Reveal key={n} delay={i * 60}>
+                <FaqItem
+                  q={t(`landing.faq${n}q`)}
+                  a={
+                    n === 4 ? (
+                      <>
+                        {t(`landing.faq${n}a`)}{" "}
+                        <Link href="/terminos" className="text-navy-700 font-semibold underline hover:text-navy-800">
+                          {t("landing.footerTerms")}
+                        </Link>
+                        .
+                      </>
+                    ) : (
+                      t(`landing.faq${n}a`)
+                    )
+                  }
+                  open={openFaq === i}
+                  onToggle={() => setOpenFaq(openFaq === i ? null : i)}
+                />
               </Reveal>
             ))}
           </div>
