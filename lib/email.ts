@@ -252,6 +252,101 @@ export async function sendStatusUpdateEmail(
   await sendEmail(email, `Shipment Update — ${trackingCode}`, html, text);
 }
 
+// ── Welcome (account created) ─────────────────────────────────────
+export async function sendWelcomeEmail(
+  email: string,
+  name: string,
+  lang: "en" | "es" = "en"
+) {
+  const accountUrl = `${BASE_URL}/mi-cuenta`;
+  const pickupUrl = `${BASE_URL}/recoger`;
+  const termsUrl = `${BASE_URL}/terminos`;
+
+  const copy = lang === "es"
+    ? {
+        subject: "¡Bienvenido a O'Globo Cargo!",
+        title: "¡Tu cuenta está lista!",
+        preheader: "Tu cuenta de O'Globo Cargo fue creada exitosamente.",
+        hi: `Hola <strong>${name}</strong>,`,
+        created: "Tu cuenta de O'Globo Cargo fue creada exitosamente. Desde tu panel puedes:",
+        features: [
+          "Solicitar recogidas de paquetes internacionales",
+          "Rastrear tus envíos en tiempo real",
+          "Ver el historial de todas tus solicitudes",
+        ],
+        cta: "Ir a Mi Cuenta →",
+        pickupNote: `¿Listo para tu primer envío? <a href="${pickupUrl}" style="color:#1d4f86;font-weight:600;">Solicita una recogida aquí</a>.`,
+        terms: `Al crear tu cuenta aceptaste nuestros <a href="${termsUrl}" style="color:#64748b;">Términos y Condiciones</a>.`,
+        hiText: `Hola ${name},`,
+        createdText: "Tu cuenta de O'Globo Cargo fue creada exitosamente.",
+        ctaText: `Tu panel: ${accountUrl}`,
+        pickupText: `Solicita una recogida: ${pickupUrl}`,
+        termsText: `Al crear tu cuenta aceptaste nuestros Términos y Condiciones: ${termsUrl}`,
+      }
+    : {
+        subject: "Welcome to O'Globo Cargo!",
+        title: "Your account is ready!",
+        preheader: "Your O'Globo Cargo account was created successfully.",
+        hi: `Hi <strong>${name}</strong>,`,
+        created: "Your O'Globo Cargo account was created successfully. From your dashboard you can:",
+        features: [
+          "Request international package pickups",
+          "Track your shipments in real time",
+          "See the history of all your requests",
+        ],
+        cta: "Go to My Account →",
+        pickupNote: `Ready for your first shipment? <a href="${pickupUrl}" style="color:#1d4f86;font-weight:600;">Request a pickup here</a>.`,
+        terms: `By creating your account you accepted our <a href="${termsUrl}" style="color:#64748b;">Terms and Conditions</a>.`,
+        hiText: `Hi ${name},`,
+        createdText: "Your O'Globo Cargo account was created successfully.",
+        ctaText: `Your dashboard: ${accountUrl}`,
+        pickupText: `Request a pickup: ${pickupUrl}`,
+        termsText: `By creating your account you accepted our Terms and Conditions: ${termsUrl}`,
+      };
+
+  const featureList = copy.features
+    .map(
+      (f) => `<tr>
+        <td style="padding:6px 0;font-size:14px;color:#475569;vertical-align:top;width:24px;">✓</td>
+        <td style="padding:6px 0;font-size:14px;color:#475569;line-height:1.5;">${f}</td>
+      </tr>`
+    )
+    .join("");
+
+  const body = `
+    <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
+    <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.created}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 24px;">
+      ${featureList}
+    </table>
+    ${button(accountUrl, copy.cta)}
+    <p style="font-size:14px;color:#475569;margin-top:24px;line-height:1.6;">${copy.pickupNote}</p>
+    <p style="font-size:12px;color:#94a3b8;margin-top:24px;line-height:1.6;">${copy.terms}</p>
+  `;
+
+  const html = layout({
+    title: copy.title,
+    preheader: copy.preheader,
+    body,
+  });
+
+  const text = [
+    copy.hiText,
+    ``,
+    copy.createdText,
+    ...copy.features.map((f) => `- ${f}`),
+    ``,
+    copy.ctaText,
+    copy.pickupText,
+    ``,
+    copy.termsText,
+    ``,
+    `O'Globo Cargo — International Logistics`,
+  ].join("\n");
+
+  await sendEmail(email, copy.subject, html, text);
+}
+
 // ── Password reset ────────────────────────────────────────────────
 export async function sendPasswordResetEmail(
   email: string,

@@ -20,7 +20,7 @@ function validateUSPhone(phone: string): boolean {
 
 export default function RegistroPage() {
   const router = useRouter();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [formData, setFormData] = useState({
     email: "", password: "", confirmPassword: "", name: "", phone: "",
   });
@@ -52,7 +52,7 @@ export default function RegistroPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password, name: formData.name, phone: formData.phone, acceptedTerms: acceptTerms }),
+        body: JSON.stringify({ email: formData.email, password: formData.password, name: formData.name, phone: formData.phone, acceptedTerms: acceptTerms, lang }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || t("registro2.errorFailed")); setIsLoading(false); return; }

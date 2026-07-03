@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/client";
 import { generateTrackingCode } from "@/lib/utils";
-import { sendPickupConfirmationEmail } from "@/lib/email";
+import { sendPickupConfirmationEmail, sendWelcomeEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { triggerConfirmationCall } from "@/lib/call-service";
@@ -126,6 +126,10 @@ export async function POST(request: NextRequest) {
             termsAcceptedAt: new Date(),
           },
         });
+
+        sendWelcomeEmail(newUser.email, newUser.name, "es").catch((err) =>
+          console.error("[pickup-requests] sendWelcomeEmail error:", err)
+        );
 
         linkUserId = newUser.id;
       } else {

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const schema = z.object({
   email: z.string().email("Valid email required."),
@@ -12,6 +13,7 @@ const schema = z.object({
   acceptedTerms: z
     .boolean()
     .refine((v) => v === true, "You must accept the Terms and Conditions."),
+  lang: z.enum(["en", "es"]).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { email, password, name, phone } = parsed.data;
+  const { email, password, name, phone, lang } = parsed.data;
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
@@ -49,6 +51,11 @@ export async function POST(request: NextRequest) {
       termsAcceptedAt: new Date(),
     },
   });
+
+  // Fire-and-forget: email failures must not block registration
+  sendWelcomeEmail(user.email, user.name, lang ?? "es").catch((err) =>
+    console.error("[register] sendWelcomeEmail error:", err)
+  );
 
   return NextResponse.json({ id: user.id, email: user.email, name: user.name, role: user.role });
 }
