@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Sans, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
+import { Archivo, IBM_Plex_Sans, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 
@@ -19,8 +19,8 @@ const plex = IBM_Plex_Sans({
   display: "swap",
 });
 
-// Condensed: freight-style uppercase headlines (landing)
-const barlow = Barlow_Condensed({
+// Headline: modern grotesque with character for landing headlines
+const grotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   variable: "--font-condensed",
@@ -47,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${archivo.variable} ${plex.variable} ${barlow.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${archivo.variable} ${plex.variable} ${grotesk.variable} ${plexMono.variable}`}>
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>

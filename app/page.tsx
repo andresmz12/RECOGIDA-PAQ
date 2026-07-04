@@ -41,29 +41,6 @@ function useCounter(target: number, active: boolean, duration = 1600) {
   return val;
 }
 
-// Smoothly tweens toward a changing target (used by the live quote price)
-function useTweened(target: number, duration = 450) {
-  const [val, setVal] = useState(target);
-  const fromRef = useRef(target);
-  useEffect(() => {
-    const from = fromRef.current;
-    if (from === target) return;
-    let raf: number;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      const v = from + (target - from) * eased;
-      setVal(v);
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else fromRef.current = target;
-    };
-    raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); fromRef.current = target; };
-  }, [target, duration]);
-  return val;
-}
-
 /* ─── Reveal wrapper ─────────────────────────────────────────────── */
 
 function Reveal({
@@ -223,23 +200,7 @@ function WaybillCard() {
   );
 }
 
-/* ─── Quote data ─────────────────────────────────────────────────── */
-
-const QUOTE_BOXES = [
-  { value: "Documento",     labelKey: "quoteBoxDoc", size: "" },
-  { value: "Caja 18x18x18", labelKey: "",            size: '18"' },
-  { value: "Caja 20x20x20", labelKey: "",            size: '20"' },
-  { value: "Caja 22x22x22", labelKey: "",            size: '22"' },
-  { value: "Caja 24x24x24", labelKey: "",            size: '24"' },
-];
-
-const QUOTE_FALLBACK: Record<string, number> = {
-  "Documento": 15,
-  "Caja 18x18x18": 35,
-  "Caja 20x20x20": 45,
-  "Caja 22x22x22": 55,
-  "Caja 24x24x24": 65,
-};
+/* ─── Destinations (marquee) ────────────────────────────────────── */
 
 const DESTINATIONS = [
   { code: "HN", flag: "🇭🇳", name: "Honduras" },
@@ -253,154 +214,6 @@ const DESTINATIONS = [
   { code: "MX", flag: "🇲🇽", name: "México" },
   { code: "CO", flag: "🇨🇴", name: "Colombia" },
 ];
-
-interface QuoteRule {
-  country: string;
-  packageType: string;
-  basePrice: number;
-  weightThreshold: number;
-  weightRate: number;
-}
-
-/* ─── Quote calculator (waybill / receipt style) ─────────────────── */
-
-function QuoteCalculator({ t }: { t: (k: string) => string }) {
-  const [rules, setRules] = useState<QuoteRule[]>([]);
-  const [box, setBox] = useState("Caja 20x20x20");
-  const [weight, setWeight] = useState(10);
-  const [dest, setDest] = useState("HN");
-
-  useEffect(() => {
-    fetch("/api/pricing")
-      .then((r) => r.json())
-      .then((d) => { if (d.pricing) setRules(d.pricing); })
-      .catch(() => {});
-  }, []);
-
-  const rule = rules.find((r) => r.country === dest && r.packageType === box);
-  const base = rule?.basePrice ?? QUOTE_FALLBACK[box] ?? 45;
-  const threshold = rule?.weightThreshold ?? 20;
-  const rate = rule?.weightRate ?? 1.0;
-  const isDoc = box === "Documento";
-  const extra = isDoc ? 0 : Math.max(0, weight - threshold) * rate;
-  const price = base + extra;
-  const shown = useTweened(price);
-  const destName = DESTINATIONS.find((d) => d.code === dest)?.name ?? dest;
-
-  const chip = (active: boolean) =>
-    `px-4 py-2.5 border text-sm font-mono transition-colors ${
-      active
-        ? "border-navy-950 bg-navy-950 text-white"
-        : "border-navy-950/25 text-navy-950/70 hover:border-navy-950 hover:text-navy-950 bg-transparent"
-    }`;
-
-  return (
-    <div className="border border-navy-950/25 bg-white relative">
-      {/* corner ticks */}
-      <span className="absolute -top-px -left-px w-4 h-4 border-t-2 border-l-2 border-navy-950" />
-      <span className="absolute -bottom-px -right-px w-4 h-4 border-b-2 border-r-2 border-navy-950" />
-
-      {/* header strip */}
-      <div className="flex items-center justify-between px-6 py-3 bg-navy-950 text-white">
-        <span className="font-mono text-[11px] tracking-[0.25em] uppercase">{t("landing.quoteEyebrow")} — OGC</span>
-        <span className="font-mono text-[11px] text-white/50">US → LATAM</span>
-      </div>
-
-      <div className="grid lg:grid-cols-[1fr_320px]">
-        {/* Controls */}
-        <div className="p-7 md:p-9 space-y-8 border-b lg:border-b-0 lg:border-r border-navy-950/15">
-          <div>
-            <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-slate-500 mb-3">
-              01 · {t("landing.quoteBox")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {QUOTE_BOXES.map((b) => (
-                <button key={b.value} type="button" onClick={() => setBox(b.value)} className={chip(box === b.value)}>
-                  {b.size || t(`landing.${b.labelKey}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {!isDoc && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-slate-500">
-                  02 · {t("landing.quoteWeight")}
-                </p>
-                <span className="font-mono text-sm font-semibold text-navy-950 tabular-nums border border-navy-950/25 px-2.5 py-0.5">
-                  {weight} LBS
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={100}
-                value={weight}
-                onChange={(e) => setWeight(parseInt(e.target.value))}
-                className="w-full accent-navy-950 cursor-pointer"
-              />
-              <div className="flex justify-between font-mono text-[10px] text-slate-400 mt-1">
-                <span>1</span><span>50</span><span>100</span>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-slate-500 mb-3">
-              {isDoc ? "02" : "03"} · {t("landing.quoteDest")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {DESTINATIONS.map((d) => (
-                <button key={d.code} type="button" onClick={() => setDest(d.code)} className={chip(dest === d.code)}>
-                  <span className="mr-1.5">{d.flag}</span>
-                  {d.code}
-                </button>
-              ))}
-            </div>
-            <p className="font-mono text-[11px] text-slate-500 mt-2">→ {destName}</p>
-          </div>
-        </div>
-
-        {/* Receipt */}
-        <div className="p-7 md:p-9 bg-[#f6f4ee] flex flex-col">
-          <p className="font-mono text-[11px] tracking-[0.25em] uppercase text-slate-500 mb-5">
-            {t("landing.quoteEstimate")}
-          </p>
-          <div className="space-y-2 font-mono text-[12px] text-navy-950/80">
-            <div className="flex justify-between">
-              <span>BASE</span>
-              <span className="tabular-nums">${base.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>+LBS</span>
-              <span className="tabular-nums">${extra.toFixed(2)}</span>
-            </div>
-          </div>
-          <div className="border-t border-dashed border-navy-950/30 my-4" />
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="font-mono text-[11px] tracking-[0.2em] uppercase text-navy-950/60">Total</span>
-            <span className="font-condensed text-5xl font-bold text-navy-950 tabular-nums leading-none">
-              ${shown.toFixed(2)}
-            </span>
-          </div>
-          <p className="font-mono text-[10px] text-slate-500 leading-relaxed mt-2 mb-6">
-            {t("landing.quoteDisclaimer")}
-          </p>
-          <div className="text-navy-950/70 mb-6">
-            <Barcode className="h-6" />
-          </div>
-          <Link
-            href="/recoger"
-            className="mt-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-accent-500 hover:bg-accent-400 text-navy-950 font-mono text-sm font-semibold uppercase tracking-wider transition-colors"
-          >
-            {t("landing.quoteCta")} →
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ─── FAQ (ruled list) ───────────────────────────────────────────── */
 
@@ -432,7 +245,7 @@ function LedgerStat({ value, suffix, label }: { value: number; suffix: string; l
   const count = useCounter(value, inView);
   return (
     <div ref={ref} className="px-6 md:px-10 py-8">
-      <p className="font-condensed text-5xl md:text-6xl font-bold text-navy-950 tabular-nums leading-none">
+      <p className="font-condensed text-4xl md:text-5xl font-bold text-navy-950 tabular-nums leading-none">
         {count}<span className="text-accent-600">{suffix}</span>
       </p>
       <div className="flex items-center gap-2 mt-3">
@@ -522,7 +335,6 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-7">
             <a href="#features" className={navLink}>{t("landing.navFeatures")}</a>
             <a href="#how" className={navLink}>{t("landing.navHow")}</a>
-            <a href="#quote" className={navLink}>{t("landing.navQuote")}</a>
             <a href="#track" className={navLink}>{t("landing.navTrack")}</a>
           </div>
           <div className="flex items-center gap-3">
@@ -553,7 +365,6 @@ export default function Home() {
           <div className="md:hidden border-t border-navy-950/10 bg-[#f6f4ee] px-6 py-4 space-y-1">
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 ${navLink}`}>{t("landing.navFeatures")}</a>
             <a href="#how" onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 ${navLink}`}>{t("landing.navHow")}</a>
-            <a href="#quote" onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 ${navLink}`}>{t("landing.navQuote")}</a>
             <a href="#track" onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 ${navLink}`}>{t("landing.navTrack")}</a>
             <Link href="/login" onClick={() => setMobileMenuOpen(false)} className={`block py-2.5 ${navLink}`}>{t("landing.navLogin")}</Link>
             <Link href="/recoger" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-navy-950 text-white font-mono text-[12px] tracking-[0.1em] uppercase py-3 mt-2">
@@ -589,7 +400,7 @@ export default function Home() {
                 MIAMI → LATAM
               </p>
 
-              <h1 className="font-condensed font-bold text-white uppercase leading-[0.95] tracking-tight text-6xl md:text-7xl xl:text-8xl mb-6">
+              <h1 className="font-condensed font-bold text-white uppercase leading-[1.02] tracking-tight text-5xl md:text-6xl xl:text-7xl mb-6">
                 {t("landing.heroTitleLine1")}<br />
                 {t("landing.heroTitleLine2")}{" "}
                 <span className="text-accent-400 relative">
@@ -697,7 +508,7 @@ export default function Home() {
           <Reveal>
             <SectionRule index="02" label={t("landing.featuresEyebrow")} />
             <div className="md:flex md:items-end md:justify-between mb-14">
-              <h2 className="font-condensed font-bold text-navy-950 uppercase text-5xl md:text-6xl tracking-tight leading-none">
+              <h2 className="font-condensed font-bold text-navy-950 uppercase text-4xl md:text-5xl tracking-tight leading-none">
                 {t("landing.featuresTitle")}
               </h2>
               <p className="text-slate-500 text-sm max-w-xs mt-4 md:mt-0 md:text-right">
@@ -736,7 +547,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <Reveal>
             <SectionRule index="03" label={t("landing.howEyebrow")} />
-            <h2 className="font-condensed font-bold text-navy-950 uppercase text-5xl md:text-6xl tracking-tight leading-none mb-3">
+            <h2 className="font-condensed font-bold text-navy-950 uppercase text-4xl md:text-5xl tracking-tight leading-none mb-3">
               {t("landing.howTitle")}
             </h2>
             <p className="text-slate-500 text-sm mb-16">{t("landing.howSubtitle")}</p>
@@ -764,22 +575,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Quote ────────────────────────────────────────────────── */}
-      <section id="quote" className="py-20 md:py-28 bg-white border-y border-navy-950/15">
-        <div className="max-w-5xl mx-auto px-6">
-          <Reveal>
-            <SectionRule index="04" label={t("landing.quoteEyebrow")} />
-            <h2 className="font-condensed font-bold text-navy-950 uppercase text-5xl md:text-6xl tracking-tight leading-none mb-3">
-              {t("landing.quoteTitle")}
-            </h2>
-            <p className="text-slate-500 text-sm mb-12 max-w-lg">{t("landing.quoteSubtitle")}</p>
-          </Reveal>
-          <Reveal delay={100}>
-            <QuoteCalculator t={t} />
-          </Reveal>
-        </div>
-      </section>
-
       {/* ── Destinations ticker ──────────────────────────────────── */}
       <section className="bg-navy-950 py-10 overflow-hidden">
         <p className="text-center font-mono text-[10px] tracking-[0.3em] uppercase text-white/40 mb-6 px-6">
@@ -789,7 +584,7 @@ export default function Home() {
           <div className="marquee-track flex w-max items-center">
             {[...DESTINATIONS, ...DESTINATIONS].map((d, i) => (
               <span key={`${d.code}-${i}`} className="flex items-center whitespace-nowrap">
-                <span className="font-condensed font-bold uppercase text-white/80 text-2xl tracking-wide px-6">
+                <span className="font-condensed font-bold uppercase text-white/80 text-xl tracking-wide px-6">
                   {d.flag} {d.name}
                 </span>
                 <span className="text-accent-500 font-mono">✈</span>
@@ -803,8 +598,8 @@ export default function Home() {
       <section className="py-20 md:py-28 bg-[#f6f4ee]">
         <div className="max-w-3xl mx-auto px-6">
           <Reveal>
-            <SectionRule index="05" label={t("landing.faqEyebrow")} />
-            <h2 className="font-condensed font-bold text-navy-950 uppercase text-5xl md:text-6xl tracking-tight leading-none mb-12">
+            <SectionRule index="04" label={t("landing.faqEyebrow")} />
+            <h2 className="font-condensed font-bold text-navy-950 uppercase text-4xl md:text-5xl tracking-tight leading-none mb-12">
               {t("landing.faqTitle")}
             </h2>
           </Reveal>
@@ -853,7 +648,7 @@ export default function Home() {
                 <span className="w-8 h-px bg-accent-400 inline-block" />
                 {t("landing.ctaSubtitle")}
               </p>
-              <h2 className="font-condensed font-bold text-white uppercase text-5xl md:text-7xl tracking-tight leading-[0.95] max-w-2xl">
+              <h2 className="font-condensed font-bold text-white uppercase text-4xl md:text-6xl tracking-tight leading-[1.02] max-w-2xl">
                 {t("landing.ctaTitle")}
               </h2>
             </div>
