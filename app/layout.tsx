@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Sans } from "next/font/google";
+import { Archivo, IBM_Plex_Sans, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 
@@ -19,6 +19,22 @@ const plex = IBM_Plex_Sans({
   display: "swap",
 });
 
+// Condensed: freight-style uppercase headlines (landing)
+const barlow = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-condensed",
+  display: "swap",
+});
+
+// Mono: waybill labels, codes and micro-copy (landing)
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono-plex",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "O'Globo Cargo — International Package Pickup",
   description:
@@ -31,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${archivo.variable} ${plex.variable}`}>
+    <html lang="en" className={`${archivo.variable} ${plex.variable} ${barlow.variable} ${plexMono.variable}`}>
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>

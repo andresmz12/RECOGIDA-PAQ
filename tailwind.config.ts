@@ -10,6 +10,8 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-body)', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        condensed: ['var(--font-condensed)', 'var(--font-display)', 'sans-serif'],
+        mono: ['var(--font-mono-plex)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         slate: {
