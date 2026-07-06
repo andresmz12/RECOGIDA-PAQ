@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Sans, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
@@ -36,6 +36,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
   title: "O'Globo Cargo — International Package Pickup",
   description:
     "Request international package pickups, track in real time, and manage operations with O'Globo Cargo.",
@@ -46,6 +47,10 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "O'Globo Cargo",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0c1b2e",
 };
 
 export default function RootLayout({
