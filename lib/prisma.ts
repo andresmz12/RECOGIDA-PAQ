@@ -9,3 +9,13 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+// Safe field set for User relations in API responses — never include `password`.
+export const publicUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  phone: true,
+  role: true,
+  createdAt: true,
+} as const;

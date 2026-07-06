@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, publicUserSelect } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendStatusUpdateEmail } from "@/lib/email";
@@ -19,8 +19,8 @@ export async function GET(
     const pickupRequest = await prisma.pickupRequest.findUnique({
       where: { id: params.id },
       include: {
-        user: true,
-        assignedCourier: true,
+        user: { select: publicUserSelect },
+        assignedCourier: { select: publicUserSelect },
         statusHistory: {
           orderBy: { createdAt: "desc" },
         },
@@ -171,8 +171,8 @@ export async function PATCH(
     const finalRequest = await prisma.pickupRequest.findUnique({
       where: { id: params.id },
       include: {
-        user: true,
-        assignedCourier: true,
+        user: { select: publicUserSelect },
+        assignedCourier: { select: publicUserSelect },
         statusHistory: {
           orderBy: { createdAt: "desc" },
         },

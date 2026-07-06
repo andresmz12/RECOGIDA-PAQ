@@ -7,7 +7,11 @@ const NEGATIVE_OUTCOMES = new Set(["no_answer", "voicemail", "not_interested", "
 
 function verifySignature(body: string, header: string | null): boolean {
   const secret = process.env.ZYRA_WEBHOOK_SECRET;
-  if (!secret) return true; // skip validation if secret not configured
+  if (!secret) {
+    // Fail closed: without a shared secret anyone could spoof call outcomes.
+    console.error("[webhook/zyra] ZYRA_WEBHOOK_SECRET is not set — rejecting webhook");
+    return false;
+  }
   if (!header) return false;
   const expected = crypto
     .createHmac("sha256", secret)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { prisma, publicUserSelect } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/client";
 import { generateTrackingCode } from "@/lib/utils";
 import { sendPickupConfirmationEmail, sendWelcomeEmail } from "@/lib/email";
@@ -309,8 +309,8 @@ export async function GET(request: NextRequest) {
     const pickups = await prisma.pickupRequest.findMany({
       where,
       include: {
-        user: true,
-        assignedCourier: true,
+        user: { select: publicUserSelect },
+        assignedCourier: { select: publicUserSelect },
         statusHistory: true,
       },
       orderBy: { createdAt: "desc" },
