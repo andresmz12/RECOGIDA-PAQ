@@ -292,7 +292,9 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (status) {
-      where.status = status;
+      // Supports comma-separated values, e.g. "SCHEDULED,EN_CAMINO"
+      const statuses = status.split(",").filter(Boolean);
+      where.status = statuses.length > 1 ? { in: statuses } : statuses[0];
     }
 
     if (courierId) {

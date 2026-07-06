@@ -111,19 +111,24 @@ export default function MisRecogidasPage() {
   };
 
   // ── Date helpers ────────────────────────────────────────────────
+  // preferredDate is stored as a date-only value (UTC midnight), so compare
+  // calendar dates as YYYY-MM-DD strings — converting through local time
+  // shifts the day for negative UTC offsets (e.g. Colombia, US East).
+  const toYMD = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const now = new Date();
-  const todayKey = now.toDateString();
+  const todayKey = toYMD(now);
   const tmrw = new Date(now);
   tmrw.setDate(now.getDate() + 1);
-  const tomorrowKey = tmrw.toDateString();
-  const dateKeyOf = (d: string) => new Date(d).toDateString();
+  const tomorrowKey = toYMD(tmrw);
+  const dateKeyOf = (d: string) => d.slice(0, 10);
 
   const matchesDate = (p: PickupRequest) => {
     if (!dateFilter) return true;
     const k = dateKeyOf(p.preferredDate);
     if (dateFilter === "today") return k === todayKey;
     if (dateFilter === "tomorrow") return k === tomorrowKey;
-    return k === new Date(dateFilter + "T00:00:00").toDateString();
+    return k === dateFilter;
   };
 
   // ── Route: build Google Maps multi-stop and open it directly ────
@@ -148,11 +153,13 @@ export default function MisRecogidasPage() {
   const filtered = pickups.filter(matchesDate);
 
   const todayPickups = filtered.filter((p) => dateKeyOf(p.preferredDate) === todayKey);
+  // Completed pickups from other days are noise in the default view, but
+  // when the courier explicitly filters by "Recogido" they must show up.
   const otherPickups = filtered.filter(
     (p) =>
       dateKeyOf(p.preferredDate) !== todayKey &&
-      p.status !== "PICKED_UP" &&
-      p.status !== "CANCELLED"
+      (statusFilter === "PICKED_UP" ||
+        (p.status !== "PICKED_UP" && p.status !== "CANCELLED"))
   );
 
   const doneToday = todayPickups.filter((p) => p.status === "PICKED_UP").length;
@@ -208,8 +215,9 @@ export default function MisRecogidasPage() {
             </button>
           </div>
 
-          {/* Today's progress bar */}
-          {totalToday > 0 && (
+          {/* Today's progress bar — only meaningful over the full list; with
+              a status filter active it would always read 0% or 100% */}
+          {statusFilter === "" && totalToday > 0 && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 flex items-center gap-4">
               <div className="flex-1">
                 <p className="text-xs font-bold text-indigo-600 mb-1.5">
@@ -229,19 +237,25 @@ export default function MisRecogidasPage() {
           )}
         </div>
 
-        {/* Status filter */}
+        {/* Status filter — "Programado" covers both SCHEDULED and EN_CAMINO,
+            which the cards treat as the same operational state */}
         <div className="flex gap-2 mb-3 flex-wrap">
-          {["", "ASSIGNED", "SCHEDULED", "PICKED_UP"].map(s => (
+          {[
+            { value: "", label: t("common.all") },
+            { value: "ASSIGNED", label: t("status.ASSIGNED") },
+            { value: "SCHEDULED,EN_CAMINO", label: t("status.SCHEDULED") },
+            { value: "PICKED_UP", label: t("status.PICKED_UP") },
+          ].map((s) => (
             <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
+              key={s.value}
+              onClick={() => setStatusFilter(s.value)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                statusFilter === s
+                statusFilter === s.value
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-indigo-300"
               }`}
             >
-              {s === "" ? t("common.all") : t(`status.${s}`)}
+              {s.label}
             </button>
           ))}
         </div>
