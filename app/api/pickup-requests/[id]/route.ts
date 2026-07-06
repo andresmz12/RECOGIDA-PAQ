@@ -50,10 +50,11 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Couriers must never see the pickup verification code
+    // Couriers must never see the pickup verification code — only a flag
+    // so the UI can require the input.
     if (role === "COURIER") {
-      const { securityCode: _sc, ...rest } = pickupRequest;
-      return NextResponse.json(rest);
+      const { securityCode, ...rest } = pickupRequest;
+      return NextResponse.json({ ...rest, requiresSecurityCode: !!securityCode });
     }
 
     return NextResponse.json(pickupRequest);
@@ -139,6 +140,14 @@ export async function PATCH(
     let verificationNote: string | null = null;
     if (status === "PICKED_UP" && pickupRequest.securityCode) {
       if (role === "COURIER") {
+        // The code is mandatory — an empty submission is rejected outright
+        // (without consuming a guess attempt).
+        if (typeof securityCode !== "string" || securityCode.trim() === "") {
+          return NextResponse.json(
+            { error: "SECURITY_CODE_REQUIRED" },
+            { status: 400 }
+          );
+        }
         const rl = rateLimit(`pickup-code:${params.id}`, { limit: 5, windowMs: 10 * 60_000 });
         if (!rl.ok) {
           return NextResponse.json(
@@ -146,10 +155,7 @@ export async function PATCH(
             { status: 429 }
           );
         }
-        if (
-          typeof securityCode !== "string" ||
-          securityCode.trim() !== pickupRequest.securityCode
-        ) {
+        if (securityCode.trim() !== pickupRequest.securityCode) {
           return NextResponse.json(
             { error: "INVALID_SECURITY_CODE" },
             { status: 403 }
@@ -226,8 +232,8 @@ export async function PATCH(
 
     // Couriers must never see the pickup verification code
     if (role === "COURIER" && finalRequest) {
-      const { securityCode: _sc, ...rest } = finalRequest;
-      return NextResponse.json(rest);
+      const { securityCode, ...rest } = finalRequest;
+      return NextResponse.json({ ...rest, requiresSecurityCode: !!securityCode });
     }
 
     return NextResponse.json(finalRequest);

@@ -12,6 +12,7 @@ import { optimizeStopsByCity, buildGoogleMapsRouteUrl } from "@/lib/route-optimi
 
 interface PickupRequest {
   id: string;
+  requiresSecurityCode?: boolean;
   trackingCode: string;
   contactName: string;
   contactPhone: string;
@@ -99,6 +100,8 @@ export default function MisRecogidasPage() {
     const data = await res.json().catch(() => ({}));
     if (data.error === "INVALID_SECURITY_CODE") {
       showToast(t("pickups.wrongSecurityCode"));
+    } else if (data.error === "SECURITY_CODE_REQUIRED") {
+      showToast(t("pickups.securityCodeRequired"));
     } else if (res.status === 429) {
       showToast(t("pickups.tooManyCodeAttempts"));
     } else {
@@ -599,20 +602,24 @@ function PickupActionCard({
 
               {isOnTheWay && (
                 <div className="flex-1 space-y-2">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={codeInput}
-                    onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, ""))}
-                    placeholder={t("pickups.securityCodePlaceholder")}
-                    aria-label={t("pickups.securityCodeLabel")}
-                    className="w-full text-center font-mono text-lg font-bold tracking-[0.4em] border-2 border-amber-300 focus:border-amber-500 rounded-2xl py-2.5 focus:outline-none placeholder:tracking-normal placeholder:text-sm placeholder:font-sans placeholder:font-normal"
-                  />
-                  <p className="text-xs text-slate-400 text-center">{t("pickups.securityCodeHint")}</p>
+                  {pickup.requiresSecurityCode && (
+                    <>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={codeInput}
+                        onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, ""))}
+                        placeholder={t("pickups.securityCodePlaceholder")}
+                        aria-label={t("pickups.securityCodeLabel")}
+                        className="w-full text-center font-mono text-lg font-bold tracking-[0.4em] border-2 border-amber-300 focus:border-amber-500 rounded-2xl py-2.5 focus:outline-none placeholder:tracking-normal placeholder:text-sm placeholder:font-sans placeholder:font-normal"
+                      />
+                      <p className="text-xs text-slate-400 text-center">{t("pickups.securityCodeHint")}</p>
+                    </>
+                  )}
                 <button
                   onClick={() => act("PICKED_UP")}
-                  disabled={acting}
+                  disabled={acting || (pickup.requiresSecurityCode && codeInput.length !== 4)}
                   className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-200 text-sm"
                 >
                   {acting ? (

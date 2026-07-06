@@ -141,7 +141,8 @@
     "securityCodeHint": "Ask the customer for their pickup security code",
     "wrongSecurityCode": "Incorrect security code. Ask the customer for the code on their guía or email.",
     "tooManyCodeAttempts": "Too many incorrect attempts. Wait 10 minutes or contact dispatch.",
-    "actionError": "Could not complete the action. Try again."
+    "actionError": "Could not complete the action. Try again.",
+    "securityCodeRequired": "You must enter the customer's security code to confirm the pickup."
   },
   "account": {
     "home": "Home",

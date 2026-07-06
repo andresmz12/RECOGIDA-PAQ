@@ -352,10 +352,14 @@ export async function GET(request: NextRequest) {
     const total = await prisma.pickupRequest.count({ where });
 
     // Couriers must never see the pickup verification code — the customer
-    // handing it over in person is the whole proof of pickup.
+    // handing it over in person is the whole proof of pickup. They only
+    // get a flag so the UI can require the input.
     const data =
       role === "COURIER"
-        ? pickups.map(({ securityCode: _sc, ...rest }) => rest)
+        ? pickups.map(({ securityCode, ...rest }) => ({
+            ...rest,
+            requiresSecurityCode: !!securityCode,
+          }))
         : pickups;
 
     return NextResponse.json({
