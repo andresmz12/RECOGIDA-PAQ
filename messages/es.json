@@ -694,5 +694,17 @@
     "termsAccept": "He leído y acepto los",
     "termsLink": "Términos y Condiciones",
     "errorTerms": "Debes aceptar los Términos y Condiciones para crear tu cuenta."
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "desc": "La página que buscas no existe o fue movida.",
+    "home": "Volver al inicio",
+    "track": "Rastrear un paquete"
+  },
+  "errorPage": {
+    "title": "Algo salió mal",
+    "desc": "Ocurrió un error inesperado. Por favor intenta de nuevo.",
+    "retry": "Intentar de nuevo",
+    "home": "Volver al inicio"
   }
 }

@@ -694,5 +694,17 @@
     "termsAccept": "I have read and accept the",
     "termsLink": "Terms and Conditions",
     "errorTerms": "You must accept the Terms and Conditions to create your account."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "desc": "The page you're looking for doesn't exist or was moved.",
+    "home": "Back to home",
+    "track": "Track a package"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "desc": "An unexpected error occurred. Please try again.",
+    "retry": "Try again",
+    "home": "Back to home"
   }
 }
