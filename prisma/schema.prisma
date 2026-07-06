@@ -88,6 +88,15 @@ model PickupRequest {
   proofPhotoUrl       String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
+
+  // Dashboard filters, courier views, calendar and webhook lookups all scan
+  // these columns — indexed so they stay fast as the table grows.
+  @@index([userId])
+  @@index([assignedCourierId])
+  @@index([status])
+  @@index([preferredDate])
+  @@index([contactPhone])
+  @@index([createdAt])
 }
 
 model StatusHistory {
@@ -99,6 +108,8 @@ model StatusHistory {
   changedById     String?
   notes           String?
   createdAt       DateTime       @default(now())
+
+  @@index([pickupRequestId])
 }
 
 model Comment {
@@ -111,6 +122,8 @@ model Comment {
   authorRole      String
   body            String
   createdAt       DateTime      @default(now())
+
+  @@index([pickupRequestId])
 }
 
 model Pricing {

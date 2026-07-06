@@ -151,16 +151,19 @@ export async function PATCH(
         },
       });
 
-      // Send email notification in the language the customer used on the form
+      // Send email notification in the language the customer used on the form.
+      // Fire-and-forget: an email failure must not fail the status update.
       if (pickupRequest.contactEmail) {
         const customerLang = (pickupRequest as any).lang === "en" ? "en" : "es";
-        await sendStatusUpdateEmail(
+        sendStatusUpdateEmail(
           pickupRequest.contactEmail,
           pickupRequest.trackingCode,
           pickupRequest.contactName,
           status,
           pickupRequest.preferredDate,
           customerLang
+        ).catch((err) =>
+          console.error("[pickup-requests/id] sendStatusUpdateEmail error:", err)
         );
       }
 

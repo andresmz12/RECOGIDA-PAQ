@@ -90,6 +90,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reject malformed dates up front — new Date("garbage") would otherwise
+    // blow up inside Prisma as a 500.
+    if (isNaN(new Date(preferredDate).getTime())) {
+      return NextResponse.json(
+        { error: "Invalid preferred date" },
+        { status: 400 }
+      );
+    }
+
     // Generate tracking code
     let trackingCode = generateTrackingCode();
     let attempts = 0;
@@ -215,9 +224,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send confirmation email
+    // Send confirmation email in background — a SendGrid outage must not
+    // fail a pickup that was already created.
     if (contactEmail) {
-      await sendPickupConfirmationEmail(contactEmail, trackingCode, contactName, {
+      sendPickupConfirmationEmail(contactEmail, trackingCode, contactName, {
         preferredDate: new Date(preferredDate),
         preferredTimeWindow,
         pickupAddress,
@@ -226,7 +236,9 @@ export async function POST(request: NextRequest) {
         packageType,
         discountCode: appliedDiscount?.code,
         discountPercent: appliedDiscount?.percent,
-      }, emailLang);
+      }, emailLang).catch((err) =>
+        console.error("[pickup-requests] sendPickupConfirmationEmail error:", err)
+      );
     }
 
     // Trigger voice confirmation call in background (non-blocking)
