@@ -287,7 +287,8 @@ export default function Home() {
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
-    const code = trackCode.trim();
+    // Tracking codes are stored uppercase (OGC-XXXXXX) and looked up exactly
+    const code = trackCode.trim().toUpperCase();
     if (code) window.location.href = `/rastreo/${encodeURIComponent(code)}`;
   };
 
@@ -668,7 +669,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <CargoMark className="w-8 h-8" />
             <div className="leading-tight">
-              <p className="font-mono text-[11px] text-white/60">&copy; 2025 O&apos;GLOBO CARGO</p>
+              <p className="font-mono text-[11px] text-white/60">&copy; {new Date().getFullYear()} O&apos;GLOBO CARGO</p>
               <p className="font-mono text-[9px] tracking-[0.25em] text-white/30 uppercase">MIA 25.76°N 80.19°W</p>
             </div>
           </div>
@@ -676,7 +677,7 @@ export default function Home() {
             {[
               { href: "/login", label: t("landing.footerPanel") },
               { href: "/recoger", label: t("landing.footerRequest") },
-              { href: "/rastreo/demo", label: t("landing.footerTrack") },
+              { href: "#track", label: t("landing.footerTrack") },
               { href: "/terminos", label: t("landing.footerTerms") },
             ].map((l) => (
               <Link key={l.href} href={l.href} className="font-mono text-[11px] tracking-[0.15em] uppercase text-white/50 hover:text-accent-400 transition-colors">

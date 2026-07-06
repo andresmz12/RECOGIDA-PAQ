@@ -39,6 +39,13 @@ export const metadata: Metadata = {
   title: "O'Globo Cargo — International Package Pickup",
   description:
     "Request international package pickups, track in real time, and manage operations with O'Globo Cargo.",
+  openGraph: {
+    title: "O'Globo Cargo — International Package Pickup",
+    description:
+      "Request international package pickups, track in real time, and manage operations with O'Globo Cargo.",
+    type: "website",
+    siteName: "O'Globo Cargo",
+  },
 };
 
 export default function RootLayout({
