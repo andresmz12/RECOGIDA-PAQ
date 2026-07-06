@@ -31,6 +31,7 @@ interface Pickup {
   recipientCity: string;
   recipientCountry: string;
   packageType?: string;
+  securityCode?: string;
 }
 
 function formatDate(d: string) {
@@ -409,6 +410,17 @@ function PickupCard({ pickup, cancelling, onCancel }: {
 
         {/* Status stepper */}
         {!isCancelled && <StatusStepper status={pickup.status} />}
+
+        {/* Pickup security code — hand to the courier at pickup */}
+        {pickup.securityCode && !isCancelled && pickup.status !== "PICKED_UP" && (
+          <div className="flex items-center justify-between gap-3 bg-amber-50 border border-dashed border-amber-300 rounded-xl px-4 py-2.5 my-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">{t("account.securityCode")}</p>
+              <p className="text-xs text-amber-600">{t("account.securityCodeNote")}</p>
+            </div>
+            <span className="font-mono font-black text-xl text-amber-700 tracking-[0.2em] shrink-0">{pickup.securityCode}</span>
+          </div>
+        )}
 
         {/* Route */}
         <div className="flex items-center gap-2 my-4">

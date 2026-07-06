@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendStatusUpdateEmail } from "@/lib/email";
 import { triggerCourierCall } from "@/lib/call-service";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(
   request: NextRequest,
@@ -49,6 +50,12 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Couriers must never see the pickup verification code
+    if (role === "COURIER") {
+      const { securityCode: _sc, ...rest } = pickupRequest;
+      return NextResponse.json(rest);
+    }
+
     return NextResponse.json(pickupRequest);
   } catch (error) {
     console.error("Error fetching pickup request:", error);
@@ -78,7 +85,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, assignedCourierId, notes, preferredDate, preferredTimeWindow, proofPhotoUrl } = body;
+    const { status, assignedCourierId, notes, preferredDate, preferredTimeWindow, proofPhotoUrl, securityCode } = body;
 
     const VALID_STATUSES = ["PENDING", "ASSIGNED", "SCHEDULED", "EN_CAMINO", "PICKED_UP", "CANCELLED"];
     if (status && !VALID_STATUSES.includes(status)) {
@@ -125,6 +132,36 @@ export async function PATCH(
       return NextResponse.json({ error: "Couriers cannot reassign pickups" }, { status: 403 });
     }
 
+    // Couriers must prove physical pickup: the 4-digit code only the
+    // customer holds is required to mark PICKED_UP. Admin/dispatcher can
+    // override manually (audited below). Legacy requests without a code
+    // are exempt.
+    let verificationNote: string | null = null;
+    if (status === "PICKED_UP" && pickupRequest.securityCode) {
+      if (role === "COURIER") {
+        const rl = rateLimit(`pickup-code:${params.id}`, { limit: 5, windowMs: 10 * 60_000 });
+        if (!rl.ok) {
+          return NextResponse.json(
+            { error: "Too many incorrect codes. Try again in 10 minutes or contact dispatch." },
+            { status: 429 }
+          );
+        }
+        if (
+          typeof securityCode !== "string" ||
+          securityCode.trim() !== pickupRequest.securityCode
+        ) {
+          return NextResponse.json(
+            { error: "INVALID_SECURITY_CODE" },
+            { status: 403 }
+          );
+        }
+        verificationNote = "Recogida verificada con código de seguridad";
+      } else {
+        // ADMIN / DISPATCHER manual confirmation — allowed, but audited
+        verificationNote = "Confirmación manual sin código de seguridad";
+      }
+    }
+
     const oldStatus = pickupRequest.status;
 
     // Update the request
@@ -147,7 +184,7 @@ export async function PATCH(
           fromStatus: oldStatus,
           toStatus: status,
           changedById: userId,
-          notes,
+          notes: [verificationNote, notes].filter(Boolean).join(" · ") || null,
         },
       });
 
@@ -186,6 +223,12 @@ export async function PATCH(
         },
       },
     });
+
+    // Couriers must never see the pickup verification code
+    if (role === "COURIER" && finalRequest) {
+      const { securityCode: _sc, ...rest } = finalRequest;
+      return NextResponse.json(rest);
+    }
 
     return NextResponse.json(finalRequest);
   } catch (error) {

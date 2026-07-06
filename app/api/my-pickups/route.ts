@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
         packageType: true,
         preferredDate: true,
         createdAt: true,
+        // Safe here: this endpoint only ever returns the customer's own
+        // requests (filtered by session userId above).
+        securityCode: true,
       },
     });
 

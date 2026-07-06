@@ -135,7 +135,13 @@
     "openingRoute": "Opening route in Google Maps…",
     "noStopsForRoute": "No active pickups to build a route.",
     "noPickupsForDate": "No pickups for this date.",
-    "addPhoto": "Add proof photo (optional)"
+    "addPhoto": "Add proof photo (optional)",
+    "securityCodeLabel": "Customer security code",
+    "securityCodePlaceholder": "Customer's 4-digit code",
+    "securityCodeHint": "Ask the customer for their pickup security code",
+    "wrongSecurityCode": "Incorrect security code. Ask the customer for the code on their guía or email.",
+    "tooManyCodeAttempts": "Too many incorrect attempts. Wait 10 minutes or contact dispatch.",
+    "actionError": "Could not complete the action. Try again."
   },
   "account": {
     "home": "Home",
@@ -180,7 +186,9 @@
     "saveProfile": "Save changes",
     "saving": "Saving...",
     "saveSuccess": "Profile updated successfully",
-    "saveError": "Error saving. Please try again."
+    "saveError": "Error saving. Please try again.",
+    "securityCode": "Pickup security code",
+    "securityCodeNote": "Give it to the courier at pickup"
   },
   "map": {
     "title": "Route Map",
@@ -446,7 +454,9 @@
     "contents": "Contents",
     "specialInstructions": "Special Instructions",
     "trackAt": "Track your shipment at:",
-    "footer": "O'Globo Cargo · International Shipping Services"
+    "footer": "O'Globo Cargo · International Shipping Services",
+    "securityCode": "Pickup security code",
+    "securityCodeNote": "Give this code to the courier at pickup. Don't share it beforehand."
   },
   "landing": {
     "navFeatures": "Features",
@@ -603,7 +613,9 @@
     "discountInvalid": "Invalid or inactive code.",
     "discountRow": "Discount ({{code}})",
     "discountOptional": "Have a code? Enter it here.",
-    "dateNotice": "The date and time you choose are a preference, not a confirmed appointment. Our team will contact you to coordinate and confirm the exact pickup day and time."
+    "dateNotice": "The date and time you choose are a preference, not a confirmed appointment. Our team will contact you to coordinate and confirm the exact pickup day and time.",
+    "securityCodeLabel": "Pickup security code",
+    "securityCodeNote": "Give this code to the courier when they pick up your package. It confirms the pickup happened in person. It's also in your confirmation email."
   },
   "rastreo": {
     "loading": "Loading tracking information...",

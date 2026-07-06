@@ -135,7 +135,13 @@
     "notSpecified": "No especificado",
     "openingRoute": "Abriendo ruta en Google Maps…",
     "noStopsForRoute": "Sin recogidas activas para armar la ruta.",
-    "noPickupsForDate": "Sin recogidas para esta fecha."
+    "noPickupsForDate": "Sin recogidas para esta fecha.",
+    "securityCodeLabel": "Código de seguridad del cliente",
+    "securityCodePlaceholder": "Código de 4 dígitos del cliente",
+    "securityCodeHint": "Pídele al cliente su código de seguridad de recogida",
+    "wrongSecurityCode": "Código incorrecto. Pídele al cliente el código que aparece en su guía o correo.",
+    "tooManyCodeAttempts": "Demasiados intentos incorrectos. Espera 10 minutos o contacta al despachador.",
+    "actionError": "No se pudo completar la acción. Intenta de nuevo."
   },
   "account": {
     "home": "Inicio",
@@ -180,7 +186,9 @@
     "saveProfile": "Guardar cambios",
     "saving": "Guardando...",
     "saveSuccess": "Perfil actualizado correctamente",
-    "saveError": "Error al guardar. Intenta de nuevo."
+    "saveError": "Error al guardar. Intenta de nuevo.",
+    "securityCode": "Código de seguridad de recogida",
+    "securityCodeNote": "Entrégalo al mensajero en la recogida"
   },
   "map": {
     "title": "Mapa de Rutas",
@@ -446,7 +454,9 @@
     "contents": "Contenido",
     "specialInstructions": "Instrucciones especiales",
     "trackAt": "Rastrea tu envío en:",
-    "footer": "O'Globo Cargo · Servicios de envío internacional"
+    "footer": "O'Globo Cargo · Servicios de envío internacional",
+    "securityCode": "Código de seguridad de recogida",
+    "securityCodeNote": "Entrega este código al mensajero al momento de la recogida. No lo compartas antes."
   },
   "landing": {
     "navFeatures": "Características",
@@ -603,7 +613,9 @@
     "discountInvalid": "Código no válido o inactivo.",
     "discountRow": "Descuento ({{code}})",
     "discountOptional": "¿Tienes un código? Ingrésalo aquí.",
-    "dateNotice": "La fecha y hora que elijas son una preferencia, no una cita confirmada. Nuestro equipo se comunicará contigo para coordinar y validar el día y horario exacto de la recogida."
+    "dateNotice": "La fecha y hora que elijas son una preferencia, no una cita confirmada. Nuestro equipo se comunicará contigo para coordinar y validar el día y horario exacto de la recogida.",
+    "securityCodeLabel": "Código de seguridad de recogida",
+    "securityCodeNote": "Entrega este código al mensajero cuando recoja tu paquete. Confirma que la recogida fue en persona. También está en tu correo de confirmación."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

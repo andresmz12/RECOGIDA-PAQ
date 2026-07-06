@@ -78,10 +78,11 @@ export default function MisRecogidasPage() {
     setTimeout(() => setToast(""), 6000);
   };
 
-  const handleAction = async (id: string, newStatus: string, notes?: string, proofPhotoUrl?: string) => {
+  const handleAction = async (id: string, newStatus: string, notes?: string, proofPhotoUrl?: string, securityCode?: string): Promise<boolean> => {
     const body: any = { status: newStatus };
     if (notes) body.notes = notes;
     if (proofPhotoUrl) body.proofPhotoUrl = proofPhotoUrl;
+    if (securityCode) body.securityCode = securityCode;
     const res = await fetch(`/api/pickup-requests/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -93,7 +94,17 @@ export default function MisRecogidasPage() {
         : t("pickups.packageInHand");
       showToast(msg);
       loadPickups();
+      return true;
     }
+    const data = await res.json().catch(() => ({}));
+    if (data.error === "INVALID_SECURITY_CODE") {
+      showToast(t("pickups.wrongSecurityCode"));
+    } else if (res.status === 429) {
+      showToast(t("pickups.tooManyCodeAttempts"));
+    } else {
+      showToast(data.error || t("pickups.actionError"));
+    }
+    return false;
   };
 
   // ── Date helpers ────────────────────────────────────────────────
@@ -362,7 +373,7 @@ function PickupActionCard({
   locale,
 }: {
   pickup: PickupRequest;
-  onAction: (id: string, status: string, notes?: string, proofPhotoUrl?: string) => void;
+  onAction: (id: string, status: string, notes?: string, proofPhotoUrl?: string, securityCode?: string) => Promise<boolean>;
   locale: string;
 }) {
   const { t } = useT();
@@ -370,6 +381,7 @@ function PickupActionCard({
   const [showNotes, setShowNotes] = useState(false);
   const [acting, setActing] = useState(false);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -395,10 +407,13 @@ function PickupActionCard({
 
   const act = async (newStatus: string) => {
     setActing(true);
-    await onAction(pickup.id, newStatus, notes || undefined, photoDataUrl || undefined);
-    setNotes("");
-    setShowNotes(false);
-    setPhotoDataUrl(null);
+    const ok = await onAction(pickup.id, newStatus, notes || undefined, photoDataUrl || undefined, codeInput.trim() || undefined);
+    if (ok) {
+      setNotes("");
+      setShowNotes(false);
+      setPhotoDataUrl(null);
+      setCodeInput("");
+    }
     setActing(false);
   };
 
@@ -583,10 +598,22 @@ function PickupActionCard({
               )}
 
               {isOnTheWay && (
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, ""))}
+                    placeholder={t("pickups.securityCodePlaceholder")}
+                    aria-label={t("pickups.securityCodeLabel")}
+                    className="w-full text-center font-mono text-lg font-bold tracking-[0.4em] border-2 border-amber-300 focus:border-amber-500 rounded-2xl py-2.5 focus:outline-none placeholder:tracking-normal placeholder:text-sm placeholder:font-sans placeholder:font-normal"
+                  />
+                  <p className="text-xs text-slate-400 text-center">{t("pickups.securityCodeHint")}</p>
                 <button
                   onClick={() => act("PICKED_UP")}
                   disabled={acting}
-                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-200 text-sm"
+                  className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-emerald-200 text-sm"
                 >
                   {acting ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -597,6 +624,7 @@ function PickupActionCard({
                   )}
                   {t("pickups.confirmPickup")}
                 </button>
+                </div>
               )}
             </div>
           </div>

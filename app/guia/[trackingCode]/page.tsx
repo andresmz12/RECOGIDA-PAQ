@@ -44,6 +44,7 @@ interface Pickup {
   preferredTimeWindow: string;
   specialInstructions?: string;
   createdAt: string;
+  securityCode?: string;
 }
 
 function Row({ label, value }: { label: string; value?: string | null }) {
@@ -156,6 +157,21 @@ export default function GuiaPage() {
             <p className="guia-st-value text-white font-bold text-sm">{t(`status.${data.status}`)}</p>
           </div>
         </div>
+
+        {/* Pickup verification code — only present for the owning customer */}
+        {data.securityCode && (
+          <div className="bg-amber-50 border-2 border-dashed border-amber-400 rounded-xl p-4 mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-amber-800 text-xs font-bold uppercase tracking-widest mb-1">
+                {t("guia.securityCode")}
+              </p>
+              <p className="text-amber-700 text-xs">{t("guia.securityCodeNote")}</p>
+            </div>
+            <p className="text-3xl font-mono font-black text-amber-700 tracking-[0.2em] shrink-0">
+              {data.securityCode}
+            </p>
+          </div>
+        )}
 
         {/* Schedule */}
         <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-5 flex items-center gap-4">

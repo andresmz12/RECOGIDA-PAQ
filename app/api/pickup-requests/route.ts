@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/client";
-import { generateTrackingCode } from "@/lib/utils";
+import { generateTrackingCode, generateSecurityCode } from "@/lib/utils";
 import { sendPickupConfirmationEmail, sendWelcomeEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -172,9 +172,14 @@ export async function POST(request: NextRequest) {
       if (found) appliedDiscount = { code: found.code, percent: found.percent };
     }
 
+    // Pickup verification code — shown only to the customer; the courier
+    // must enter it to confirm the pickup.
+    const securityCode = generateSecurityCode();
+
     // Create pickup request
     const createData: Prisma.PickupRequestUncheckedCreateInput = {
       trackingCode,
+      securityCode,
       userId: linkUserId,
         // Sender/pickup
         contactName,
@@ -236,6 +241,7 @@ export async function POST(request: NextRequest) {
         packageType,
         discountCode: appliedDiscount?.code,
         discountPercent: appliedDiscount?.percent,
+        securityCode,
       }, emailLang).catch((err) =>
         console.error("[pickup-requests] sendPickupConfirmationEmail error:", err)
       );
@@ -248,6 +254,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       trackingCode,
+      securityCode,
       createdAt: pickupRequest.createdAt,
       accountCreated: !!linkUserId,
     });
@@ -344,8 +351,15 @@ export async function GET(request: NextRequest) {
 
     const total = await prisma.pickupRequest.count({ where });
 
+    // Couriers must never see the pickup verification code — the customer
+    // handing it over in person is the whole proof of pickup.
+    const data =
+      role === "COURIER"
+        ? pickups.map(({ securityCode: _sc, ...rest }) => rest)
+        : pickups;
+
     return NextResponse.json({
-      data: pickups,
+      data,
       pagination: {
         page,
         limit,

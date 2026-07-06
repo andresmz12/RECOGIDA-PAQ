@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -46,6 +48,8 @@ export async function GET(
         preferredTimeWindow: true,
         specialInstructions: true,
         createdAt: true,
+        userId: true,
+        securityCode: true,
       },
     });
 
@@ -53,7 +57,22 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(p);
+    // The pickup verification code must never reach the courier — it only
+    // proves physical pickup if the customer is its sole holder. Expose it
+    // to the owning customer and back-office staff; hide it from everyone
+    // else (the guía URL itself is public by tracking code).
+    const session = await getServerSession(authOptions);
+    const sessionUser = session?.user as { id?: string; role?: string } | undefined;
+    const canSeeCode =
+      !!sessionUser &&
+      (sessionUser.id === p.userId ||
+        ["ADMIN", "DISPATCHER"].includes(sessionUser.role ?? ""));
+
+    const { userId: _userId, securityCode, ...publicFields } = p;
+    return NextResponse.json({
+      ...publicFields,
+      ...(canSeeCode && securityCode ? { securityCode } : {}),
+    });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

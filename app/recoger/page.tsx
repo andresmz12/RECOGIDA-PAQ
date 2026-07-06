@@ -120,6 +120,7 @@ export default function RecogerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
+  const [securityCode, setSecurityCode] = useState("");
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const [discountInput, setDiscountInput] = useState("");
   const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
@@ -227,6 +228,7 @@ export default function RecogerPage() {
         return;
       }
       setTrackingCode(data.trackingCode);
+      setSecurityCode(data.securityCode ?? "");
     } catch {
       setError(t("recoger.connectionError"));
       setLoading(false);
@@ -255,6 +257,16 @@ export default function RecogerPage() {
             <p className="text-3xl font-mono font-black text-indigo-300">{trackingCode}</p>
             <p className="text-white/40 text-xs mt-3">{t("recoger.saveCode")}</p>
           </div>
+
+          {securityCode && (
+            <div className="bg-amber-500/15 backdrop-blur border-2 border-dashed border-amber-400/50 rounded-2xl p-5 mb-6">
+              <p className="text-amber-300 text-xs font-bold uppercase tracking-widest mb-2">
+                {t("recoger.securityCodeLabel")}
+              </p>
+              <p className="text-3xl font-mono font-black text-amber-300 tracking-[0.25em]">{securityCode}</p>
+              <p className="text-amber-200/70 text-xs mt-3">{t("recoger.securityCodeNote")}</p>
+            </div>
+          )}
 
           {/* Download guide button */}
           <a

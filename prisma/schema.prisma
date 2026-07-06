@@ -86,6 +86,9 @@ model PickupRequest {
   lastCallId          String?
   lastCallAt          DateTime?
   proofPhotoUrl       String?
+  // 4-digit pickup verification code. Only the customer sees it (guía,
+  // email, success screen); the courier must enter it to confirm pickup.
+  securityCode        String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 

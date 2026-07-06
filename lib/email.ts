@@ -151,6 +151,7 @@ export async function sendPickupConfirmationEmail(
     packageType?: string;
     discountCode?: string;
     discountPercent?: number;
+    securityCode?: string;
   },
   lang: "en" | "es" = "en"
 ) {
@@ -169,6 +170,8 @@ export async function sendPickupConfirmationEmail(
         followUp: "Recibirás un correo cada vez que cambie el estado de tu recogida.",
         trackText: `Rastrea tu envío: ${trackingUrl}`,
         trackingCodeLabel: "Código de rastreo",
+        securityCodeLabel: "Código de seguridad de recogida",
+        securityCodeNote: "Entrega este código al mensajero al momento de la recogida. Es tu comprobante de que el paquete fue entregado en persona — no lo compartas antes.",
         labels: {
           date: "Fecha de recogida", window: "Ventana horaria", address: "Dirección de recogida",
           destination: "Destino", pkg: "Paquete", discount: "Descuento",
@@ -186,6 +189,8 @@ export async function sendPickupConfirmationEmail(
         followUp: "You'll receive an email every time your pickup status changes.",
         trackText: `Track your shipment: ${trackingUrl}`,
         trackingCodeLabel: "Tracking code",
+        securityCodeLabel: "Pickup security code",
+        securityCodeNote: "Give this code to the courier at pickup time. It's your proof the package was handed over in person — don't share it beforehand.",
         labels: {
           date: "Pickup date", window: "Time window", address: "Pickup address",
           destination: "Destination", pkg: "Package", discount: "Discount",
@@ -209,6 +214,12 @@ export async function sendPickupConfirmationEmail(
     <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
     <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.received}</p>
     ${trackingBox(trackingCode, lang)}
+    ${details?.securityCode ? `
+    <div style="background:#fffbeb;border:2px dashed #f5a524;border-radius:12px;padding:16px 20px;margin:16px 0;">
+      <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a3570c;">${copy.securityCodeLabel}</p>
+      <p style="margin:0 0 8px;font-size:28px;font-weight:800;font-family:monospace;letter-spacing:8px;color:#c9730a;">${esc(details.securityCode)}</p>
+      <p style="margin:0;font-size:12px;line-height:1.5;color:#854610;">${copy.securityCodeNote}</p>
+    </div>` : ""}
     ${detailsTable(rows)}
     ${button(trackingUrl, copy.cta)}
     <p style="font-size:13px;color:#64748b;margin-top:24px;line-height:1.6;">${copy.followUp}</p>
@@ -225,6 +236,9 @@ export async function sendPickupConfirmationEmail(
     ``,
     copy.receivedText,
     `${copy.trackingCodeLabel}: ${trackingCode}`,
+    ...(details?.securityCode
+      ? [`${copy.securityCodeLabel}: ${details.securityCode}`, copy.securityCodeNote]
+      : []),
     ...rows.map(([l, v]) => `${l}: ${v}`),
     ``,
     copy.trackText,

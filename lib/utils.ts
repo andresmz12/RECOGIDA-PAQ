@@ -18,6 +18,14 @@ export function generateTrackingCode(): string {
   return code;
 }
 
+export function generateSecurityCode(): string {
+  // 4-digit pickup verification code the customer hands to the courier.
+  // Brute force is stopped server-side by an attempt limit, not by length.
+  const bytes = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(bytes);
+  return String(bytes[0] % 10000).padStart(4, "0");
+}
+
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("es-ES", {
     year: "numeric",
