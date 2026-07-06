@@ -502,7 +502,13 @@
     "trackEyebrow": "Real-time tracking",
     "trackSectionTitle": "Have a tracking code?",
     "trackPlaceholder": "e.g. OGC-A7B3K9",
-    "footerTerms": "Terms and Conditions"
+    "footerTerms": "Terms and Conditions",
+    "mockupTimeAgo": "2 hours ago",
+    "mockupType": "International Shipment",
+    "mockupStatus": "Scheduled — Tomorrow 10:00–13:00",
+    "mockupCourier": "Juan Pérez · Assigned courier",
+    "mockupNotifTitle": "Pickup confirmed",
+    "mockupNotifTime": "OGC-F2D5M1 · 5 min ago"
   },
   "recoger": {
     "title": "Request a pickup",

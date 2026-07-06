@@ -155,6 +155,7 @@ const FEATURES = [
 /* ─── Hero mockup card ───────────────────────────────────────────── */
 
 function TrackingMockup() {
+  const { t } = useT();
   return (
     <div className="relative select-none">
       {/* Main tracking card */}
@@ -166,7 +167,7 @@ function TrackingMockup() {
           <span className="font-mono font-bold text-navy-700 text-sm bg-navy-50 px-3 py-1.5 rounded-lg tracking-wide">
             OGC-A7B3K9
           </span>
-          <span className="text-xs text-slate-400">Hace 2 horas</span>
+          <span className="text-xs text-slate-400">{t("landing.mockupTimeAgo")}</span>
         </div>
 
         <div className="flex items-center gap-3 mb-5">
@@ -176,7 +177,7 @@ function TrackingMockup() {
             </svg>
           </div>
           <div>
-            <p className="font-semibold text-slate-900 text-sm">Envío Internacional</p>
+            <p className="font-semibold text-slate-900 text-sm">{t("landing.mockupType")}</p>
             <p className="text-xs text-slate-500 mt-0.5">Miami, FL → Bogotá, Colombia</p>
           </div>
         </div>
@@ -193,7 +194,7 @@ function TrackingMockup() {
         </div>
         <div className="flex items-center gap-1.5 mb-5">
           <span className="w-2 h-2 bg-accent-500 rounded-full animate-pulse" />
-          <p className="text-sm font-semibold text-slate-700">Programado — Mañana 10:00–13:00</p>
+          <p className="text-sm font-semibold text-slate-700">{t("landing.mockupStatus")}</p>
         </div>
 
         <div className="pt-4 border-t border-slate-100 flex items-center gap-2.5">
@@ -201,7 +202,7 @@ function TrackingMockup() {
             JP
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-700">Juan Pérez · Courier asignado</p>
+            <p className="text-xs font-semibold text-slate-700">{t("landing.mockupCourier")}</p>
             <p className="text-xs text-slate-400">+1 (305) 555-0192</p>
           </div>
         </div>
@@ -218,8 +219,8 @@ function TrackingMockup() {
           </svg>
         </div>
         <div>
-          <p className="text-white font-semibold text-xs leading-tight">Recogida confirmada</p>
-          <p className="text-emerald-100 text-xs">OGC-F2D5M1 · hace 5 min</p>
+          <p className="text-white font-semibold text-xs leading-tight">{t("landing.mockupNotifTitle")}</p>
+          <p className="text-emerald-100 text-xs">{t("landing.mockupNotifTime")}</p>
         </div>
       </div>
 
@@ -239,7 +240,8 @@ export default function Home() {
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
-    const code = trackCode.trim();
+    // Tracking codes are stored uppercase (OGC-XXXXXX) and looked up exactly
+    const code = trackCode.trim().toUpperCase();
     if (code) window.location.href = `/rastreo/${encodeURIComponent(code)}`;
   };
 
@@ -386,6 +388,7 @@ export default function Home() {
                   value={trackCode}
                   onChange={(e) => setTrackCode(e.target.value)}
                   placeholder={t("landing.trackPlaceholder")}
+                  aria-label={t("landing.trackSectionTitle")}
                   className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 text-sm focus:outline-none focus:border-white/40 backdrop-blur-sm"
                 />
                 <button
@@ -421,6 +424,19 @@ export default function Home() {
               <TrackingMockup />
             </div>
           </div>
+
+          {/* Stats band */}
+          <div className="mt-20 pt-12 border-t border-white/10">
+            <p className="text-center text-navy-200/50 text-xs font-semibold uppercase tracking-widest mb-8">
+              {t("landing.socialProof")}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <StatCounter value={2500} suffix="+" label={t("landing.statPackages")} />
+              <StatCounter value={15} label={t("landing.statCities")} />
+              <StatCounter value={24} suffix="h" label={t("landing.statResponse")} />
+              <StatCounter value={98} suffix="%" label={t("landing.statSuccess")} />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -435,6 +451,7 @@ export default function Home() {
               value={trackCode}
               onChange={(e) => setTrackCode(e.target.value)}
               placeholder={t("landing.trackPlaceholder")}
+              aria-label={t("landing.trackSectionTitle")}
               className="flex-1 px-4 py-3 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 bg-white"
             />
             <button
@@ -547,7 +564,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <GlobeMark className="w-7 h-7" />
-            <p className="text-slate-500 text-sm">&copy; 2025 O&apos;Globo Cargo</p>
+            <p className="text-slate-500 text-sm">&copy; {new Date().getFullYear()} O&apos;Globo Cargo</p>
           </div>
           <div className="flex items-center gap-6">
             <Link href="/login" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
@@ -556,9 +573,9 @@ export default function Home() {
             <Link href="/recoger" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               {t("landing.footerRequest")}
             </Link>
-            <Link href="/rastreo/demo" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
+            <a href="#track" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               {t("landing.footerTrack")}
-            </Link>
+            </a>
             <Link href="/terminos" className="text-slate-500 hover:text-navy-700 text-sm transition-colors">
               {t("landing.footerTerms")}
             </Link>
