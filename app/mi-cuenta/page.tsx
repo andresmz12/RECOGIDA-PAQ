@@ -274,19 +274,20 @@ export default function MiCuentaPage() {
           </div>
         </div>
 
-        {/* Tab bar */}
+        {/* Tab bar — horizontally scrollable so it never clips on narrow
+            phone screens instead of running the last tab off-screen */}
         <div className="max-w-3xl mx-auto px-4">
-          <div className="flex gap-1 border-b border-white/10">
-            <button onClick={() => setTab("active")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "active" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+          <div className="flex gap-1 border-b border-white/10 overflow-x-auto no-scrollbar">
+            <button onClick={() => setTab("active")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "active" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.activeTab")}{active.length > 0 ? ` (${active.length})` : ""}
             </button>
-            <button onClick={() => setTab("history")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "history" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("history")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "history" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.historyTab")}{done.length > 0 ? ` (${done.length})` : ""}
             </button>
-            <button onClick={() => setTab("recipients")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "recipients" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("recipients")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "recipients" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.recipientsTab")}
             </button>
-            <button onClick={() => setTab("profile")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("profile")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.profileTab")}
             </button>
           </div>
