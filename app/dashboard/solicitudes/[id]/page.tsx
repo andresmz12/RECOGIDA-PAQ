@@ -12,6 +12,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Alert from "@/components/ui/Alert";
 import { useT } from "@/lib/i18n-context";
+import { formatPickupDate } from "@/lib/utils";
 
 interface Courier {
   id: string;
@@ -439,7 +440,7 @@ export default function SolicitudDetailPage() {
                 <InfoRow label={t("detail.type")} value={pickup.packageType} />
                 <InfoRow label={t("detail.estimatedWeight")} value={pickup.estimatedWeight ? `${pickup.estimatedWeight} lb` : null} />
                 <InfoRow label={t("detail.dimensions")} value={pickup.dimensions} />
-                <InfoRow label={t("detail.preferredDate")} value={new Date(pickup.preferredDate).toLocaleDateString(locale)} />
+                <InfoRow label={t("detail.preferredDate")} value={formatPickupDate(pickup.preferredDate, locale, {})} />
                 <InfoRow label={t("detail.timeWindow")} value={pickup.preferredTimeWindow} />
               </div>
               {pickup.packageContents && (

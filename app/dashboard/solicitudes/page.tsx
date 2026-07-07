@@ -12,6 +12,7 @@ import { SkeletonTableRow } from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import { useT } from "@/lib/i18n-context";
 import { US_STATES } from "@/lib/countries";
+import { formatPickupDate } from "@/lib/utils";
 
 interface PickupRequest {
   id: string;
@@ -125,7 +126,7 @@ function SolicitudesPageInner() {
       ["Code", "Status", "Date", "Time", "Client", "Phone", "Email", "Pickup Address", "City", "State", "Recipient", "Dest. Country", "Package", "Weight", "Courier"],
       ...(data.data ?? []).map((p: any) => [
         p.trackingCode, p.status,
-        new Date(p.preferredDate).toLocaleDateString("en-US"),
+        formatPickupDate(p.preferredDate, "en-US", {}),
         p.preferredTimeWindow, p.contactName, p.contactPhone, p.contactEmail ?? "",
         p.pickupAddress, p.pickupCity, p.pickupState ?? "",
         p.recipientName, p.destinationCountry ?? p.recipientCountry ?? "",
@@ -299,7 +300,7 @@ function SolicitudesPageInner() {
                   </td>
                   <td style={{ padding: "6px 8px", fontWeight: 600 }}>{p.assignedCourier?.name ?? "—"}</td>
                   <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
-                    {new Date(p.preferredDate).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })}
+                    {formatPickupDate(p.preferredDate, locale, { day: "2-digit", month: "short", year: "numeric" })}
                   </td>
                 </tr>
               ))}
@@ -568,7 +569,7 @@ function SolicitudesPageInner() {
                       </td>
 
                       <td className="px-5 py-3.5 text-sm text-slate-500">
-                        {new Date(p.preferredDate).toLocaleDateString(locale, {
+                        {formatPickupDate(p.preferredDate, locale, {
                           day: "2-digit", month: "short", year: "numeric",
                         })}
                       </td>

@@ -113,8 +113,11 @@ function detailsTable(rows: Array<[string, string]>): string {
 }
 
 function fmtDate(d: Date, lang: "en" | "es" = "en"): string {
+  // preferredDate is a UTC-midnight, date-only value — force UTC so the
+  // date in the email always matches what the customer picked, regardless
+  // of the server's configured timezone.
   return new Intl.DateTimeFormat(lang === "es" ? "es-US" : "en-US", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
+    weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
   }).format(d);
 }
 

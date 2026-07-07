@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { formatPickupDate } from "@/lib/utils";
 
 interface LabelData {
   trackingCode: string;
@@ -65,7 +66,7 @@ export default function EtiquetaPage() {
     );
   }
 
-  const preferredDate = new Date(data.preferredDate).toLocaleDateString("en-US", {
+  const preferredDate = formatPickupDate(data.preferredDate, "en-US", {
     weekday: "short", month: "short", day: "numeric", year: "numeric",
   });
 

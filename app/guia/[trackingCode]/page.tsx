@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useT } from "@/lib/i18n-context";
+import { formatPickupDate } from "@/lib/utils";
 
 const COUNTRY: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",
@@ -89,7 +90,7 @@ export default function GuiaPage() {
   const locale = lang === "en" ? "en-US" : "es-ES";
   const trackingUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/guia/${trackingCode}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackingUrl)}`;
-  const date = new Date(data.preferredDate).toLocaleDateString(locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const date = formatPickupDate(data.preferredDate, locale, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const created = new Date(data.createdAt).toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
 
   return (

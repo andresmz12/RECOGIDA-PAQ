@@ -8,6 +8,7 @@ import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useT } from "@/lib/i18n-context";
+import { pickupDateKey } from "@/lib/utils";
 
 interface Pickup {
   id: string;
@@ -65,7 +66,7 @@ export default function CalendarioPage() {
 
   const byDay: Record<string, Pickup[]> = {};
   pickups.forEach(p => {
-    const key = new Date(p.preferredDate).toLocaleDateString("en-CA");
+    const key = pickupDateKey(p.preferredDate);
     if (!byDay[key]) byDay[key] = [];
     byDay[key].push(p);
   });

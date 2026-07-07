@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { formatPickupDate } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
@@ -134,7 +135,7 @@ export default function RastreoPage() {
 
   const isCancelled = tracking.status === "CANCELLED";
   const currentStep = stepIndex(tracking.status);
-  const formattedDate = new Date(tracking.estimatedPickupDate).toLocaleDateString(locale, {
+  const formattedDate = formatPickupDate(tracking.estimatedPickupDate, locale, {
     year: "numeric",
     month: "long",
     day: "numeric",

@@ -26,6 +26,26 @@ export function generateSecurityCode(): string {
   return String(bytes[0] % 10000).padStart(4, "0");
 }
 
+// preferredDate/estimatedPickupDate are stored as UTC-midnight, date-only
+// values (from a plain <input type="date">). Formatting them with the
+// viewer's local timezone shifts the displayed day backward for anyone
+// west of UTC (all of the Americas) — always render/group them in UTC so
+// the calendar date shown matches what was actually picked.
+export function formatPickupDate(
+  date: string | Date,
+  locale: string,
+  options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" }
+): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString(locale, { ...options, timeZone: "UTC" });
+}
+
+// YYYY-MM-DD grouping key for a pickup date, immune to viewer timezone.
+export function pickupDateKey(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-CA", { timeZone: "UTC" });
+}
+
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("es-ES", {
     year: "numeric",

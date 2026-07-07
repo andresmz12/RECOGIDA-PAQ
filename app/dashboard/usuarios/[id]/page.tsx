@@ -9,6 +9,7 @@ import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useT } from "@/lib/i18n-context";
+import { formatPickupDate } from "@/lib/utils";
 
 const AVATAR_COLORS = [
   "from-indigo-500 to-violet-600",
@@ -185,7 +186,7 @@ export default function UserProfilePage() {
                       </span>
                       <span className="shrink-0"><StatusBadge status={p.status} /></span>
                       <span className="text-xs text-slate-400 shrink-0">
-                        {new Date(p.preferredDate).toLocaleDateString(locale, { day: "numeric", month: "short" })}
+                        {formatPickupDate(p.preferredDate, locale, { day: "numeric", month: "short" })}
                       </span>
                       <svg className="w-4 h-4 text-slate-300 group-hover:text-slate-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

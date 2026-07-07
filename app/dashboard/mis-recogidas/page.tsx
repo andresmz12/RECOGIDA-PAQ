@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { formatPickupDate } from "@/lib/utils";
 import DashboardLayout from "@/components/DashboardLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
 import StartRouteModal from "@/components/StartRouteModal";
@@ -462,7 +463,7 @@ function PickupActionCard({
             <div className="flex items-center gap-2">
               <StatusBadge status={pickup.status} />
               <span className="text-slate-500 text-xs">
-                {new Date(pickup.preferredDate).toLocaleDateString(locale, { day: "numeric", month: "short" })} · {pickup.preferredTimeWindow}
+                {formatPickupDate(pickup.preferredDate, locale, { day: "numeric", month: "short" })} · {pickup.preferredTimeWindow}
               </span>
             </div>
           </div>

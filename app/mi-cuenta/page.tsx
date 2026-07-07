@@ -35,7 +35,9 @@ interface Pickup {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+  // preferredDate is stored as UTC-midnight; force UTC when rendering so
+  // the calendar day shown doesn't shift for viewers west of UTC.
+  return new Date(d).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
 function StatusStepper({ status }: { status: string }) {
