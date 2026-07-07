@@ -64,6 +64,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/dashboard/casos",
+    key: "nav.casos",
+    exact: false,
+    roles: ["ADMIN", "DISPATCHER"],
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/soporte",
     key: "nav.soporte",
     exact: false,
@@ -126,6 +137,7 @@ const PAGE_TITLE_KEYS: Array<{ match: (p: string) => boolean; key: string }> = [
   { match: (p) => p.startsWith("/dashboard/solicitudes"), key: "pageTitles.solicitudes" },
   { match: (p) => p.startsWith("/dashboard/mapa"), key: "pageTitles.mapa" },
   { match: (p) => p.startsWith("/dashboard/mis-recogidas"), key: "pageTitles.misRecogidas" },
+  { match: (p) => p.startsWith("/dashboard/casos"), key: "pageTitles.casos" },
   { match: (p) => p.startsWith("/dashboard/soporte"), key: "pageTitles.soporte" },
   { match: (p) => p.startsWith("/dashboard/usuarios"), key: "pageTitles.usuarios" },
   { match: (p) => p.startsWith("/dashboard/calendario"), key: "pageTitles.calendario" },
@@ -149,6 +161,7 @@ function SidebarContent({
 }) {
   const { t } = useT();
   const [unreadChats, setUnreadChats] = useState(0);
+  const [openCases, setOpenCases] = useState(0);
 
   useEffect(() => {
     if (!["ADMIN", "DISPATCHER"].includes(role)) return;
@@ -156,6 +169,10 @@ function SidebarContent({
       fetch("/api/support-chat/unread-count")
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d) setUnreadChats(d.count); })
+        .catch(() => {});
+      fetch("/api/cases?status=OPEN")
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setOpenCases((d.cases ?? []).length); })
         .catch(() => {});
     };
     load();
@@ -205,6 +222,11 @@ function SidebarContent({
               {item.href === "/dashboard/soporte" && unreadChats > 0 && (
                 <span className="shrink-0 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center">
                   {unreadChats}
+                </span>
+              )}
+              {item.href === "/dashboard/casos" && openCases > 0 && (
+                <span className="shrink-0 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center">
+                  {openCases}
                 </span>
               )}
             </Link>

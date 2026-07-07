@@ -45,7 +45,6 @@ interface PickupDetail {
   estimatedWeight: number | null;
   dimensions: string | null;
   packageContents: string | null;
-  hsCode: string | null;
   declaredValue: number | null;
   insuranceRequested: boolean;
   insuranceValue: number | null;
@@ -54,6 +53,7 @@ interface PickupDetail {
   specialInstructions: string | null;
   notes: string | null;
   status: string;
+  user?: { id: string } | null;
   assignedCourier?: { id: string; name: string } | null;
   statusHistory: Array<{
     id: string;
@@ -163,6 +163,180 @@ function InternalComments({ pickupId }: { pickupId: string }) {
           {t("detail.commentSend")}
         </button>
       </form>
+    </Card>
+  );
+}
+
+const CASE_TYPES = ["LOST", "DAMAGED", "DELAYED", "WRONG_ITEM", "OTHER"] as const;
+const CASE_STATUS_COLORS: Record<string, string> = {
+  OPEN: "bg-red-100 text-red-700",
+  IN_PROGRESS: "bg-amber-100 text-amber-700",
+  RESOLVED: "bg-emerald-100 text-emerald-700",
+};
+
+interface CaseItem {
+  id: string;
+  type: string;
+  status: string;
+  description: string;
+  resolutionNotes: string | null;
+  createdByName: string;
+  createdAt: string;
+}
+
+function CasesSection({ pickupId, hasCustomer }: { pickupId: string; hasCustomer: boolean }) {
+  const { t } = useT();
+  const [cases, setCases] = useState<CaseItem[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [caseType, setCaseType] = useState<string>("LOST");
+  const [description, setDescription] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = () =>
+    fetch(`/api/cases?pickupRequestId=${pickupId}`)
+      .then(r => r.json())
+      .then(d => setCases(d.cases ?? []));
+
+  useEffect(() => { load(); }, [pickupId]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!description.trim()) return;
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pickupRequestId: pickupId, type: caseType, description }),
+      });
+      if (res.ok) {
+        setDescription("");
+        setShowForm(false);
+        await load();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || t("detail.caseCreateError"));
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const updateStatus = async (id: string, newStatus: string) => {
+    await fetch(`/api/cases/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    load();
+  };
+
+  return (
+    <Card variant="default" padding="lg">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-bold text-slate-900 flex items-center gap-2">
+          <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          {t("detail.casesTitle")}
+        </h2>
+        {!showForm && (
+          <button
+            onClick={() => setShowForm(true)}
+            disabled={!hasCustomer}
+            title={!hasCustomer ? t("detail.caseNeedsAccount") : undefined}
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {t("detail.caseOpenNew")}
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <form onSubmit={submit} className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">{t("detail.caseType")}</label>
+            <select
+              value={caseType}
+              onChange={e => setCaseType(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {CASE_TYPES.map(ct => (
+                <option key={ct} value={ct}>{t(`detail.caseType_${ct}`)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">{t("detail.caseDescription")}</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              required
+            />
+          </div>
+          {error && <p className="text-xs text-red-600 font-semibold">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={sending || !description.trim()}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              {sending ? t("common.loading") : t("detail.caseSubmit")}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowForm(false); setError(""); }}
+              className="px-4 py-2 text-slate-500 hover:text-slate-700 text-sm font-semibold"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {cases.length === 0 ? (
+        <p className="text-slate-400 text-sm">{t("detail.noCases")}</p>
+      ) : (
+        <div className="space-y-3">
+          {cases.map(c => (
+            <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-800 text-sm">{t(`detail.caseType_${c.type}`)}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${CASE_STATUS_COLORS[c.status]}`}>
+                    {t(`detail.caseStatus_${c.status}`)}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-400">
+                  {new Date(c.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </div>
+              <p className="text-sm text-slate-700 mb-2">{c.description}</p>
+              {c.resolutionNotes && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 mb-2">
+                  {c.resolutionNotes}
+                </p>
+              )}
+              {c.status !== "RESOLVED" && (
+                <div className="flex gap-2">
+                  {c.status === "OPEN" && (
+                    <button onClick={() => updateStatus(c.id, "IN_PROGRESS")} className="text-xs font-semibold text-amber-700 hover:underline">
+                      {t("detail.caseMarkInProgress")}
+                    </button>
+                  )}
+                  <button onClick={() => updateStatus(c.id, "RESOLVED")} className="text-xs font-semibold text-emerald-700 hover:underline">
+                    {t("detail.caseMarkResolved")}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
@@ -463,9 +637,8 @@ export default function SolicitudDetailPage() {
                   <InfoRow label={t("detail.packageContents")} value={pickup.packageContents} />
                 </div>
               )}
-              {(pickup.hsCode || pickup.declaredValue != null || pickup.insuranceRequested) && (
+              {(pickup.declaredValue != null || pickup.insuranceRequested) && (
                 <div className="mt-6 pt-6 border-t border-slate-100 grid sm:grid-cols-2 gap-6">
-                  <InfoRow label={t("detail.hsCode")} value={pickup.hsCode} />
                   <InfoRow label={t("detail.declaredValue")} value={pickup.declaredValue != null ? `$${pickup.declaredValue.toFixed(2)} USD` : null} />
                   {pickup.insuranceRequested && (
                     <InfoRow label={t("detail.insuranceValue")} value={pickup.insuranceValue != null ? `$${pickup.insuranceValue.toFixed(2)} USD` : null} />
@@ -520,6 +693,11 @@ export default function SolicitudDetailPage() {
                 </div>
               </div>
             </Card>
+
+            {/* Cases — lost/damaged/delayed shipment reports */}
+            {["ADMIN", "DISPATCHER"].includes(role) && (
+              <CasesSection pickupId={pickup.id} hasCustomer={!!pickup.user} />
+            )}
 
             {/* Internal comments */}
             <InternalComments pickupId={pickup.id} />

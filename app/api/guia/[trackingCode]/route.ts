@@ -44,7 +44,6 @@ export async function GET(
         dimensions: true,
         packageContents: true,
         packageItems: true,
-        hsCode: true,
         declaredValue: true,
         insuranceRequested: true,
         insuranceValue: true,

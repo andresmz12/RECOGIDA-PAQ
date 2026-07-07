@@ -52,8 +52,7 @@ export async function POST(request: NextRequest) {
       dimensions,
       packageContents,
       packageItems,
-      // Customs / insurance
-      hsCode,
+      // Declared / insured value
       declaredValue,
       insuranceRequested,
       insuranceValue,
@@ -96,18 +95,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Customs/insurance values are optional but must be sane numbers when present.
-    const parsedDeclaredValue = declaredValue !== undefined && declaredValue !== null && declaredValue !== ""
-      ? parseFloat(declaredValue) : null;
-    if (parsedDeclaredValue !== null && (isNaN(parsedDeclaredValue) || parsedDeclaredValue < 0)) {
-      return NextResponse.json({ error: "Invalid declared value" }, { status: 400 });
+    // Declared value and insured value are mandatory on every shipment.
+    const parsedDeclaredValue = parseFloat(declaredValue);
+    if (isNaN(parsedDeclaredValue) || parsedDeclaredValue <= 0) {
+      return NextResponse.json({ error: "Declared value is required" }, { status: 400 });
     }
-    const wantsInsurance = insuranceRequested === true;
-    const parsedInsuranceValue = wantsInsurance
-      ? parseFloat(insuranceValue)
-      : null;
-    if (wantsInsurance && (isNaN(parsedInsuranceValue as number) || (parsedInsuranceValue as number) <= 0)) {
-      return NextResponse.json({ error: "Insurance value is required when insurance is requested" }, { status: 400 });
+    const parsedInsuranceValue = parseFloat(insuranceValue);
+    if (isNaN(parsedInsuranceValue) || parsedInsuranceValue <= 0) {
+      return NextResponse.json({ error: "Insurance value is required" }, { status: 400 });
     }
 
     // Reject malformed dates up front — new Date("garbage") would otherwise
@@ -228,9 +223,8 @@ export async function POST(request: NextRequest) {
         dimensions: dimensions || null,
         packageContents: packageContents || null,
         packageItems: packageItems ?? null,
-        hsCode: hsCode || null,
         declaredValue: parsedDeclaredValue,
-        insuranceRequested: wantsInsurance,
+        insuranceRequested: true,
         insuranceValue: parsedInsuranceValue,
         // Preferences
         preferredDate: new Date(preferredDate),

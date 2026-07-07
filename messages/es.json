@@ -12,7 +12,8 @@
     "cerrarSesion": "Cerrar sesión",
     "panelControl": "Panel de Control",
     "descuentos": "Descuentos",
-    "soporte": "Soporte"
+    "soporte": "Soporte",
+    "casos": "Casos"
   },
   "roles": {
     "ADMIN": "Administrador",
@@ -31,7 +32,8 @@
     "precios": "Precios",
     "calendario": "Calendario",
     "descuentos": "Códigos de Descuento",
-    "soporte": "Soporte"
+    "soporte": "Soporte",
+    "casos": "Casos"
   },
   "common": {
     "loading": "Cargando...",
@@ -197,7 +199,12 @@
     "recipientsDesc": "Administra los destinatarios que has guardado para envíos recurrentes más rápidos.",
     "noRecipients": "Aún no has guardado ningún destinatario.",
     "deleteRecipient": "Eliminar",
-    "deleteRecipientConfirm": "¿Eliminar este destinatario guardado?"
+    "deleteRecipientConfirm": "¿Eliminar este destinatario guardado?",
+    "caseType_LOST": "Paquete perdido",
+    "caseType_DAMAGED": "Paquete dañado",
+    "caseType_DELAYED": "Envío retrasado",
+    "caseType_WRONG_ITEM": "Artículo incorrecto",
+    "caseType_OTHER": "Caso abierto"
   },
   "map": {
     "title": "Mapa de Rutas",
@@ -434,9 +441,26 @@
     "noComments": "Sin comentarios aún. Los comentarios son privados entre el equipo.",
     "commentPlaceholder": "Agregar nota interna…",
     "commentSend": "Enviar",
-    "hsCode": "Código HS",
     "declaredValue": "Valor declarado",
-    "insuranceValue": "Valor asegurado"
+    "insuranceValue": "Valor asegurado",
+    "casesTitle": "Casos",
+    "caseOpenNew": "+ Abrir caso",
+    "caseNeedsAccount": "Esta solicitud no tiene una cuenta de cliente vinculada",
+    "caseType": "Tipo de caso",
+    "caseType_LOST": "Paquete perdido",
+    "caseType_DAMAGED": "Paquete dañado",
+    "caseType_DELAYED": "Envío retrasado",
+    "caseType_WRONG_ITEM": "Artículo incorrecto",
+    "caseType_OTHER": "Otro",
+    "caseDescription": "¿Qué pasó?",
+    "caseSubmit": "Abrir caso",
+    "caseCreateError": "No se pudo abrir el caso. Intenta de nuevo.",
+    "noCases": "No hay casos para esta solicitud.",
+    "caseStatus_OPEN": "Abierto",
+    "caseStatus_IN_PROGRESS": "En proceso",
+    "caseStatus_RESOLVED": "Resuelto",
+    "caseMarkInProgress": "Marcar en proceso",
+    "caseMarkResolved": "Marcar resuelto"
   },
   "guia": {
     "title": "Guía de envío",
@@ -469,8 +493,7 @@
     "footer": "O'Globo Cargo · Servicios de envío internacional",
     "securityCode": "Código de seguridad de recogida",
     "securityCodeNote": "Entrega este código al mensajero al momento de la recogida. No lo compartas antes.",
-    "customsSection": "Aduana y Seguro",
-    "hsCode": "Código HS",
+    "customsSection": "Valor Declarado y Seguro",
     "declaredValue": "Valor declarado",
     "insuranceValue": "Valor asegurado"
   },
@@ -635,8 +658,6 @@
     "dateNotice": "La fecha y hora que elijas son una preferencia, no una cita confirmada. Nuestro equipo se comunicará contigo para coordinar y validar el día y horario exacto de la recogida.",
     "securityCodeLabel": "Código de seguridad de recogida",
     "securityCodeNote": "Entrega este código al mensajero cuando recoja tu paquete. Confirma que la recogida fue en persona. También está en tu correo de confirmación.",
-    "hsCode": "Código HS (opcional)",
-    "hsCodeHint": "Código arancelario del Sistema Armonizado para clasificación aduanera",
     "declaredValue": "Valor declarado (USD)",
     "declaredValueHint": "Valor aduanero del contenido del envío",
     "insuranceLabel": "Asegurar este envío",
@@ -659,7 +680,8 @@
     "item": "Artículo",
     "itemType": "Tipo de artículo",
     "airPriceRow": "{{weight}} lbs × ${{rate}}/lb",
-    "addItem": "Agregar artículo"
+    "addItem": "Agregar artículo",
+    "declaredValueRequired": "Ingresa el valor declarado del contenido del paquete."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",
@@ -779,5 +801,15 @@
     "selectPrompt": "Selecciona una conversación para verla.",
     "youPrefix": "Tú:",
     "send": "Enviar"
+  },
+  "casos": {
+    "title": "Casos",
+    "subtitle": "Problemas de envío reportados a clientes — paquetes perdidos, dañados o retrasados.",
+    "empty": "No hay casos aquí.",
+    "status_OPEN": "Abierto",
+    "status_IN_PROGRESS": "En proceso",
+    "status_RESOLVED": "Resuelto",
+    "resolutionPlaceholder": "Notas de resolución (opcional)",
+    "resolvedBy": "Abierto por {{name}}"
   }
 }

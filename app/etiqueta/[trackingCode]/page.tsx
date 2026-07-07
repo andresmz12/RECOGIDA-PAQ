@@ -23,7 +23,6 @@ interface LabelData {
   destinationCountry: string;
   packageType: string;
   estimatedWeight: number | null;
-  hsCode: string | null;
   declaredValue: number | null;
   preferredDate: string;
   preferredTimeWindow: string;
@@ -194,21 +193,13 @@ export default function EtiquetaPage() {
           ))}
         </div>
 
-        {/* Customs row — only when provided */}
-        {(data.hsCode || data.declaredValue != null) && (
+        {/* Declared value row — only when provided */}
+        {data.declaredValue != null && (
           <div style={{ display: "flex", borderBottom: "1px solid #ccc", padding: "5px 10px", background: "#fff" }}>
-            {data.hsCode && (
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: "7pt", color: "#666", textTransform: "uppercase" }}>HS code: </span>
-                <span style={{ fontSize: "9pt", fontWeight: "bold" }}>{data.hsCode}</span>
-              </div>
-            )}
-            {data.declaredValue != null && (
-              <div style={{ flex: 1, textAlign: data.hsCode ? "right" : "left" }}>
-                <span style={{ fontSize: "7pt", color: "#666", textTransform: "uppercase" }}>Declared value: </span>
-                <span style={{ fontSize: "9pt", fontWeight: "bold" }}>${data.declaredValue.toFixed(2)} USD</span>
-              </div>
-            )}
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: "7pt", color: "#666", textTransform: "uppercase" }}>Declared value: </span>
+              <span style={{ fontSize: "9pt", fontWeight: "bold" }}>${data.declaredValue.toFixed(2)} USD</span>
+            </div>
           </div>
         )}
 

@@ -41,7 +41,6 @@ interface Pickup {
   dimensions?: string;
   packageContents?: string;
   packageItems?: string;
-  hsCode?: string;
   declaredValue?: number;
   insuranceRequested?: boolean;
   insuranceValue?: number;
@@ -250,10 +249,9 @@ export default function GuiaPage() {
           )}
         </Section>
 
-        {/* Customs & insurance */}
-        {(data.hsCode || data.declaredValue != null || data.insuranceRequested) && (
+        {/* Declared value & insurance */}
+        {(data.declaredValue != null || data.insuranceRequested) && (
           <Section title={t("guia.customsSection")}>
-            <Row label={t("guia.hsCode")} value={data.hsCode} />
             <Row label={t("guia.declaredValue")} value={data.declaredValue != null ? `$${data.declaredValue.toFixed(2)} USD` : undefined} />
             {data.insuranceRequested && (
               <Row label={t("guia.insuranceValue")} value={data.insuranceValue != null ? `$${data.insuranceValue.toFixed(2)} USD` : undefined} />

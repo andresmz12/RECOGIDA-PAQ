@@ -122,7 +122,6 @@ const EMPTY = {
   recipientState: "",
   // Package (shared across boxes)
   packageContents: "",
-  hsCode: "",
   declaredValue: "",
   // Schedule
   preferredDate: "",
@@ -165,7 +164,7 @@ export default function RecogerPage() {
   const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
   const [discountError, setDiscountError] = useState("");
   const [checkingDiscount, setCheckingDiscount] = useState(false);
-  const [wantsInsurance, setWantsInsurance] = useState(false);
+  // Declared/insured value is mandatory on every shipment now — no opt-in.
   const [insuranceValue, setInsuranceValue] = useState("");
   const [savedRecipients, setSavedRecipients] = useState<SavedRecipient[]>([]);
   const [selectedRecipientId, setSelectedRecipientId] = useState("");
@@ -313,7 +312,11 @@ export default function RecogerPage() {
     e.preventDefault();
     setError("");
 
-    if (wantsInsurance && (!insuranceValue || parseFloat(insuranceValue) <= 0)) {
+    if (!form.declaredValue || parseFloat(form.declaredValue) <= 0) {
+      setError(t("recoger.declaredValueRequired"));
+      return;
+    }
+    if (!insuranceValue || parseFloat(insuranceValue) <= 0) {
       setError(t("recoger.insuranceValueRequired"));
       return;
     }
@@ -339,8 +342,8 @@ export default function RecogerPage() {
         destinationCountry: form.recipientCountry,
         recipientState: form.recipientState || null,
         discountCode: discount?.code || null,
-        insuranceRequested: wantsInsurance,
-        insuranceValue: wantsInsurance ? insuranceValue : null,
+        insuranceRequested: true,
+        insuranceValue,
         lang,
       };
     } else {
@@ -362,8 +365,8 @@ export default function RecogerPage() {
         destinationCountry: form.recipientCountry,
         recipientState: form.recipientState || null,
         discountCode: discount?.code || null,
-        insuranceRequested: wantsInsurance,
-        insuranceValue: wantsInsurance ? insuranceValue : null,
+        insuranceRequested: true,
+        insuranceValue,
         lang,
       };
     }
@@ -860,61 +863,36 @@ export default function RecogerPage() {
             </Field>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label={t("recoger.hsCode")} hint={t("recoger.hsCodeHint")}>
-                <input
-                  className={inputCls}
-                  value={form.hsCode}
-                  onChange={e => set("hsCode", e.target.value)}
-                  placeholder="0000.00.00"
-                />
-              </Field>
-              <Field label={t("recoger.declaredValue")} hint={t("recoger.declaredValueHint")}>
+              <Field label={t("recoger.declaredValue")} hint={t("recoger.declaredValueHint")} required>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                   <input
                     type="number"
-                    min="0"
+                    min="0.01"
                     step="0.01"
                     className={inputCls + " pl-7"}
                     value={form.declaredValue}
                     onChange={e => set("declaredValue", e.target.value)}
                     placeholder="0.00"
+                    required
                   />
                 </div>
               </Field>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 p-4">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={wantsInsurance}
-                  onChange={e => setWantsInsurance(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-slate-800">{t("recoger.insuranceLabel")}</span>
-                  <span className="block text-xs text-slate-500 mt-0.5">{t("recoger.insuranceHint")}</span>
-                </span>
-              </label>
-              {wantsInsurance && (
-                <div className="mt-3 pl-7">
-                  <Field label={t("recoger.insuranceValue")} required>
-                    <div className="relative max-w-xs">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        className={inputCls + " pl-7"}
-                        value={insuranceValue}
-                        onChange={e => setInsuranceValue(e.target.value)}
-                        required={wantsInsurance}
-                      />
-                    </div>
-                  </Field>
+              <Field label={t("recoger.insuranceValue")} hint={t("recoger.insuranceHint")} required>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    className={inputCls + " pl-7"}
+                    value={insuranceValue}
+                    onChange={e => setInsuranceValue(e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
                 </div>
-              )}
+              </Field>
             </div>
           </section>
 

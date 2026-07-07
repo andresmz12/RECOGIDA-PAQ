@@ -12,7 +12,8 @@
     "cerrarSesion": "Sign out",
     "panelControl": "Control Panel",
     "descuentos": "Discounts",
-    "soporte": "Support"
+    "soporte": "Support",
+    "casos": "Cases"
   },
   "roles": {
     "ADMIN": "Administrator",
@@ -31,7 +32,8 @@
     "precios": "Pricing",
     "calendario": "Calendar",
     "descuentos": "Discount Codes",
-    "soporte": "Support"
+    "soporte": "Support",
+    "casos": "Cases"
   },
   "common": {
     "loading": "Loading...",
@@ -197,7 +199,12 @@
     "recipientsDesc": "Manage the recipients you've saved for faster recurring shipments.",
     "noRecipients": "You haven't saved any recipients yet.",
     "deleteRecipient": "Remove",
-    "deleteRecipientConfirm": "Remove this saved recipient?"
+    "deleteRecipientConfirm": "Remove this saved recipient?",
+    "caseType_LOST": "Lost package",
+    "caseType_DAMAGED": "Damaged package",
+    "caseType_DELAYED": "Delayed shipment",
+    "caseType_WRONG_ITEM": "Wrong item",
+    "caseType_OTHER": "Case opened"
   },
   "map": {
     "title": "Route Map",
@@ -434,9 +441,26 @@
     "noComments": "No comments yet. Comments are private to the team.",
     "commentPlaceholder": "Add an internal note…",
     "commentSend": "Send",
-    "hsCode": "HS code",
     "declaredValue": "Declared value",
-    "insuranceValue": "Insured value"
+    "insuranceValue": "Insured value",
+    "casesTitle": "Cases",
+    "caseOpenNew": "+ Open case",
+    "caseNeedsAccount": "This request has no linked customer account",
+    "caseType": "Case type",
+    "caseType_LOST": "Lost package",
+    "caseType_DAMAGED": "Damaged package",
+    "caseType_DELAYED": "Delayed shipment",
+    "caseType_WRONG_ITEM": "Wrong item",
+    "caseType_OTHER": "Other",
+    "caseDescription": "What happened?",
+    "caseSubmit": "Open case",
+    "caseCreateError": "Could not open the case. Try again.",
+    "noCases": "No cases for this request.",
+    "caseStatus_OPEN": "Open",
+    "caseStatus_IN_PROGRESS": "In progress",
+    "caseStatus_RESOLVED": "Resolved",
+    "caseMarkInProgress": "Mark in progress",
+    "caseMarkResolved": "Mark resolved"
   },
   "guia": {
     "title": "Shipment Guide",
@@ -469,8 +493,7 @@
     "footer": "O'Globo Cargo · International Shipping Services",
     "securityCode": "Pickup security code",
     "securityCodeNote": "Give this code to the courier at pickup. Don't share it beforehand.",
-    "customsSection": "Customs & Insurance",
-    "hsCode": "HS code",
+    "customsSection": "Declared Value & Insurance",
     "declaredValue": "Declared value",
     "insuranceValue": "Insured value"
   },
@@ -635,8 +658,6 @@
     "dateNotice": "The date and time you choose are a preference, not a confirmed appointment. Our team will contact you to coordinate and confirm the exact pickup day and time.",
     "securityCodeLabel": "Pickup security code",
     "securityCodeNote": "Give this code to the courier when they pick up your package. It confirms the pickup happened in person. It's also in your confirmation email.",
-    "hsCode": "HS code (optional)",
-    "hsCodeHint": "Harmonized System tariff code for customs classification",
     "declaredValue": "Declared value (USD)",
     "declaredValueHint": "Customs value of the shipment contents",
     "insuranceLabel": "Insure this shipment",
@@ -659,7 +680,8 @@
     "item": "Item",
     "itemType": "Item type",
     "airPriceRow": "{{weight}} lbs × ${{rate}}/lb",
-    "addItem": "Add item"
+    "addItem": "Add item",
+    "declaredValueRequired": "Enter the declared value of the package contents."
   },
   "rastreo": {
     "loading": "Loading tracking information...",
@@ -779,5 +801,15 @@
     "selectPrompt": "Select a conversation to view it.",
     "youPrefix": "You:",
     "send": "Send"
+  },
+  "casos": {
+    "title": "Cases",
+    "subtitle": "Shipment problems reported to customers — lost, damaged or delayed packages.",
+    "empty": "No cases here.",
+    "status_OPEN": "Open",
+    "status_IN_PROGRESS": "In progress",
+    "status_RESOLVED": "Resolved",
+    "resolutionPlaceholder": "Resolution notes (optional)",
+    "resolvedBy": "Opened by {{name}}"
   }
 }

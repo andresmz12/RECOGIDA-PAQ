@@ -626,3 +626,60 @@ export async function sendSupportReplyEmail(
 
   await sendEmail(email, copy.subject, html, text);
 }
+
+// ── Case opened notification ────────────────────────────────────────
+export async function sendCaseOpenedEmail(
+  email: string,
+  contactName: string,
+  trackingCode: string,
+  caseType: string,
+  lang: "en" | "es" = "es"
+) {
+  const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
+
+  const TYPE_LABELS_ES: Record<string, string> = {
+    LOST: "Paquete perdido", DAMAGED: "Paquete dañado", DELAYED: "Envío retrasado",
+    WRONG_ITEM: "Artículo incorrecto", OTHER: "Otro",
+  };
+  const TYPE_LABELS_EN: Record<string, string> = {
+    LOST: "Lost package", DAMAGED: "Damaged package", DELAYED: "Delayed shipment",
+    WRONG_ITEM: "Wrong item", OTHER: "Other",
+  };
+  const typeLabel = (lang === "es" ? TYPE_LABELS_ES : TYPE_LABELS_EN)[caseType] ?? caseType;
+
+  const copy = lang === "es"
+    ? {
+        subject: `Caso abierto para tu envío — ${trackingCode}`,
+        title: "Hemos abierto un caso para tu envío",
+        preheader: `Estamos revisando un problema con tu envío ${trackingCode}.`,
+        hi: `Hola <strong>${esc(contactName)}</strong>,`,
+        hiText: `Hola ${contactName},`,
+        body: `Nuestro equipo abrió un caso relacionado con tu envío <strong>${trackingCode}</strong>: <strong>${typeLabel}</strong>. Estamos revisando la situación y te mantendremos informado.`,
+        cta: "Ver estado del envío →",
+        linkText: `Ver estado del envío: ${trackingUrl}`,
+      }
+    : {
+        subject: `Case opened for your shipment — ${trackingCode}`,
+        title: "We've opened a case for your shipment",
+        preheader: `We're looking into an issue with your shipment ${trackingCode}.`,
+        hi: `Hi <strong>${esc(contactName)}</strong>,`,
+        hiText: `Hi ${contactName},`,
+        body: `Our team opened a case for your shipment <strong>${trackingCode}</strong>: <strong>${typeLabel}</strong>. We're looking into it and will keep you updated.`,
+        cta: "View shipment status →",
+        linkText: `View shipment status: ${trackingUrl}`,
+      };
+
+  const html = layout({
+    title: copy.title,
+    preheader: copy.preheader,
+    body: `
+      <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
+      <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.body}</p>
+      ${button(trackingUrl, copy.cta)}
+    `,
+  });
+
+  const text = [copy.hiText, ``, copy.body.replace(/<[^>]+>/g, ""), ``, copy.linkText, ``, `O'Globo Cargo — International Logistics`].join("\n");
+
+  await sendEmail(email, copy.subject, html, text);
+}

@@ -27,6 +27,20 @@ enum PickupStatus {
   CANCELLED
 }
 
+enum CaseType {
+  LOST
+  DAMAGED
+  DELAYED
+  WRONG_ITEM
+  OTHER
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
 model User {
   id                 String          @id @default(cuid())
   email              String          @unique
@@ -39,6 +53,7 @@ model User {
   comments           Comment[]       @relation("AuthoredComments")
   savedRecipients    SavedRecipient[]
   supportMessages    SupportMessage[] @relation("SupportThreadOwner")
+  cases              Case[]          @relation("CustomerCases")
   termsAcceptedAt    DateTime?
   createdAt          DateTime        @default(now())
 }
@@ -95,8 +110,9 @@ model PickupRequest {
   dimensions          String?
   packageContents     String?
   packageItems        String?
-  // International customs fields — declaredValue/insuranceValue are USD.
-  hsCode              String?
+  // Declared/insured value (USD) — required on every new request as of
+  // the shipping-insurance policy change; kept nullable so pre-existing
+  // rows created before that change stay valid.
   declaredValue       Float?
   insuranceRequested  Boolean         @default(false)
   insuranceValue      Float?
@@ -109,6 +125,7 @@ model PickupRequest {
   assignedCourier     User?           @relation("CourierAssignments", fields: [assignedCourierId], references: [id])
   statusHistory       StatusHistory[]
   comments            Comment[]
+  cases               Case[]
   discountCode        String?
   discountPercent     Float?
   lang                String?
@@ -180,6 +197,30 @@ model SupportMessage {
   readByStaff    Boolean  @default(false)
 
   @@index([customerId, createdAt])
+}
+
+// A support case opened by staff for a specific shipment problem (lost,
+// damaged, delayed, etc). Visible to the customer on their account, and
+// tracked by staff until resolved.
+model Case {
+  id              String     @id @default(cuid())
+  pickupRequestId String
+  pickupRequest   PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+  customerId      String
+  customer        User       @relation("CustomerCases", fields: [customerId], references: [id], onDelete: Cascade)
+  createdById     String
+  createdByName   String
+  type            CaseType
+  status          CaseStatus @default(OPEN)
+  description     String
+  resolutionNotes String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  resolvedAt      DateTime?
+
+  @@index([pickupRequestId])
+  @@index([customerId])
+  @@index([status])
 }
 
 model Pricing {
