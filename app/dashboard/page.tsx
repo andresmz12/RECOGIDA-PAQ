@@ -46,25 +46,25 @@ const IconDoc  = () => <svg className="w-5 h-5" fill="none" stroke="currentColor
 const IconList = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>;
 const IconAlert = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>;
 
-function StatCard({ label, value, total, color, icon, href }: {
-  label: string; value: number; total?: number; color: string;
+function StatCard({ label, value, total, accent, icon, href }: {
+  label: string; value: number; total?: number; accent: string;
   icon: React.ReactNode; href: string;
 }) {
   const pct = total && total > 0 ? Math.round((value / total) * 100) : null;
   return (
     <Link href={href} className="group">
-      <div className={`relative overflow-hidden bg-gradient-to-br ${color} p-5 rounded-2xl text-white shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-0.5 h-full`}>
+      <div className="relative overflow-hidden bg-white border border-slate-200 p-5 rounded-2xl shadow-xs group-hover:border-slate-300 group-hover:shadow-md transition-all duration-200 h-full">
         <div className="flex items-start justify-between mb-4">
-          <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center">{icon}</div>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent}`}>{icon}</div>
           {pct !== null && (
-            <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">{pct}%</span>
+            <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{pct}%</span>
           )}
         </div>
-        <p className="text-4xl font-black mb-1 tabular-nums">{value}</p>
-        <p className="text-white/75 text-sm font-medium">{label}</p>
+        <p className="text-4xl font-black text-slate-900 mb-1 tabular-nums">{value}</p>
+        <p className="text-slate-500 text-sm font-medium">{label}</p>
         {pct !== null && (
-          <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full bg-white/60 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+          <div className="mt-3 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-navy-700 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
           </div>
         )}
       </div>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Today's progress */}
-          <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white mb-6 shadow-lg shadow-indigo-200">
+          <div className="bg-navy-900 rounded-2xl p-6 text-white mb-6 shadow-lg shadow-navy-200">
             <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-3">{t("dashboard.todayPickups")}</p>
             {loading ? (
               <div className="h-10 bg-white/20 rounded-xl animate-pulse w-24" />
@@ -214,12 +214,15 @@ export default function DashboardPage() {
     ? Math.round((stats.todayCompleted / stats.todayTotal) * 100)
     : 0;
 
+  // Color carries meaning here, not decoration: neutral for the overview
+  // tile, amber for "needs attention", navy for "in progress", green only
+  // for the completed state.
   const STAT_CARDS = [
-    { label: t("dashboard.totalActive"), value: stats.total,     color: "from-slate-700 to-slate-900",   icon: <IconBox />,   href: "/dashboard/solicitudes" },
-    { label: t("dashboard.statPending"),    value: stats.pending,   color: "from-amber-500 to-orange-600",  icon: <IconClock />, href: "/dashboard/solicitudes?status=PENDING",   total: stats.total },
-    { label: t("dashboard.statAssigned"),     value: stats.assigned,  color: "from-blue-500 to-cyan-600",     icon: <IconTruck />, href: "/dashboard/solicitudes?status=ASSIGNED",  total: stats.total },
-    { label: t("dashboard.statInTransit"),     value: stats.scheduled, color: "from-violet-500 to-purple-700", icon: <IconMap />,   href: "/dashboard/solicitudes?status=SCHEDULED", total: stats.total },
-    { label: t("dashboard.statPickedUp"),     value: stats.pickedUp,  color: "from-emerald-500 to-green-700", icon: <IconCheck />, href: "/dashboard/solicitudes?status=PICKED_UP",  total: stats.total },
+    { label: t("dashboard.totalActive"), value: stats.total,     accent: "bg-slate-100 text-slate-600",  icon: <IconBox />,   href: "/dashboard/solicitudes" },
+    { label: t("dashboard.statPending"),    value: stats.pending,   accent: "bg-accent-50 text-accent-600", icon: <IconClock />, href: "/dashboard/solicitudes?status=PENDING",   total: stats.total },
+    { label: t("dashboard.statAssigned"),     value: stats.assigned,  accent: "bg-navy-50 text-navy-700",     icon: <IconTruck />, href: "/dashboard/solicitudes?status=ASSIGNED",  total: stats.total },
+    { label: t("dashboard.statInTransit"),     value: stats.scheduled, accent: "bg-navy-50 text-navy-700",     icon: <IconMap />,   href: "/dashboard/solicitudes?status=SCHEDULED", total: stats.total },
+    { label: t("dashboard.statPickedUp"),     value: stats.pickedUp,  accent: "bg-emerald-50 text-emerald-600", icon: <IconCheck />, href: "/dashboard/solicitudes?status=PICKED_UP",  total: stats.total },
   ];
 
   return (
@@ -271,7 +274,7 @@ export default function DashboardPage() {
 
         {/* Today's progress */}
         {!loading && (
-          <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 rounded-xl p-5 mb-7 flex items-center gap-5 flex-wrap">
+          <div className="bg-navy-50 border border-navy-100 rounded-xl p-5 mb-7 flex items-center gap-5 flex-wrap">
             <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
               <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -292,7 +295,7 @@ export default function DashboardPage() {
             {stats.todayTotal > 0 && (
               <div className="flex items-center gap-3 min-w-48 flex-1">
                 <div className="flex-1 h-2 bg-white border border-indigo-100 rounded-full overflow-hidden shadow-inner">
-                  <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all duration-700"
+                  <div className="h-full bg-navy-700 rounded-full transition-all duration-700"
                     style={{ width: `${todayPct}%` }} />
                 </div>
                 <span className="text-sm font-bold text-indigo-600 shrink-0 tabular-nums">{todayPct}%</span>
@@ -364,8 +367,8 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <QuickAction href="/dashboard/solicitudes" icon={<IconList />}  label={t("nav.solicitudes")}   desc={t("dashboard.manageAll")} hoverColor="hover:border-indigo-200 hover:bg-indigo-50/50" />
                 <QuickAction href="/dashboard/mapa"        icon={<IconMap />}   label={t("nav.mapa")} desc={t("dashboard.geographicView")}        hoverColor="hover:border-violet-200 hover:bg-violet-50/50" />
-                <QuickAction href="/dashboard/usuarios"    icon={<IconUsers />} label={t("nav.usuarios")}      desc={t("dashboard.couriersAdmins")}       hoverColor="hover:border-emerald-200 hover:bg-emerald-50/50" />
-                <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label={t("nav.rutasPdf")}     desc={t("dashboard.exportRoutes")}  hoverColor="hover:border-rose-200 hover:bg-rose-50/50" />
+                <QuickAction href="/dashboard/usuarios"    icon={<IconUsers />} label={t("nav.usuarios")}      desc={t("dashboard.couriersAdmins")}       hoverColor="hover:border-navy-200 hover:bg-navy-50/50" />
+                <QuickAction href="/dashboard/rutas"       icon={<IconDoc />}   label={t("nav.rutasPdf")}     desc={t("dashboard.exportRoutes")}  hoverColor="hover:border-navy-200 hover:bg-navy-50/50" />
               </div>
             </div>
 
