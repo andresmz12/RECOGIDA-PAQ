@@ -18,7 +18,7 @@
   "roles": {
     "ADMIN": "Administrator",
     "COURIER": "Courier",
-    "DISPATCHER": "Dispatcher",
+    "DISPATCHER": "Office",
     "CUSTOMER": "Customer"
   },
   "pageTitles": {
