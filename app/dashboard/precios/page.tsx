@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useT } from "@/lib/i18n-context";
+import { COUNTRY_SHIPPING_CONFIG, AIR_ITEM_TYPES, AIR_PER_LB_KEY } from "@/lib/shipping-modes";
 
 const COUNTRIES = [
   { code: "HN", name: "Honduras" },
@@ -19,6 +20,7 @@ const COUNTRIES = [
   { code: "VE", name: "Venezuela" },
   { code: "MX", name: "México" },
   { code: "CO", name: "Colombia" },
+  { code: "EC", name: "Ecuador" },
 ];
 
 const BOX_SIZES = [
@@ -32,22 +34,27 @@ const BOX_SIZES = [
 interface PricingRule {
   id: string;
   country: string;
+  shippingMode: string;
   packageType: string;
   basePrice: number;
   weightThreshold: number;
   weightRate: number;
+  pricePerLb: number | null;
+  minWeight: number | null;
+  maxWeight: number | null;
 }
 
-type PriceMap = Record<string, Record<string, PricingRule>>;
+// map[country][shippingMode][packageType] = rule
+type PriceMap = Record<string, Record<string, Record<string, PricingRule>>>;
 
 export default function PreciosPage() {
   const { data: session, status } = useSession();
-  const { t, lang } = useT();
+  const { lang } = useT();
   const router = useRouter();
 
   const [priceMap, setPriceMap] = useState<PriceMap>({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null); // "country:packageType"
+  const [saving, setSaving] = useState<string | null>(null); // "mode:country:packageType"
   const [saved, setSaved] = useState<string | null>(null);
   const [globalThreshold, setGlobalThreshold] = useState("20");
   const [globalRate, setGlobalRate] = useState("1.00");
@@ -63,38 +70,47 @@ export default function PreciosPage() {
         const map: PriceMap = {};
         for (const rule of d.pricing ?? []) {
           if (!map[rule.country]) map[rule.country] = {};
-          map[rule.country][rule.packageType] = rule;
+          if (!map[rule.country][rule.shippingMode]) map[rule.country][rule.shippingMode] = {};
+          map[rule.country][rule.shippingMode][rule.packageType] = rule;
         }
         setPriceMap(map);
         setLoading(false);
       });
   }, [status, role]);
 
-  const getPrice = (country: string, pkg: string) =>
-    priceMap[country]?.[pkg]?.basePrice ?? null;
+  const getRule = (country: string, mode: string, pkg: string) =>
+    priceMap[country]?.[mode]?.[pkg] ?? null;
 
   const save = useCallback(async (
-    country: string, packageType: string, basePrice: string
+    country: string,
+    shippingMode: string,
+    packageType: string,
+    fields: { basePrice?: string; pricePerLb?: string; minWeight?: string; maxWeight?: string }
   ) => {
-    const parsed = parseFloat(basePrice);
-    if (isNaN(parsed) || parsed < 0) return;
-    const key = `${country}:${packageType}`;
+    const key = `${shippingMode}:${country}:${packageType}`;
     setSaving(key);
     try {
       const res = await fetch("/api/pricing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          country, packageType, basePrice: parsed,
-          weightThreshold: parseFloat(globalThreshold) || 20,
-          weightRate: parseFloat(globalRate) || 1.0,
+          country, shippingMode, packageType,
+          basePrice: fields.basePrice !== undefined ? fields.basePrice : undefined,
+          pricePerLb: fields.pricePerLb !== undefined ? fields.pricePerLb : undefined,
+          minWeight: fields.minWeight !== undefined ? fields.minWeight : undefined,
+          maxWeight: fields.maxWeight !== undefined ? fields.maxWeight : undefined,
+          weightThreshold: shippingMode === "MARITIME" ? (parseFloat(globalThreshold) || 20) : 0,
+          weightRate: shippingMode === "MARITIME" ? (parseFloat(globalRate) || 1.0) : 0,
         }),
       });
       if (res.ok) {
         const { rule } = await res.json();
         setPriceMap(prev => ({
           ...prev,
-          [country]: { ...(prev[country] ?? {}), [packageType]: rule },
+          [country]: {
+            ...(prev[country] ?? {}),
+            [shippingMode]: { ...(prev[country]?.[shippingMode] ?? {}), [packageType]: rule },
+          },
         }));
         setSaved(key);
         setTimeout(() => setSaved(null), 2000);
@@ -105,137 +121,332 @@ export default function PreciosPage() {
   }, [globalThreshold, globalRate]);
 
   const saveAll = async () => {
-    // Save all currently set prices with updated threshold/rate
-    const entries: Array<[string, string, number]> = [];
-    for (const [country, pkgs] of Object.entries(priceMap)) {
-      for (const [pkg, rule] of Object.entries(pkgs)) {
-        entries.push([country, pkg, rule.basePrice]);
+    for (const [country, byMode] of Object.entries(priceMap)) {
+      for (const [mode, pkgs] of Object.entries(byMode)) {
+        if (mode !== "MARITIME") continue;
+        for (const [pkg, rule] of Object.entries(pkgs)) {
+          await save(country, mode, pkg, { basePrice: String(rule.basePrice) });
+        }
       }
-    }
-    for (const [country, pkg, price] of entries) {
-      await save(country, pkg, String(price));
     }
   };
 
+  const maritimeCountries = COUNTRIES.filter(c => COUNTRY_SHIPPING_CONFIG[c.code]?.maritime);
+  const perLbCountries = COUNTRIES.filter(c => COUNTRY_SHIPPING_CONFIG[c.code]?.air === "PER_LB");
+  const fixedItemCountries = COUNTRIES.filter(c => COUNTRY_SHIPPING_CONFIG[c.code]?.air === "FIXED_ITEM");
+
   return (
     <DashboardLayout>
-      <div className="p-6 md:p-8">
+      <div className="p-6 md:p-8 space-y-10">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {lang === "en" ? "Pricing by Country" : "Precios por País"}
-            </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              {lang === "en"
-                ? "Set the base price per box size for each destination country. Click a cell to edit."
-                : "Define el precio base por tamaño de caja para cada país destino. Haz clic en una celda para editar."}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {lang === "en" ? "Pricing by Country" : "Precios por País"}
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {lang === "en"
+              ? "Each country only shows the shipping modalities it actually supports."
+              : "Cada país solo muestra las modalidades de envío que realmente tiene."}
+          </p>
         </div>
 
-        {/* Global weight settings */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-xs">
-          <h2 className="font-semibold text-slate-900 text-sm mb-4">
-            {lang === "en" ? "Weight surcharge settings (applied to all rules on save)" : "Configuración de sobrecargo por peso (se aplica a todas las reglas al guardar)"}
-          </h2>
-          <div className="flex flex-wrap gap-6 items-end">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                {lang === "en" ? "Weight included in base (lbs)" : "Peso incluido en precio base (lbs)"}
-              </label>
-              <input
-                type="number" min="0" step="1"
-                value={globalThreshold}
-                onChange={e => setGlobalThreshold(e.target.value)}
-                className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                {lang === "en" ? "Rate per extra lb (USD)" : "Tarifa por lb adicional (USD)"}
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                <input
-                  type="number" min="0" step="0.1"
-                  value={globalRate}
-                  onChange={e => setGlobalRate(e.target.value)}
-                  className="w-32 pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-            <button
-              onClick={saveAll}
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              {lang === "en" ? "Apply to all" : "Aplicar a todos"}
-            </button>
-          </div>
-        </div>
-
-        {/* Price matrix */}
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
           </div>
         ) : (
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80">
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide w-44">
-                      {lang === "en" ? "Country" : "País"}
-                    </th>
-                    {BOX_SIZES.map(b => (
-                      <th key={b.value} className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        {b.label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {COUNTRIES.map(c => (
-                    <tr key={c.code} className="hover:bg-slate-50/40 transition-colors">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-900">{c.name}</span>
-                          <span className="text-xs text-slate-400 font-mono">{c.code}</span>
-                        </div>
-                      </td>
-                      {BOX_SIZES.map(b => {
-                        const key = `${c.code}:${b.value}`;
-                        const current = getPrice(c.code, b.value);
-                        const isSaving = saving === key;
-                        const isDone = saved === key;
-                        return (
-                          <td key={b.value} className="px-4 py-3 text-center">
-                            <PriceCell
-                              key={key}
-                              initialValue={current}
-                              saving={isSaving}
-                              saved={isDone}
-                              onSave={(val) => save(c.code, b.value, val)}
-                            />
+          <>
+            {/* ── Marítimo ── */}
+            <section>
+              <h2 className="font-bold text-slate-900 text-lg mb-1">
+                {lang === "en" ? "Maritime (by box size)" : "Marítimo (por tamaño de caja)"}
+              </h2>
+              <p className="text-sm text-slate-500 mb-4">
+                {lang === "en" ? "Click a cell to edit." : "Haz clic en una celda para editar."}
+              </p>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-5 mb-4 shadow-xs">
+                <h3 className="font-semibold text-slate-900 text-sm mb-4">
+                  {lang === "en" ? "Weight surcharge settings (applied to all maritime rules on \"Apply to all\")" : "Configuración de sobrecargo por peso (se aplica a todas las reglas marítimas con \"Aplicar a todos\")"}
+                </h3>
+                <div className="flex flex-wrap gap-6 items-end">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      {lang === "en" ? "Weight included in base (lbs)" : "Peso incluido en precio base (lbs)"}
+                    </label>
+                    <input
+                      type="number" min="0" step="1"
+                      value={globalThreshold}
+                      onChange={e => setGlobalThreshold(e.target.value)}
+                      className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      {lang === "en" ? "Rate per extra lb (USD)" : "Tarifa por lb adicional (USD)"}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                      <input
+                        type="number" min="0" step="0.1"
+                        value={globalRate}
+                        onChange={e => setGlobalRate(e.target.value)}
+                        className="w-32 pl-7 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={saveAll}
+                    className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    {lang === "en" ? "Apply to all" : "Aplicar a todos"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50/80">
+                        <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide w-44">
+                          {lang === "en" ? "Country" : "País"}
+                        </th>
+                        {BOX_SIZES.map(b => (
+                          <th key={b.value} className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                            {b.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {maritimeCountries.map(c => (
+                        <tr key={c.code} className="hover:bg-slate-50/40 transition-colors">
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-slate-900">{c.name}</span>
+                              <span className="text-xs text-slate-400 font-mono">{c.code}</span>
+                            </div>
                           </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                          {BOX_SIZES.map(b => {
+                            const key = `MARITIME:${c.code}:${b.value}`;
+                            const rule = getRule(c.code, "MARITIME", b.value);
+                            const isSaving = saving === key;
+                            const isDone = saved === key;
+                            return (
+                              <td key={b.value} className="px-4 py-3 text-center">
+                                <PriceCell
+                                  key={key}
+                                  initialValue={rule?.basePrice ?? null}
+                                  saving={isSaving}
+                                  saved={isDone}
+                                  onSave={(val) => save(c.code, "MARITIME", b.value, { basePrice: val })}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Aéreo por libra ── */}
+            {perLbCountries.length > 0 && (
+              <section>
+                <h2 className="font-bold text-slate-900 text-lg mb-1">
+                  {lang === "en" ? "Air — per pound" : "Aéreo — por libra"}
+                </h2>
+                <p className="text-sm text-slate-500 mb-4">
+                  {lang === "en"
+                    ? "The customer's declared weight is multiplied by this rate. Min/max define the customs-allowed weight range."
+                    : "El peso declarado por el cliente se multiplica por esta tarifa. El mín/máx define el rango de peso permitido por aduana."}
+                </p>
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50/80">
+                          <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                            {lang === "en" ? "Country" : "País"}
+                          </th>
+                          <th className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                            {lang === "en" ? "Price per lb (USD)" : "Precio por libra (USD)"}
+                          </th>
+                          <th className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                            {lang === "en" ? "Min lbs" : "Libras mín."}
+                          </th>
+                          <th className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                            {lang === "en" ? "Max lbs" : "Libras máx."}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {perLbCountries.map(c => {
+                          const cfg = COUNTRY_SHIPPING_CONFIG[c.code];
+                          const rule = getRule(c.code, "AIR", AIR_PER_LB_KEY);
+                          const key = `AIR:${c.code}:${AIR_PER_LB_KEY}`;
+                          return (
+                            <PerLbRow
+                              key={c.code}
+                              country={c}
+                              rule={rule}
+                              defaultMin={cfg.airWeightMin}
+                              defaultMax={cfg.airWeightMax}
+                              saving={saving === key}
+                              saved={saved === key}
+                              onSave={(fields) => save(c.code, "AIR", AIR_PER_LB_KEY, fields)}
+                            />
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* ── Aéreo con tarifa fija por artículo ── */}
+            {fixedItemCountries.length > 0 && (
+              <section>
+                <h2 className="font-bold text-slate-900 text-lg mb-1">
+                  {lang === "en" ? "Air — fixed price per item type" : "Aéreo — tarifa fija por tipo de artículo"}
+                </h2>
+                <p className="text-sm text-slate-500 mb-4">
+                  {lang === "en"
+                    ? "These countries don't charge by weight — each item type has its own flat price."
+                    : "Estos países no cobran por peso — cada tipo de artículo tiene su propio precio fijo."}
+                </p>
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50/80">
+                          <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide w-44">
+                            {lang === "en" ? "Country" : "País"}
+                          </th>
+                          {AIR_ITEM_TYPES.map(item => (
+                            <th key={item} className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                              {item}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {fixedItemCountries.map(c => (
+                          <tr key={c.code} className="hover:bg-slate-50/40 transition-colors">
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-slate-900">{c.name}</span>
+                                <span className="text-xs text-slate-400 font-mono">{c.code}</span>
+                              </div>
+                            </td>
+                            {AIR_ITEM_TYPES.map(item => {
+                              const key = `AIR:${c.code}:${item}`;
+                              const rule = getRule(c.code, "AIR", item);
+                              return (
+                                <td key={item} className="px-4 py-3 text-center">
+                                  <PriceCell
+                                    key={key}
+                                    initialValue={rule?.basePrice ?? null}
+                                    saving={saving === key}
+                                    saved={saved === key}
+                                    onSave={(val) => save(c.code, "AIR", item, { basePrice: val })}
+                                  />
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
         )}
 
-        <p className="text-xs text-slate-400 mt-4">
+        <p className="text-xs text-slate-400">
           {lang === "en"
             ? "Prices in USD. Empty cells mean no price is configured for that combination."
             : "Precios en USD. Las celdas vacías indican que no hay precio configurado para esa combinación."}
         </p>
       </div>
     </DashboardLayout>
+  );
+}
+
+function PerLbRow({ country, rule, defaultMin, defaultMax, saving, saved, onSave }: {
+  country: { code: string; name: string };
+  rule: PricingRule | null;
+  defaultMin?: number;
+  defaultMax?: number;
+  saving: boolean;
+  saved: boolean;
+  onSave: (fields: { pricePerLb: string; minWeight: string; maxWeight: string }) => void;
+}) {
+  const [rate, setRate] = useState(rule?.pricePerLb != null ? String(rule.pricePerLb) : "");
+  const [min, setMin] = useState(rule?.minWeight != null ? String(rule.minWeight) : (defaultMin != null ? String(defaultMin) : ""));
+  const [max, setMax] = useState(rule?.maxWeight != null ? String(rule.maxWeight) : (defaultMax != null ? String(defaultMax) : ""));
+
+  return (
+    <tr className="hover:bg-slate-50/40 transition-colors">
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-slate-900">{country.name}</span>
+          <span className="text-xs text-slate-400 font-mono">{country.code}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-center">
+        <div className="relative inline-block">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
+          <input
+            type="number" min="0" step="0.01"
+            value={rate}
+            onChange={e => setRate(e.target.value)}
+            className="w-24 pl-5 pr-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+      </td>
+      <td className="px-4 py-3 text-center">
+        <input
+          type="number" min="0" step="1"
+          value={min}
+          onChange={e => setMin(e.target.value)}
+          className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </td>
+      <td className="px-4 py-3 text-center">
+        <div className="flex items-center justify-center gap-2">
+          <input
+            type="number" min="0" step="1"
+            value={max}
+            onChange={e => setMax(e.target.value)}
+            className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            onClick={() => onSave({ pricePerLb: rate, minWeight: min, maxWeight: max })}
+            disabled={saving || !rate}
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 disabled:opacity-40 transition-colors"
+          >
+            {saving ? (
+              <div className="w-3.5 h-3.5 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+            ) : saved ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16v-2a4 4 0 00-4-4H9m0 0l3-3m-3 3l3 3m8 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h4" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 }
 

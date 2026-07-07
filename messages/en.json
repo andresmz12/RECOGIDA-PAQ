@@ -644,7 +644,16 @@
     "saveRecipientHint": "Recurring shipments to the same person will auto-fill their info",
     "savedRecipientName": "Name for this recipient",
     "savedRecipientNamePlaceholder": "e.g. Mom, Home, Main office",
-    "savedRecipientNameRequired": "Enter a name to save this recipient."
+    "savedRecipientNameRequired": "Enter a name to save this recipient.",
+    "modeMaritime": "Maritime",
+    "modeAir": "Air",
+    "totalWeight": "Total shipment weight",
+    "airWeightRange": "Allowed weight for air shipping to this destination: {{min}}–{{max}} lbs.",
+    "airWeightWarning": "This weight exceeds what customs allows for this destination. Your shipment may face delays or issues at customs.",
+    "items": "Items",
+    "item": "Item",
+    "itemType": "Item type",
+    "airPriceRow": "{{weight}} lbs × ${{rate}}/lb"
   },
   "rastreo": {
     "loading": "Loading tracking information...",

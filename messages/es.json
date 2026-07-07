@@ -644,7 +644,16 @@
     "saveRecipientHint": "Los envíos recurrentes a la misma persona autocompletarán su información",
     "savedRecipientName": "Nombre para este destinatario",
     "savedRecipientNamePlaceholder": "Ej: Mamá, Casa, Oficina principal",
-    "savedRecipientNameRequired": "Ingresa un nombre para guardar este destinatario."
+    "savedRecipientNameRequired": "Ingresa un nombre para guardar este destinatario.",
+    "modeMaritime": "Marítimo",
+    "modeAir": "Aéreo",
+    "totalWeight": "Peso total del envío",
+    "airWeightRange": "Peso permitido para envío aéreo a este destino: {{min}}–{{max}} lbs.",
+    "airWeightWarning": "Este peso supera lo permitido por aduana para este destino. Tu envío podría tener retrasos o inconvenientes en la aduana.",
+    "items": "Artículos",
+    "item": "Artículo",
+    "itemType": "Tipo de artículo",
+    "airPriceRow": "{{weight}} lbs × ${{rate}}/lb"
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

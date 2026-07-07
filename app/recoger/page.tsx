@@ -9,6 +9,9 @@ import LocationPicker from "@/components/Form/LocationPicker";
 import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { getShippingConfig, AIR_ITEM_TYPES, AIR_PER_LB_KEY, type ShippingMode } from "@/lib/shipping-modes";
+
+const AIR_PER_LB_LABEL = "Envío Aéreo (por libra)";
 
 // Fallback prices used when no pricing rule is configured in DB
 const BOX_BASE_FALLBACK: Record<string, number> = {
@@ -21,13 +24,18 @@ const BOX_BASE_FALLBACK: Record<string, number> = {
 
 interface PricingRule {
   country: string;
+  shippingMode: string;
   packageType: string;
   basePrice: number;
   weightThreshold: number;
   weightRate: number;
+  pricePerLb: number | null;
+  minWeight: number | null;
+  maxWeight: number | null;
 }
 
-function calcPrice(
+// Maritime: base box price + surcharge for weight over the included threshold.
+function calcMaritimePrice(
   packageType: string,
   weightStr: string,
   rule?: PricingRule,
@@ -38,6 +46,18 @@ function calcPrice(
   const lbs = parseFloat(weightStr) || 0;
   const extra = Math.max(0, lbs - threshold) * rate;
   return base + extra;
+}
+
+// Air, per pound: declared weight × the country's per-lb rate. No base fee.
+function calcAirPerLbPrice(weightStr: string, rule?: PricingRule) {
+  const rate = rule?.pricePerLb ?? 0;
+  const lbs = parseFloat(weightStr) || 0;
+  return rate * lbs;
+}
+
+// Air, fixed fee by item type (HN/GT/NI): flat price per unit, weight-independent.
+function calcAirFixedItemPrice(rule?: PricingRule) {
+  return rule?.basePrice ?? 0;
 }
 
 const BOX_SIZES = [
@@ -134,6 +154,8 @@ export default function RecogerPage() {
   const { data: session } = useSession();
   const [form, setForm] = useState(EMPTY);
   const [items, setItems] = useState<BoxItem[]>([{ ...DEFAULT_ITEM }]);
+  const [shippingMode, setShippingMode] = useState<ShippingMode>("MARITIME");
+  const [airWeight, setAirWeight] = useState(""); // total shipment weight for AIR/PER_LB
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
@@ -211,11 +233,52 @@ export default function RecogerPage() {
   };
 
   const isLoggedIn = !!session;
-  const ruleFor = (packageType: string) =>
-    pricingRules.find(r => r.country === form.recipientCountry && r.packageType === packageType);
-  const priceOf = (item: BoxItem) =>
-    calcPrice(item.packageType, item.estimatedWeight, ruleFor(item.packageType));
-  const totalPrice = items.reduce((sum, item) => sum + priceOf(item), 0);
+
+  // Which shipping modalities exist for the chosen destination country, and
+  // which pricing mechanic "AIR" uses there (per-lb vs fixed fee per item).
+  const shippingConfig = getShippingConfig(form.recipientCountry);
+  const airKind = shippingConfig.air;
+
+  // When the destination changes, snap the selected mode back to something
+  // that's actually valid for that country, and reset the package section
+  // to a sensible default for the new mode.
+  useEffect(() => {
+    setShippingMode(prev => {
+      if (prev === "MARITIME" && shippingConfig.maritime) return prev;
+      if (prev === "AIR" && shippingConfig.air) return prev;
+      return shippingConfig.maritime ? "MARITIME" : "AIR";
+    });
+  }, [form.recipientCountry]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (shippingMode === "AIR" && airKind === "FIXED_ITEM") {
+      setItems([{ packageType: AIR_ITEM_TYPES[0], estimatedWeight: "" }]);
+    } else if (shippingMode === "MARITIME") {
+      setItems(prev => (BOX_SIZES.some(b => b.value === prev[0]?.packageType) ? prev : [{ ...DEFAULT_ITEM }]));
+    }
+  }, [shippingMode, airKind]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ruleFor = (mode: ShippingMode, packageType: string) =>
+    pricingRules.find(r => r.country === form.recipientCountry && r.shippingMode === mode && r.packageType === packageType);
+
+  const airPerLbRule = ruleFor("AIR", AIR_PER_LB_KEY);
+  const airMinWeight = airPerLbRule?.minWeight ?? shippingConfig.airWeightMin;
+  const airMaxWeight = airPerLbRule?.maxWeight ?? shippingConfig.airWeightMax;
+  const airWeightNum = parseFloat(airWeight) || 0;
+  const airWeightOutOfRange =
+    shippingMode === "AIR" && airKind === "PER_LB" && airWeightNum > 0 &&
+    ((airMinWeight != null && airWeightNum < airMinWeight) || (airMaxWeight != null && airWeightNum > airMaxWeight));
+
+  const priceOf = (item: BoxItem) => {
+    if (shippingMode === "AIR" && airKind === "FIXED_ITEM") {
+      return calcAirFixedItemPrice(ruleFor("AIR", item.packageType));
+    }
+    return calcMaritimePrice(item.packageType, item.estimatedWeight, ruleFor("MARITIME", item.packageType));
+  };
+  const totalPrice =
+    shippingMode === "AIR" && airKind === "PER_LB"
+      ? calcAirPerLbPrice(airWeight, airPerLbRule)
+      : items.reduce((sum, item) => sum + priceOf(item), 0);
   const discountAmount = discount ? (totalPrice * discount.percent) / 100 : 0;
   const finalPrice = totalPrice - discountAmount;
 
@@ -257,26 +320,48 @@ export default function RecogerPage() {
 
     setLoading(true);
 
-    const firstItem = items[0];
-    const firstBox = BOX_SIZES.find((b) => b.value === firstItem.packageType);
-    const packageItemsData = items.map(item => ({
-      packageType: item.packageType,
-      estimatedWeight: item.estimatedWeight ? parseFloat(item.estimatedWeight) : null,
-      dimensions: BOX_SIZES.find(b => b.value === item.packageType)?.dimensions || "",
-    }));
-    const payload = {
-      ...form,
-      packageType: firstItem.packageType,
-      estimatedWeight: firstItem.estimatedWeight ? parseFloat(firstItem.estimatedWeight) : null,
-      dimensions: firstBox?.dimensions || "",
-      packageItems: JSON.stringify(packageItemsData),
-      destinationCountry: form.recipientCountry,
-      recipientState: form.recipientState || null,
-      discountCode: discount?.code || null,
-      insuranceRequested: wantsInsurance,
-      insuranceValue: wantsInsurance ? insuranceValue : null,
-      lang,
-    };
+    const isAirPerLb = shippingMode === "AIR" && airKind === "PER_LB";
+
+    let payload: Record<string, unknown>;
+    if (isAirPerLb) {
+      payload = {
+        ...form,
+        shippingMode,
+        packageType: AIR_PER_LB_LABEL,
+        estimatedWeight: airWeight ? parseFloat(airWeight) : null,
+        dimensions: "",
+        packageItems: null,
+        destinationCountry: form.recipientCountry,
+        recipientState: form.recipientState || null,
+        discountCode: discount?.code || null,
+        insuranceRequested: wantsInsurance,
+        insuranceValue: wantsInsurance ? insuranceValue : null,
+        lang,
+      };
+    } else {
+      const firstItem = items[0];
+      const isFixedItem = shippingMode === "AIR" && airKind === "FIXED_ITEM";
+      const firstBox = BOX_SIZES.find((b) => b.value === firstItem.packageType);
+      const packageItemsData = items.map(item => ({
+        packageType: item.packageType,
+        estimatedWeight: isFixedItem ? null : (item.estimatedWeight ? parseFloat(item.estimatedWeight) : null),
+        dimensions: isFixedItem ? "" : (BOX_SIZES.find(b => b.value === item.packageType)?.dimensions || ""),
+      }));
+      payload = {
+        ...form,
+        shippingMode,
+        packageType: firstItem.packageType,
+        estimatedWeight: isFixedItem ? null : (firstItem.estimatedWeight ? parseFloat(firstItem.estimatedWeight) : null),
+        dimensions: isFixedItem ? "" : (firstBox?.dimensions || ""),
+        packageItems: JSON.stringify(packageItemsData),
+        destinationCountry: form.recipientCountry,
+        recipientState: form.recipientState || null,
+        discountCode: discount?.code || null,
+        insuranceRequested: wantsInsurance,
+        insuranceValue: wantsInsurance ? insuranceValue : null,
+        lang,
+      };
+    }
 
     try {
       const res = await fetch("/api/pickup-requests", {
@@ -608,9 +693,65 @@ export default function RecogerPage() {
               <h2 className="font-bold text-slate-900">{t("recoger.packageSection")}</h2>
             </div>
 
-            {/* Items list */}
+            {/* Shipping mode — only shown when the destination supports both */}
+            {shippingConfig.maritime && shippingConfig.air && (
+              <div className="flex gap-2">
+                {(["MARITIME", "AIR"] as ShippingMode[]).map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setShippingMode(mode)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                      shippingMode === mode
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 text-slate-500 hover:border-slate-300"
+                    }`}
+                  >
+                    {mode === "MARITIME" ? t("recoger.modeMaritime") : t("recoger.modeAir")}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Air, per pound — single weight field for the whole shipment */}
+            {shippingMode === "AIR" && airKind === "PER_LB" && (
+              <div className="space-y-2">
+                <Field label={t("recoger.totalWeight")} required>
+                  <div className="relative max-w-xs">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      className={inputCls + " pr-10"}
+                      value={airWeight}
+                      onChange={e => setAirWeight(e.target.value)}
+                      required
+                    />
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">lbs</span>
+                  </div>
+                </Field>
+                {(airMinWeight != null || airMaxWeight != null) && (
+                  <p className="text-xs text-slate-400">
+                    {t("recoger.airWeightRange", { min: airMinWeight ?? "—", max: airMaxWeight ?? "—" })}
+                  </p>
+                )}
+                {airWeightOutOfRange && (
+                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
+                    <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                    <p className="text-xs text-red-700 leading-relaxed">{t("recoger.airWeightWarning")}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Items list — box sizes (maritime) or fixed-fee item types (air) */}
+            {!(shippingMode === "AIR" && airKind === "PER_LB") && (
             <div className="space-y-2.5">
-              <p className="text-sm font-semibold text-slate-700">{t("recoger.boxes")} <span className="text-red-500">*</span></p>
+              <p className="text-sm font-semibold text-slate-700">
+                {shippingMode === "AIR" && airKind === "FIXED_ITEM" ? t("recoger.items") : t("recoger.boxes")} <span className="text-red-500">*</span>
+              </p>
               {items.map((item, i) => (
                 <div key={i} className="flex items-end gap-2.5 p-4 bg-slate-50 rounded-xl border border-slate-200">
                   {/* Box icon */}
@@ -622,41 +763,57 @@ export default function RecogerPage() {
                       }
                     </svg>
                   </div>
-                  {/* Box type */}
+                  {/* Box / item type */}
                   <div className="flex-1">
                     <label className="block text-xs font-semibold text-slate-500 mb-1">
-                      {items.length > 1 ? `${t("recoger.box")} ${i + 1}` : t("recoger.boxSize")}
+                      {shippingMode === "AIR" && airKind === "FIXED_ITEM"
+                        ? (items.length > 1 ? `${t("recoger.item")} ${i + 1}` : t("recoger.itemType"))
+                        : (items.length > 1 ? `${t("recoger.box")} ${i + 1}` : t("recoger.boxSize"))}
                     </label>
-                    <select
-                      value={item.packageType}
-                      onChange={e => updateItem(i, "packageType", e.target.value)}
-                      className={inputCls + " bg-white py-2"}
-                      required
-                    >
-                      {BOX_SIZES.map(b => (
-                        <option key={b.value} value={b.value}>
-                          {b.value === "Documento" ? t("recoger.boxDoc") : b.value}
-                          {b.dimensions ? ` (${b.dimensions})` : ""}
-                        </option>
-                      ))}
-                    </select>
+                    {shippingMode === "AIR" && airKind === "FIXED_ITEM" ? (
+                      <select
+                        value={item.packageType}
+                        onChange={e => updateItem(i, "packageType", e.target.value)}
+                        className={inputCls + " bg-white py-2"}
+                        required
+                      >
+                        {AIR_ITEM_TYPES.map(it => (
+                          <option key={it} value={it}>{it}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <select
+                        value={item.packageType}
+                        onChange={e => updateItem(i, "packageType", e.target.value)}
+                        className={inputCls + " bg-white py-2"}
+                        required
+                      >
+                        {BOX_SIZES.map(b => (
+                          <option key={b.value} value={b.value}>
+                            {b.value === "Documento" ? t("recoger.boxDoc") : b.value}
+                            {b.dimensions ? ` (${b.dimensions})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
-                  {/* Weight */}
-                  <div className="w-32 shrink-0">
-                    <label className="block text-xs font-semibold text-slate-500 mb-1">{t("recoger.weightLabel")}</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        className={inputCls + " pr-10 py-2"}
-                        value={item.estimatedWeight}
-                        onChange={e => updateItem(i, "estimatedWeight", e.target.value)}
-                       
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">lbs</span>
+                  {/* Weight — not used for fixed-fee air items, price doesn't depend on it */}
+                  {!(shippingMode === "AIR" && airKind === "FIXED_ITEM") && (
+                    <div className="w-32 shrink-0">
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{t("recoger.weightLabel")}</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          className={inputCls + " pr-10 py-2"}
+                          value={item.estimatedWeight}
+                          onChange={e => updateItem(i, "estimatedWeight", e.target.value)}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">lbs</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {/* Remove */}
                   {items.length > 1 && (
                     <button
@@ -685,6 +842,7 @@ export default function RecogerPage() {
                 {t("recoger.addBox")}
               </button>
             </div>
+            )}
 
             <Field label={t("recoger.contents")} required>
               <input
@@ -817,8 +975,12 @@ export default function RecogerPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-xs text-slate-500 space-y-1">
-                    {items.map((item, i) => {
-                      const rule = ruleFor(item.packageType);
+                    {shippingMode === "AIR" && airKind === "PER_LB" ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <span>{t("recoger.airPriceRow", { weight: airWeightNum, rate: (airPerLbRule?.pricePerLb ?? 0).toFixed(2) })}:</span>
+                        <span className="font-bold text-slate-700">${totalPrice.toFixed(2)}</span>
+                      </div>
+                    ) : items.map((item, i) => {
                       const p = priceOf(item);
                       return (
                         <div key={i} className="flex items-center justify-end gap-2">

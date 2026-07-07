@@ -87,6 +87,8 @@ model PickupRequest {
   recipientPostalCode String?
   recipientCountry    String
   destinationCountry  String
+  // "MARITIME" or "AIR" — which modality was chosen/priced for this request.
+  shippingMode        String          @default("MARITIME")
   packageType         String
   estimatedWeight     Float?
   dimensions          String?
@@ -160,15 +162,22 @@ model Comment {
 model Pricing {
   id              String   @id @default(cuid())
   country         String
+  // "MARITIME" (by box size) or "AIR" (per-lb rate, or fixed price per
+  // AIR_ITEM_TYPES item when packageType is one of those categories).
+  shippingMode    String   @default("MARITIME")
   packageType     String
   basePrice       Float
   weightThreshold Float    @default(20)
   weightRate      Float    @default(1.0)
+  // Only used when shippingMode = AIR and packageType = AIR_PER_LB.
+  pricePerLb      Float?
+  minWeight       Float?
+  maxWeight       Float?
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@unique([country, packageType])
+  @@unique([country, shippingMode, packageType])
 }
 
 model DiscountCode {

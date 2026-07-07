@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       recipientCountry,
       destinationCountry,
       // Package
+      shippingMode,
       packageType,
       estimatedWeight,
       dimensions,
@@ -221,6 +222,7 @@ export async function POST(request: NextRequest) {
         recipientCountry,
         destinationCountry,
         // Package
+        shippingMode: shippingMode === "AIR" ? "AIR" : "MARITIME",
         packageType,
         estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight) : null,
         dimensions: dimensions || null,

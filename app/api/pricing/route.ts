@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const pricing = await (prisma as any).pricing.findMany({
       where: { active: true },
-      orderBy: [{ country: "asc" }, { packageType: "asc" }],
+      orderBy: [{ country: "asc" }, { shippingMode: "asc" }, { packageType: "asc" }],
     });
     return NextResponse.json({ pricing });
   } catch (error) {
@@ -25,27 +25,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { country, packageType, basePrice, weightThreshold, weightRate } = await req.json();
+    const {
+      country,
+      shippingMode,
+      packageType,
+      basePrice,
+      weightThreshold,
+      weightRate,
+      pricePerLb,
+      minWeight,
+      maxWeight,
+    } = await req.json();
 
-    if (!country || !packageType || basePrice == null) {
-      return NextResponse.json({ error: "country, packageType and basePrice are required" }, { status: 400 });
+    const mode = shippingMode === "AIR" ? "AIR" : "MARITIME";
+
+    if (!country || !packageType) {
+      return NextResponse.json({ error: "country and packageType are required" }, { status: 400 });
+    }
+    if (basePrice == null && pricePerLb == null) {
+      return NextResponse.json({ error: "basePrice or pricePerLb is required" }, { status: 400 });
     }
 
+    const data = {
+      basePrice: basePrice != null ? parseFloat(basePrice) : 0,
+      weightThreshold: weightThreshold != null ? parseFloat(weightThreshold) : 20,
+      weightRate: weightRate != null ? parseFloat(weightRate) : 1.0,
+      pricePerLb: pricePerLb != null ? parseFloat(pricePerLb) : null,
+      minWeight: minWeight != null ? parseFloat(minWeight) : null,
+      maxWeight: maxWeight != null ? parseFloat(maxWeight) : null,
+      active: true,
+    };
+
     const rule = await (prisma as any).pricing.upsert({
-      where: { country_packageType: { country, packageType } },
-      update: {
-        basePrice: parseFloat(basePrice),
-        weightThreshold: weightThreshold != null ? parseFloat(weightThreshold) : 20,
-        weightRate: weightRate != null ? parseFloat(weightRate) : 1.0,
-        active: true,
-      },
-      create: {
-        country,
-        packageType,
-        basePrice: parseFloat(basePrice),
-        weightThreshold: weightThreshold != null ? parseFloat(weightThreshold) : 20,
-        weightRate: weightRate != null ? parseFloat(weightRate) : 1.0,
-      },
+      where: { country_shippingMode_packageType: { country, shippingMode: mode, packageType } },
+      update: data,
+      create: { country, shippingMode: mode, packageType, ...data },
     });
 
     return NextResponse.json({ rule });
