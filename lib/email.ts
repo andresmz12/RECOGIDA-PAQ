@@ -256,7 +256,8 @@ export async function sendStatusUpdateEmail(
   contactName: string,
   newStatus: PickupStatus,
   preferredDate?: Date,
-  lang: "en" | "es" = "en"
+  lang: "en" | "es" = "en",
+  securityCode?: string | null
 ) {
   const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
 
@@ -288,6 +289,8 @@ export async function sendStatusUpdateEmail(
         cta: "Ver detalles completos →",
         trackingCodeLabel: "Código de rastreo",
         viewText: "Ver detalles",
+        securityCodeLabel: "Código de seguridad de recogida",
+        securityCodeNote: "Ten este código a la mano y entrégaselo al mensajero cuando llegue — es la prueba de que el paquete fue entregado en persona.",
       }
     : {
         subject: `Shipment Update — ${trackingCode}`,
@@ -298,6 +301,8 @@ export async function sendStatusUpdateEmail(
         cta: "View Full Details →",
         trackingCodeLabel: "Tracking code",
         viewText: "View details",
+        securityCodeLabel: "Pickup security code",
+        securityCodeNote: "Keep this code handy and give it to the courier when they arrive — it's the proof the package was handed over in person.",
       };
 
   const STATUS_MESSAGES = lang === "es" ? STATUS_MESSAGES_ES : STATUS_MESSAGES_EN;
@@ -323,6 +328,12 @@ export async function sendStatusUpdateEmail(
       <p style="margin:0;font-size:14px;color:#475569;line-height:1.5;">${msgBody}</p>
     </div>
     ${dateHtml}
+    ${securityCode && (newStatus === "SCHEDULED" || newStatus === "EN_CAMINO") ? `
+    <div style="background:#fffbeb;border:2px dashed #f5a524;border-radius:12px;padding:16px 20px;margin:16px 0;">
+      <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a3570c;">${copy.securityCodeLabel}</p>
+      <p style="margin:0 0 8px;font-size:28px;font-weight:800;font-family:monospace;letter-spacing:8px;color:#c9730a;">${esc(securityCode)}</p>
+      <p style="margin:0;font-size:12px;line-height:1.5;color:#854610;">${copy.securityCodeNote}</p>
+    </div>` : ""}
     ${trackingBox(trackingCode, lang)}
     ${button(trackingUrl, copy.cta)}
   `;
@@ -340,6 +351,9 @@ export async function sendStatusUpdateEmail(
     `${msgBody}`,
     preferredDate && (newStatus === "ASSIGNED" || newStatus === "SCHEDULED" || newStatus === "EN_CAMINO")
       ? `${copy.scheduledDate}: ${fmtDate(preferredDate, lang)}`
+      : "",
+    securityCode && (newStatus === "SCHEDULED" || newStatus === "EN_CAMINO")
+      ? `\n${copy.securityCodeLabel}: ${securityCode}\n${copy.securityCodeNote}`
       : "",
     ``,
     `${copy.trackingCodeLabel}: ${trackingCode}`,

@@ -204,7 +204,8 @@ export async function PATCH(
           pickupRequest.contactName,
           status,
           pickupRequest.preferredDate,
-          customerLang
+          customerLang,
+          pickupRequest.securityCode
         ).catch((err) =>
           console.error("[pickup-requests/id] sendStatusUpdateEmail error:", err)
         );
