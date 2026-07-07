@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { COUNTRY_SHIPPING_CONFIG } from "@/lib/shipping-modes";
 
 /* ─── Hooks ─────────────────────────────────────────────────────── */
 
@@ -202,6 +203,18 @@ function WaybillCard() {
 
 /* ─── Destinations (marquee) ────────────────────────────────────── */
 
+const ShipIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 18l1.5-5h15L21 18M5.5 13V7a1 1 0 011-1h11a1 1 0 011 1v6M9 6V3h6v3M2 21c1.5 1 3.5 1 5 0s3.5-1 5 0 3.5 1 5 0 3.5-1 5 0" />
+  </svg>
+);
+
+const PlaneIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+  </svg>
+);
+
 const DESTINATIONS = [
   { code: "HN", flag: "🇭🇳", name: "Honduras" },
   { code: "GT", flag: "🇬🇹", name: "Guatemala" },
@@ -213,7 +226,24 @@ const DESTINATIONS = [
   { code: "VE", flag: "🇻🇪", name: "Venezuela" },
   { code: "MX", flag: "🇲🇽", name: "México" },
   { code: "CO", flag: "🇨🇴", name: "Colombia" },
+  { code: "EC", flag: "🇪🇨", name: "Ecuador" },
 ];
+
+// Group the same destination list by shipping modality — driven by the
+// single shipping-modes config so this always matches what the pickup
+// form and admin pricing panel actually support.
+const MARITIME_ONLY = DESTINATIONS.filter(d => {
+  const cfg = COUNTRY_SHIPPING_CONFIG[d.code];
+  return cfg?.maritime && !cfg.air;
+});
+const AIR_ONLY = DESTINATIONS.filter(d => {
+  const cfg = COUNTRY_SHIPPING_CONFIG[d.code];
+  return cfg?.air && !cfg.maritime;
+});
+const BOTH_MODES = DESTINATIONS.filter(d => {
+  const cfg = COUNTRY_SHIPPING_CONFIG[d.code];
+  return cfg?.maritime && cfg.air;
+});
 
 /* ─── FAQ (ruled list) ───────────────────────────────────────────── */
 
@@ -594,6 +624,48 @@ export default function Home() {
               </span>
             ))}
           </div>
+        </div>
+
+        {/* Coverage by shipping mode */}
+        <div className="max-w-5xl mx-auto px-6 mt-12 grid sm:grid-cols-3 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/10">
+          {[
+            {
+              key: "modeMaritimeOnly",
+              icon: <ShipIcon />,
+              countries: MARITIME_ONLY,
+            },
+            {
+              key: "modeAirOnly",
+              icon: <PlaneIcon />,
+              countries: AIR_ONLY,
+            },
+            {
+              key: "modeBoth",
+              icon: (
+                <span className="flex items-center gap-1">
+                  <ShipIcon /> <PlaneIcon />
+                </span>
+              ),
+              countries: BOTH_MODES,
+            },
+          ].map((group) => (
+            <div key={group.key} className="bg-navy-950 p-6">
+              <div className="flex items-center gap-2 text-accent-400 mb-4">
+                {group.icon}
+                <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-white/50">
+                  {t(`landing.${group.key}`)}
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {group.countries.map(c => (
+                  <li key={c.code} className="flex items-center gap-2 text-white/80 text-sm">
+                    <span>{c.flag}</span>
+                    <span className="font-medium">{c.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 

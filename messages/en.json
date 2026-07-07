@@ -554,7 +554,10 @@
     "faq4q": "What items can't I ship?",
     "faq4a": "For safety and legal reasons we don't transport cash, weapons, illegal substances, hazardous materials, or perishables without prior agreement. See the full list in our",
     "faq5q": "How do I track my package?",
-    "faq5a": "When you create your request you get a unique code (OGC-XXXXXX) by email. Enter it in the tracking section to see your shipment status in real time — no account needed."
+    "faq5a": "When you create your request you get a unique code (OGC-XXXXXX) by email. Enter it in the tracking section to see your shipment status in real time — no account needed.",
+    "modeMaritimeOnly": "Maritime only",
+    "modeAirOnly": "Air only",
+    "modeBoth": "Maritime + Air"
   },
   "recoger": {
     "title": "Request a pickup",
@@ -653,7 +656,8 @@
     "items": "Items",
     "item": "Item",
     "itemType": "Item type",
-    "airPriceRow": "{{weight}} lbs × ${{rate}}/lb"
+    "airPriceRow": "{{weight}} lbs × ${{rate}}/lb",
+    "addItem": "Add item"
   },
   "rastreo": {
     "loading": "Loading tracking information...",

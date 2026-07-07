@@ -554,7 +554,10 @@
     "faq4q": "¿Qué artículos no puedo enviar?",
     "faq4a": "Por seguridad y por ley no transportamos dinero en efectivo, armas, sustancias ilegales, materiales peligrosos ni perecederos sin acuerdo previo. Consulta la lista completa en nuestros",
     "faq5q": "¿Cómo rastreo mi paquete?",
-    "faq5a": "Al crear tu solicitud recibes un código único (OGC-XXXXXX) por correo. Ingrésalo en la sección de rastreo y verás el estado de tu envío en tiempo real, sin necesidad de cuenta."
+    "faq5a": "Al crear tu solicitud recibes un código único (OGC-XXXXXX) por correo. Ingrésalo en la sección de rastreo y verás el estado de tu envío en tiempo real, sin necesidad de cuenta.",
+    "modeMaritimeOnly": "Solo marítimo",
+    "modeAirOnly": "Solo aéreo",
+    "modeBoth": "Marítimo + Aéreo"
   },
   "recoger": {
     "title": "Solicitar una recogida",
@@ -653,7 +656,8 @@
     "items": "Artículos",
     "item": "Artículo",
     "itemType": "Tipo de artículo",
-    "airPriceRow": "{{weight}} lbs × ${{rate}}/lb"
+    "airPriceRow": "{{weight}} lbs × ${{rate}}/lb",
+    "addItem": "Agregar artículo"
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

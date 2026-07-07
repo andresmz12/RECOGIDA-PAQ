@@ -175,7 +175,12 @@ export default function RecogerPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const addItem = useCallback(() =>
-    setItems(prev => [...prev, { ...DEFAULT_ITEM }]), []);
+    setItems(prev => [
+      ...prev,
+      shippingMode === "AIR" && getShippingConfig(form.recipientCountry).air === "FIXED_ITEM"
+        ? { packageType: AIR_ITEM_TYPES[0], estimatedWeight: "" }
+        : { ...DEFAULT_ITEM },
+    ]), [shippingMode, form.recipientCountry]);
   const removeItem = useCallback((i: number) =>
     setItems(prev => prev.filter((_, idx) => idx !== i)), []);
   const updateItem = useCallback((i: number, field: keyof BoxItem, value: string) =>
@@ -839,7 +844,7 @@ export default function RecogerPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                {t("recoger.addBox")}
+                {shippingMode === "AIR" && airKind === "FIXED_ITEM" ? t("recoger.addItem") : t("recoger.addBox")}
               </button>
             </div>
             )}
