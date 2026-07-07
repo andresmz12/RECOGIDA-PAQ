@@ -299,13 +299,18 @@ export default function MisRecogidasPage() {
           </div>
         ) : pickups.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-3xl border border-slate-200">
-            <div className="text-6xl mb-4">📭</div>
+            <svg className="w-14 h-14 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V7a2 2 0 00-1-1.73l-6-3.46a2 2 0 00-2 0l-6 3.46A2 2 0 004 7v6a2 2 0 001 1.73l6 3.46a2 2 0 002 0l6-3.46A2 2 0 0020 13z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.27 6.96L12 12.01l7.73-5.05M12 22.08V12" />
+            </svg>
             <p className="text-slate-900 font-bold text-lg mb-1">{t("pickups.noPickupsAvailable")}</p>
             <p className="text-slate-500 text-sm">{t("pickups.notifiedWhenRoutes")}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-slate-200">
-            <div className="text-5xl mb-3">📅</div>
+            <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
             <p className="text-slate-700 font-semibold">{t("pickups.noPickupsForDate")}</p>
           </div>
         ) : dateFilter ? (
@@ -533,7 +538,12 @@ function PickupActionCard({
 
         {pickup.specialInstructions && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
-            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">⚠️ {t("pickups.specialInstructions")}</p>
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              {t("pickups.specialInstructions")}
+            </p>
             <p className="text-amber-900 text-sm">{pickup.specialInstructions}</p>
           </div>
         )}

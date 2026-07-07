@@ -114,7 +114,10 @@ export default function RastreoPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
         <Container size="md">
           <Card variant="elevated" padding="lg" className="text-center">
-            <div className="text-6xl mb-4 opacity-50">📭</div>
+            <svg className="w-14 h-14 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V7a2 2 0 00-1-1.73l-6-3.46a2 2 0 00-2 0l-6 3.46A2 2 0 004 7v6a2 2 0 001 1.73l6 3.46a2 2 0 002 0l6-3.46A2 2 0 0020 13z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.27 6.96L12 12.01l7.73-5.05M12 22.08V12" />
+            </svg>
             <h1 className="text-2xl font-black text-slate-900 mb-3">{t("rastreo.notFound")}</h1>
             <p className="text-slate-600 mb-8">{error}</p>
             <div className="flex gap-3 justify-center">
@@ -247,13 +250,23 @@ export default function RastreoPage() {
         {!isCancelled && (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <Card variant="default" padding="lg">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">📅 {t("rastreo.estimatedDate")}</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {t("rastreo.estimatedDate")}
+              </h3>
               <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
               <p className="text-xs text-slate-500 mt-2">{t("rastreo.scheduledDate")}</p>
             </Card>
 
             <Card variant="default" padding="lg">
-              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3">⏰ {t("rastreo.timeWindow")}</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {t("rastreo.timeWindow")}
+              </h3>
               <p className="text-2xl font-bold text-slate-900">{tracking.preferredTimeWindow}</p>
               <p className="text-xs text-slate-500 mt-2">{t("rastreo.timeWindowDesc")}</p>
             </Card>
@@ -264,7 +277,10 @@ export default function RastreoPage() {
         {tracking.statusHistory.length > 0 && (
           <Card variant="default" padding="lg" className="mb-8">
             <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <span>📋</span> {t("rastreo.updateHistory")}
+              <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+              {t("rastreo.updateHistory")}
             </h3>
             <div className="relative">
               <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />

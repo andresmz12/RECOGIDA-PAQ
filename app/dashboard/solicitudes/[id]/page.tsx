@@ -45,6 +45,10 @@ interface PickupDetail {
   estimatedWeight: number | null;
   dimensions: string | null;
   packageContents: string | null;
+  hsCode: string | null;
+  declaredValue: number | null;
+  insuranceRequested: boolean;
+  insuranceValue: number | null;
   preferredDate: string;
   preferredTimeWindow: string;
   specialInstructions: string | null;
@@ -110,7 +114,9 @@ function InternalComments({ pickupId }: { pickupId: string }) {
   return (
     <Card variant="default" padding="lg">
       <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-        <span className="text-xl">💬</span>
+        <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
         {t("detail.internalComments")}
       </h2>
       {comments.length === 0 ? (
@@ -337,7 +343,9 @@ export default function SolicitudDetailPage() {
             {/* Contact */}
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="text-xl">👤</span>
+                <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
                 {t("detail.senderInfo")}
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
@@ -353,7 +361,9 @@ export default function SolicitudDetailPage() {
             {/* Recipient */}
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="text-xl">🏠</span>
+                <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
                 {t("detail.recipientInfo")}
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
@@ -383,7 +393,10 @@ export default function SolicitudDetailPage() {
             <Card variant="default" padding="lg">
               <div className="flex items-start justify-between gap-4 mb-5">
                 <h2 className="font-bold text-slate-900 flex items-center gap-2">
-                  <span className="text-xl">📍</span>
+                  <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                   {t("detail.pickupAddressTitle")}
                 </h2>
                 {/* Navigation buttons */}
@@ -433,7 +446,9 @@ export default function SolicitudDetailPage() {
             {/* Package */}
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
-                <span className="text-xl">📦</span>
+                <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
                 {t("detail.packageDetails")}
               </h2>
               <div className="grid sm:grid-cols-2 gap-6">
@@ -448,6 +463,15 @@ export default function SolicitudDetailPage() {
                   <InfoRow label={t("detail.packageContents")} value={pickup.packageContents} />
                 </div>
               )}
+              {(pickup.hsCode || pickup.declaredValue != null || pickup.insuranceRequested) && (
+                <div className="mt-6 pt-6 border-t border-slate-100 grid sm:grid-cols-2 gap-6">
+                  <InfoRow label={t("detail.hsCode")} value={pickup.hsCode} />
+                  <InfoRow label={t("detail.declaredValue")} value={pickup.declaredValue != null ? `$${pickup.declaredValue.toFixed(2)} USD` : null} />
+                  {pickup.insuranceRequested && (
+                    <InfoRow label={t("detail.insuranceValue")} value={pickup.insuranceValue != null ? `$${pickup.insuranceValue.toFixed(2)} USD` : null} />
+                  )}
+                </div>
+              )}
               {pickup.specialInstructions && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <InfoRow label={t("detail.specialInstructions")} value={pickup.specialInstructions} />
@@ -458,7 +482,9 @@ export default function SolicitudDetailPage() {
             {/* Status history */}
             <Card variant="default" padding="lg">
               <h2 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <span className="text-xl">📋</span>
+                <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
                 {t("detail.statusHistory")}
               </h2>
               <div className="relative">
@@ -597,7 +623,14 @@ export default function SolicitudDetailPage() {
                     >
                       {updating ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : <>🚗 {t("detail.onMyWayBtn")}</>}
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                          {t("detail.onMyWayBtn")}
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -616,7 +649,14 @@ export default function SolicitudDetailPage() {
                     >
                       {updating ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : <>✅ {t("detail.confirmPickupBtn")}</>}
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {t("detail.confirmPickupBtn")}
+                        </>
+                      )}
                     </button>
                   </div>
                 )}

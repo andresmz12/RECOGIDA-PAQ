@@ -148,7 +148,7 @@ export default function MapView({ points, center, routePolyline, focusPoint }: M
         .addTo(map)
         .bindPopup(
           pt.isCurrentLocation
-            ? `<div style="font-family:sans-serif;font-weight:700;color:#1d4ed8">📍 Tu ubicación actual</div>`
+            ? `<div style="font-family:sans-serif;font-weight:700;color:#1d4ed8">Tu ubicación actual</div>`
             : `
               <div style="font-family:sans-serif;min-width:180px">
                 ${pt.routeOrder != null ? `<div style="font-size:10px;font-weight:700;color:${color};margin-bottom:4px">PARADA ${pt.routeOrder}</div>` : ""}

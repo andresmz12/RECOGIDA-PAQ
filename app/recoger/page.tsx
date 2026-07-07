@@ -65,6 +65,21 @@ const TIME_WINDOWS = [
 type BoxItem = { packageType: string; estimatedWeight: string };
 const DEFAULT_ITEM: BoxItem = { packageType: "Caja 20x20x20", estimatedWeight: "" };
 
+interface SavedRecipient {
+  id: string;
+  label: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientPhoneSecondary: string | null;
+  recipientEmail: string | null;
+  recipientAddress: string;
+  recipientCity: string;
+  recipientState: string | null;
+  recipientPostalCode: string | null;
+  recipientCountry: string;
+  destinationCountry: string;
+}
+
 const EMPTY = {
   // Sender
   contactName: "",
@@ -87,6 +102,8 @@ const EMPTY = {
   recipientState: "",
   // Package (shared across boxes)
   packageContents: "",
+  hsCode: "",
+  declaredValue: "",
   // Schedule
   preferredDate: "",
   preferredTimeWindow: "08:00-12:00",
@@ -126,6 +143,12 @@ export default function RecogerPage() {
   const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
   const [discountError, setDiscountError] = useState("");
   const [checkingDiscount, setCheckingDiscount] = useState(false);
+  const [wantsInsurance, setWantsInsurance] = useState(false);
+  const [insuranceValue, setInsuranceValue] = useState("");
+  const [savedRecipients, setSavedRecipients] = useState<SavedRecipient[]>([]);
+  const [selectedRecipientId, setSelectedRecipientId] = useState("");
+  const [saveRecipient, setSaveRecipient] = useState(false);
+  const [saveRecipientLabel, setSaveRecipientLabel] = useState("");
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -159,6 +182,33 @@ export default function RecogerPage() {
       })
       .catch(() => {});
   }, [session]);
+
+  // Recurring shippers: load saved recipients so recipient info can be
+  // auto-filled instead of re-typed on every request.
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/saved-recipients")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.data) setSavedRecipients(d.data); })
+      .catch(() => {});
+  }, [session]);
+
+  const applySavedRecipient = (id: string) => {
+    setSelectedRecipientId(id);
+    const r = savedRecipients.find(sr => sr.id === id);
+    if (!r) return;
+    setForm(prev => ({
+      ...prev,
+      recipientName: r.recipientName,
+      recipientPhone: r.recipientPhone,
+      recipientPhoneSecondary: r.recipientPhoneSecondary || "",
+      recipientEmail: r.recipientEmail || "",
+      recipientAddress: r.recipientAddress,
+      recipientCity: r.recipientCity,
+      recipientState: r.recipientState || "",
+      recipientCountry: r.recipientCountry,
+    }));
+  };
 
   const isLoggedIn = !!session;
   const ruleFor = (packageType: string) =>
@@ -194,6 +244,17 @@ export default function RecogerPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (wantsInsurance && (!insuranceValue || parseFloat(insuranceValue) <= 0)) {
+      setError(t("recoger.insuranceValueRequired"));
+      return;
+    }
+
+    if (saveRecipient && !saveRecipientLabel.trim()) {
+      setError(t("recoger.savedRecipientNameRequired"));
+      return;
+    }
+
     setLoading(true);
 
     const firstItem = items[0];
@@ -212,6 +273,8 @@ export default function RecogerPage() {
       destinationCountry: form.recipientCountry,
       recipientState: form.recipientState || null,
       discountCode: discount?.code || null,
+      insuranceRequested: wantsInsurance,
+      insuranceValue: wantsInsurance ? insuranceValue : null,
       lang,
     };
 
@@ -229,6 +292,26 @@ export default function RecogerPage() {
       }
       setTrackingCode(data.trackingCode);
       setSecurityCode(data.securityCode ?? "");
+
+      // Save the recipient for next time — best-effort, doesn't block success
+      if (saveRecipient && saveRecipientLabel.trim()) {
+        fetch("/api/saved-recipients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label: saveRecipientLabel.trim(),
+            recipientName: form.recipientName,
+            recipientPhone: form.recipientPhone,
+            recipientPhoneSecondary: form.recipientPhoneSecondary || null,
+            recipientEmail: form.recipientEmail || null,
+            recipientAddress: form.recipientAddress,
+            recipientCity: form.recipientCity,
+            recipientState: form.recipientState || null,
+            recipientCountry: form.recipientCountry,
+            destinationCountry: form.recipientCountry,
+          }),
+        }).catch(() => {});
+      }
     } catch {
       setError(t("recoger.connectionError"));
       setLoading(false);
@@ -430,6 +513,21 @@ export default function RecogerPage() {
               <h2 className="font-bold text-slate-900">{t("recoger.recipientSection")}</h2>
             </div>
 
+            {savedRecipients.length > 0 && (
+              <Field label={t("recoger.useSavedRecipient")}>
+                <select
+                  className={inputCls + " bg-white"}
+                  value={selectedRecipientId}
+                  onChange={e => applySavedRecipient(e.target.value)}
+                >
+                  <option value="">{t("recoger.selectSavedRecipient")}</option>
+                  {savedRecipients.map(r => (
+                    <option key={r.id} value={r.id}>{r.label}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("recoger.recipientName")} required>
                 <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} required />
@@ -467,6 +565,36 @@ export default function RecogerPage() {
                 }));
               }}
             />
+
+            {isLoggedIn && (
+              <div className="rounded-xl border border-slate-200 p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={saveRecipient}
+                    onChange={e => setSaveRecipient(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-800">{t("recoger.saveRecipientLabel")}</span>
+                    <span className="block text-xs text-slate-500 mt-0.5">{t("recoger.saveRecipientHint")}</span>
+                  </span>
+                </label>
+                {saveRecipient && (
+                  <div className="mt-3 pl-7">
+                    <Field label={t("recoger.savedRecipientName")} required>
+                      <input
+                        className={inputCls + " max-w-xs"}
+                        value={saveRecipientLabel}
+                        onChange={e => setSaveRecipientLabel(e.target.value)}
+                        placeholder={t("recoger.savedRecipientNamePlaceholder")}
+                        required={saveRecipient}
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* ── Paquete ── */}
@@ -563,10 +691,68 @@ export default function RecogerPage() {
                 className={inputCls}
                 value={form.packageContents}
                 onChange={e => set("packageContents", e.target.value)}
-               
+
                 required
               />
             </Field>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label={t("recoger.hsCode")} hint={t("recoger.hsCodeHint")}>
+                <input
+                  className={inputCls}
+                  value={form.hsCode}
+                  onChange={e => set("hsCode", e.target.value)}
+                  placeholder="0000.00.00"
+                />
+              </Field>
+              <Field label={t("recoger.declaredValue")} hint={t("recoger.declaredValueHint")}>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className={inputCls + " pl-7"}
+                    value={form.declaredValue}
+                    onChange={e => set("declaredValue", e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              </Field>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={wantsInsurance}
+                  onChange={e => setWantsInsurance(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-800">{t("recoger.insuranceLabel")}</span>
+                  <span className="block text-xs text-slate-500 mt-0.5">{t("recoger.insuranceHint")}</span>
+                </span>
+              </label>
+              {wantsInsurance && (
+                <div className="mt-3 pl-7">
+                  <Field label={t("recoger.insuranceValue")} required>
+                    <div className="relative max-w-xs">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        className={inputCls + " pl-7"}
+                        value={insuranceValue}
+                        onChange={e => setInsuranceValue(e.target.value)}
+                        required={wantsInsurance}
+                      />
+                    </div>
+                  </Field>
+                </div>
+              )}
+            </div>
           </section>
 
           {/* ── Fecha y hora ── */}

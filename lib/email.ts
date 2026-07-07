@@ -155,6 +155,8 @@ export async function sendPickupConfirmationEmail(
     discountCode?: string;
     discountPercent?: number;
     securityCode?: string;
+    declaredValue?: number | null;
+    insuranceValue?: number | null;
   },
   lang: "en" | "es" = "en"
 ) {
@@ -178,6 +180,7 @@ export async function sendPickupConfirmationEmail(
         labels: {
           date: "Fecha de recogida", window: "Ventana horaria", address: "Dirección de recogida",
           destination: "Destino", pkg: "Paquete", discount: "Descuento",
+          declaredValue: "Valor declarado", insurance: "Valor asegurado",
         },
       }
     : {
@@ -197,6 +200,7 @@ export async function sendPickupConfirmationEmail(
         labels: {
           date: "Pickup date", window: "Time window", address: "Pickup address",
           destination: "Destination", pkg: "Package", discount: "Discount",
+          declaredValue: "Declared value", insurance: "Insured value",
         },
       };
 
@@ -212,6 +216,8 @@ export async function sendPickupConfirmationEmail(
   if (details?.discountCode && details?.discountPercent) {
     rows.push([copy.labels.discount, `${details.discountCode} (−${details.discountPercent}%)`]);
   }
+  if (details?.declaredValue != null) rows.push([copy.labels.declaredValue, `$${details.declaredValue.toFixed(2)} USD`]);
+  if (details?.insuranceValue != null) rows.push([copy.labels.insurance, `$${details.insuranceValue.toFixed(2)} USD`]);
 
   const body = `
     <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
@@ -264,22 +270,22 @@ export async function sendStatusUpdateEmail(
 ) {
   const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
 
-  const STATUS_MESSAGES_EN: Record<PickupStatus, { headline: string; body: string; emoji: string }> = {
-    PENDING:   { headline: "Awaiting assignment",   emoji: "🕓", body: "Your request is in our system and will be assigned to a courier soon." },
-    ASSIGNED:  { headline: "Courier assigned",      emoji: "📋", body: "A courier has been assigned to your pickup request." },
-    SCHEDULED: { headline: "Courier is on the way", emoji: "🚚", body: "Your courier is heading to the pickup address. Make sure someone is available." },
-    EN_CAMINO: { headline: "Courier is on the way", emoji: "🚚", body: "Your courier is on the way to pick up your package. Please be available." },
-    PICKED_UP: { headline: "Package picked up!",    emoji: "✅", body: "Your package has been collected successfully and is on its way." },
-    CANCELLED: { headline: "Request cancelled",     emoji: "⚠️", body: "Your pickup request has been cancelled. Contact us if you have any questions." },
+  const STATUS_MESSAGES_EN: Record<PickupStatus, { headline: string; body: string }> = {
+    PENDING:   { headline: "Request received",  body: "Your pickup request has been received and will be assigned to a courier shortly." },
+    ASSIGNED:  { headline: "Courier assigned",  body: "A courier has been assigned to your pickup request." },
+    SCHEDULED: { headline: "Courier en route",  body: "Your courier is en route to the pickup address. Please ensure someone is available to hand over the package." },
+    EN_CAMINO: { headline: "Courier en route",  body: "Your courier is en route to collect your package. Please ensure someone is available." },
+    PICKED_UP: { headline: "Package collected", body: "Your package has been collected and is now in transit." },
+    CANCELLED: { headline: "Request cancelled", body: "Your pickup request has been cancelled. Please contact our support team with any questions." },
   };
 
-  const STATUS_MESSAGES_ES: Record<PickupStatus, { headline: string; body: string; emoji: string }> = {
-    PENDING:   { headline: "En espera de asignación",    emoji: "🕓", body: "Tu solicitud está en nuestro sistema y pronto será asignada a un mensajero." },
-    ASSIGNED:  { headline: "Mensajero asignado",         emoji: "📋", body: "Un mensajero fue asignado a tu solicitud de recogida." },
-    SCHEDULED: { headline: "El mensajero va en camino",  emoji: "🚚", body: "Tu mensajero se dirige a la dirección de recogida. Asegúrate de que alguien esté disponible." },
-    EN_CAMINO: { headline: "El mensajero va en camino",  emoji: "🚚", body: "Tu mensajero va en camino a recoger tu paquete. Por favor mantente disponible." },
-    PICKED_UP: { headline: "¡Paquete recogido!",         emoji: "✅", body: "Tu paquete fue recogido exitosamente y ya va en camino." },
-    CANCELLED: { headline: "Solicitud cancelada",        emoji: "⚠️", body: "Tu solicitud de recogida fue cancelada. Contáctanos si tienes alguna pregunta." },
+  const STATUS_MESSAGES_ES: Record<PickupStatus, { headline: string; body: string }> = {
+    PENDING:   { headline: "Solicitud recibida",   body: "Tu solicitud de recogida fue recibida y será asignada a un mensajero en breve." },
+    ASSIGNED:  { headline: "Mensajero asignado",   body: "Un mensajero ha sido asignado a tu solicitud de recogida." },
+    SCHEDULED: { headline: "Mensajero en camino",  body: "Tu mensajero se encuentra en camino a la dirección de recogida. Asegúrate de que haya alguien disponible para la entrega del paquete." },
+    EN_CAMINO: { headline: "Mensajero en camino",  body: "Tu mensajero se encuentra en camino a recoger tu paquete. Asegúrate de que haya alguien disponible." },
+    PICKED_UP: { headline: "Paquete recogido",     body: "Tu paquete ha sido recogido y se encuentra en tránsito." },
+    CANCELLED: { headline: "Solicitud cancelada",  body: "Tu solicitud de recogida ha sido cancelada. Contacta a nuestro equipo de soporte si tienes alguna pregunta." },
   };
 
   const copy = lang === "es"
@@ -309,7 +315,7 @@ export async function sendStatusUpdateEmail(
       };
 
   const STATUS_MESSAGES = lang === "es" ? STATUS_MESSAGES_ES : STATUS_MESSAGES_EN;
-  const { headline, body: msgBody, emoji } = STATUS_MESSAGES[newStatus];
+  const { headline, body: msgBody } = STATUS_MESSAGES[newStatus];
 
   const statusColor: Record<PickupStatus, string> = {
     PENDING: "#f59e0b", ASSIGNED: "#3b82f6", SCHEDULED: "#2c629b",
@@ -327,7 +333,7 @@ export async function sendStatusUpdateEmail(
   const body = `
     <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
     <div style="border-left:4px solid ${statusColor[newStatus]};padding:14px 20px;margin:20px 0;background:#f8fafc;border-radius:0 8px 8px 0;">
-      <p style="margin:0 0 4px;font-weight:700;font-size:16px;color:#0f172a;">${emoji} ${headline}</p>
+      <p style="margin:0 0 4px;font-weight:700;font-size:16px;color:#0f172a;">${headline}</p>
       <p style="margin:0;font-size:14px;color:#475569;line-height:1.5;">${msgBody}</p>
     </div>
     ${dateHtml}
@@ -380,8 +386,8 @@ export async function sendWelcomeEmail(
 
   const copy = lang === "es"
     ? {
-        subject: "¡Bienvenido a O'Globo Cargo!",
-        title: "¡Tu cuenta está lista!",
+        subject: "Bienvenido a O'Globo Cargo",
+        title: "Tu cuenta ha sido creada",
         preheader: "Tu cuenta de O'Globo Cargo fue creada exitosamente.",
         hi: `Hola <strong>${esc(name)}</strong>,`,
         created: "Tu cuenta de O'Globo Cargo fue creada exitosamente. Desde tu panel puedes:",
@@ -391,10 +397,10 @@ export async function sendWelcomeEmail(
           "Ver el historial de todas tus solicitudes",
         ],
         cta: "Ir a Mi Cuenta →",
-        promoTitle: "🎉 ¡Regalo de bienvenida!",
+        promoTitle: "Bono de bienvenida",
         promoBody: "Obtén un <strong>10% de descuento</strong> en tu primer envío usando este código al solicitar tu recogida:",
         promoCode: "Oglobo2026",
-        promoTextLine: "🎉 Regalo de bienvenida: 10% de descuento en tu primer envío con el código Oglobo2026.",
+        promoTextLine: "Bono de bienvenida: 10% de descuento en tu primer envío con el código Oglobo2026.",
         pickupNote: `¿Listo para tu primer envío? <a href="${pickupUrl}" style="color:#1d4f86;font-weight:600;">Solicita una recogida aquí</a>.`,
         terms: `Al crear tu cuenta aceptaste nuestros <a href="${termsUrl}" style="color:#64748b;">Términos y Condiciones</a>.`,
         hiText: `Hola ${name},`,
@@ -404,8 +410,8 @@ export async function sendWelcomeEmail(
         termsText: `Al crear tu cuenta aceptaste nuestros Términos y Condiciones: ${termsUrl}`,
       }
     : {
-        subject: "Welcome to O'Globo Cargo!",
-        title: "Your account is ready!",
+        subject: "Welcome to O'Globo Cargo",
+        title: "Your account has been created",
         preheader: "Your O'Globo Cargo account was created successfully.",
         hi: `Hi <strong>${esc(name)}</strong>,`,
         created: "Your O'Globo Cargo account was created successfully. From your dashboard you can:",
@@ -415,10 +421,10 @@ export async function sendWelcomeEmail(
           "See the history of all your requests",
         ],
         cta: "Go to My Account →",
-        promoTitle: "🎉 Welcome gift!",
+        promoTitle: "Welcome bonus",
         promoBody: "Get <strong>10% off</strong> your first shipment by using this code when requesting your pickup:",
         promoCode: "Oglobo2026",
-        promoTextLine: "🎉 Welcome gift: 10% off your first shipment with code Oglobo2026.",
+        promoTextLine: "Welcome bonus: 10% off your first shipment with code Oglobo2026.",
         pickupNote: `Ready for your first shipment? <a href="${pickupUrl}" style="color:#1d4f86;font-weight:600;">Request a pickup here</a>.`,
         terms: `By creating your account you accepted our <a href="${termsUrl}" style="color:#64748b;">Terms and Conditions</a>.`,
         hiText: `Hi ${name},`,

@@ -189,7 +189,13 @@
     "saveSuccess": "Perfil actualizado correctamente",
     "saveError": "Error al guardar. Intenta de nuevo.",
     "securityCode": "Código de seguridad de recogida",
-    "securityCodeNote": "Entrégalo al mensajero en la recogida"
+    "securityCodeNote": "Entrégalo al mensajero en la recogida",
+    "recipientsTab": "Destinatarios",
+    "recipientsTitle": "Destinatarios guardados",
+    "recipientsDesc": "Administra los destinatarios que has guardado para envíos recurrentes más rápidos.",
+    "noRecipients": "Aún no has guardado ningún destinatario.",
+    "deleteRecipient": "Eliminar",
+    "deleteRecipientConfirm": "¿Eliminar este destinatario guardado?"
   },
   "map": {
     "title": "Mapa de Rutas",
@@ -425,7 +431,10 @@
     "internalComments": "Comentarios internos",
     "noComments": "Sin comentarios aún. Los comentarios son privados entre el equipo.",
     "commentPlaceholder": "Agregar nota interna…",
-    "commentSend": "Enviar"
+    "commentSend": "Enviar",
+    "hsCode": "Código HS",
+    "declaredValue": "Valor declarado",
+    "insuranceValue": "Valor asegurado"
   },
   "guia": {
     "title": "Guía de envío",
@@ -457,7 +466,11 @@
     "trackAt": "Rastrea tu envío en:",
     "footer": "O'Globo Cargo · Servicios de envío internacional",
     "securityCode": "Código de seguridad de recogida",
-    "securityCodeNote": "Entrega este código al mensajero al momento de la recogida. No lo compartas antes."
+    "securityCodeNote": "Entrega este código al mensajero al momento de la recogida. No lo compartas antes.",
+    "customsSection": "Aduana y Seguro",
+    "hsCode": "Código HS",
+    "declaredValue": "Valor declarado",
+    "insuranceValue": "Valor asegurado"
   },
   "landing": {
     "navFeatures": "Características",
@@ -616,7 +629,22 @@
     "discountOptional": "¿Tienes un código? Ingrésalo aquí.",
     "dateNotice": "La fecha y hora que elijas son una preferencia, no una cita confirmada. Nuestro equipo se comunicará contigo para coordinar y validar el día y horario exacto de la recogida.",
     "securityCodeLabel": "Código de seguridad de recogida",
-    "securityCodeNote": "Entrega este código al mensajero cuando recoja tu paquete. Confirma que la recogida fue en persona. También está en tu correo de confirmación."
+    "securityCodeNote": "Entrega este código al mensajero cuando recoja tu paquete. Confirma que la recogida fue en persona. También está en tu correo de confirmación.",
+    "hsCode": "Código HS (opcional)",
+    "hsCodeHint": "Código arancelario del Sistema Armonizado para clasificación aduanera",
+    "declaredValue": "Valor declarado (USD)",
+    "declaredValueHint": "Valor aduanero del contenido del envío",
+    "insuranceLabel": "Asegurar este envío",
+    "insuranceHint": "Agrega cobertura por pérdida o daño durante el tránsito",
+    "insuranceValue": "Monto de cobertura (USD)",
+    "insuranceValueRequired": "Ingresa un monto de cobertura para asegurar este envío.",
+    "useSavedRecipient": "Usar un destinatario guardado",
+    "selectSavedRecipient": "Selecciona un destinatario guardado...",
+    "saveRecipientLabel": "Guardar este destinatario para la próxima vez",
+    "saveRecipientHint": "Los envíos recurrentes a la misma persona autocompletarán su información",
+    "savedRecipientName": "Nombre para este destinatario",
+    "savedRecipientNamePlaceholder": "Ej: Mamá, Casa, Oficina principal",
+    "savedRecipientNameRequired": "Ingresa un nombre para guardar este destinatario."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

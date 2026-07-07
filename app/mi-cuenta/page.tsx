@@ -81,6 +81,17 @@ function StatusStepper({ status }: { status: string }) {
 
 interface Profile { name: string; phone: string; currentPassword: string; newPassword: string; confirmPassword: string; }
 
+interface SavedRecipient {
+  id: string;
+  label: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientAddress: string;
+  recipientCity: string;
+  recipientState: string | null;
+  recipientCountry: string;
+}
+
 export default function MiCuentaPage() {
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
@@ -88,7 +99,10 @@ export default function MiCuentaPage() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
-  const [tab, setTab] = useState<"active" | "history" | "profile">("active");
+  const [tab, setTab] = useState<"active" | "history" | "profile" | "recipients">("active");
+  const [recipients, setRecipients] = useState<SavedRecipient[]>([]);
+  const [recipientsLoading, setRecipientsLoading] = useState(false);
+  const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", currentPassword: "", newPassword: "", confirmPassword: "" });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -122,6 +136,34 @@ export default function MiCuentaPage() {
       .then(d => { if (d) setProfile(prev => ({ ...prev, name: d.name ?? "", phone: d.phone ?? "" })); })
       .catch(() => {});
   }, [status]);
+
+  const fetchRecipients = async () => {
+    setRecipientsLoading(true);
+    try {
+      const res = await fetch("/api/saved-recipients");
+      const data = await res.json();
+      setRecipients(data.data || []);
+    } catch {
+      /* silent */
+    } finally {
+      setRecipientsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "recipients" && status === "authenticated") fetchRecipients();
+  }, [tab, status]);
+
+  const deleteRecipient = async (id: string) => {
+    if (!confirm(t("account.deleteRecipientConfirm"))) return;
+    setDeletingRecipient(id);
+    try {
+      const res = await fetch(`/api/saved-recipients/${id}`, { method: "DELETE" });
+      if (res.ok) setRecipients(prev => prev.filter(r => r.id !== id));
+    } finally {
+      setDeletingRecipient(null);
+    }
+  };
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,12 +282,52 @@ export default function MiCuentaPage() {
             <button onClick={() => setTab("history")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "history" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.historyTab")}{done.length > 0 ? ` (${done.length})` : ""}
             </button>
+            <button onClick={() => setTab("recipients")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "recipients" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+              {t("account.recipientsTab")}
+            </button>
             <button onClick={() => setTab("profile")} className={`px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.profileTab")}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Saved recipients tab */}
+      {tab === "recipients" && (
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">{t("account.recipientsTitle")}</h2>
+            <p className="text-slate-500 text-sm mb-5">{t("account.recipientsDesc")}</p>
+
+            {recipientsLoading ? (
+              <p className="text-slate-400 text-sm">{t("common.loading")}</p>
+            ) : recipients.length === 0 ? (
+              <p className="text-slate-400 text-sm">{t("account.noRecipients")}</p>
+            ) : (
+              <div className="space-y-3">
+                {recipients.map(r => (
+                  <div key={r.id} className="flex items-start justify-between gap-4 border border-slate-100 rounded-xl p-4">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">{r.label}</p>
+                      <p className="text-slate-600 text-sm">{r.recipientName} · {r.recipientPhone}</p>
+                      <p className="text-slate-400 text-xs mt-0.5">
+                        {r.recipientAddress}, {r.recipientCity}{r.recipientState ? `, ${r.recipientState}` : ""}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => deleteRecipient(r.id)}
+                      disabled={deletingRecipient === r.id}
+                      className="shrink-0 text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
+                    >
+                      {deletingRecipient === r.id ? t("common.loading") : t("account.deleteRecipient")}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Profile tab */}
       {tab === "profile" && (
@@ -303,7 +385,7 @@ export default function MiCuentaPage() {
       )}
 
       {/* Content */}
-      <div className={`max-w-3xl mx-auto px-4 py-6 ${tab === "profile" ? "hidden" : ""}`}>
+      <div className={`max-w-3xl mx-auto px-4 py-6 ${tab === "profile" || tab === "recipients" ? "hidden" : ""}`}>
         <div className="flex items-center justify-between mb-5">
           <p className="text-slate-500 text-sm font-medium">
             {loading ? t("account.loadingShipments") : displayed.length === 0

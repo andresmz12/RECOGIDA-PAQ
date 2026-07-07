@@ -37,6 +37,8 @@ export async function GET(
         destinationCountry: true,
         packageType: true,
         estimatedWeight: true,
+        hsCode: true,
+        declaredValue: true,
         preferredDate: true,
         preferredTimeWindow: true,
         specialInstructions: true,

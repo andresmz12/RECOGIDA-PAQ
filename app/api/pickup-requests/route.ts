@@ -51,6 +51,11 @@ export async function POST(request: NextRequest) {
       dimensions,
       packageContents,
       packageItems,
+      // Customs / insurance
+      hsCode,
+      declaredValue,
+      insuranceRequested,
+      insuranceValue,
       // Preferences
       preferredDate,
       preferredTimeWindow,
@@ -88,6 +93,20 @@ export async function POST(request: NextRequest) {
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    // Customs/insurance values are optional but must be sane numbers when present.
+    const parsedDeclaredValue = declaredValue !== undefined && declaredValue !== null && declaredValue !== ""
+      ? parseFloat(declaredValue) : null;
+    if (parsedDeclaredValue !== null && (isNaN(parsedDeclaredValue) || parsedDeclaredValue < 0)) {
+      return NextResponse.json({ error: "Invalid declared value" }, { status: 400 });
+    }
+    const wantsInsurance = insuranceRequested === true;
+    const parsedInsuranceValue = wantsInsurance
+      ? parseFloat(insuranceValue)
+      : null;
+    if (wantsInsurance && (isNaN(parsedInsuranceValue as number) || (parsedInsuranceValue as number) <= 0)) {
+      return NextResponse.json({ error: "Insurance value is required when insurance is requested" }, { status: 400 });
     }
 
     // Reject malformed dates up front — new Date("garbage") would otherwise
@@ -207,6 +226,10 @@ export async function POST(request: NextRequest) {
         dimensions: dimensions || null,
         packageContents: packageContents || null,
         packageItems: packageItems ?? null,
+        hsCode: hsCode || null,
+        declaredValue: parsedDeclaredValue,
+        insuranceRequested: wantsInsurance,
+        insuranceValue: parsedInsuranceValue,
         // Preferences
         preferredDate: new Date(preferredDate),
         preferredTimeWindow,
@@ -242,6 +265,8 @@ export async function POST(request: NextRequest) {
         discountCode: appliedDiscount?.code,
         discountPercent: appliedDiscount?.percent,
         securityCode,
+        declaredValue: parsedDeclaredValue,
+        insuranceValue: parsedInsuranceValue,
       }, emailLang).catch((err) =>
         console.error("[pickup-requests] sendPickupConfirmationEmail error:", err)
       );

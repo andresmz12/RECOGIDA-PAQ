@@ -126,7 +126,9 @@ export default function UsuariosPage() {
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="text-3xl">👥</div>
+              <svg className="w-7 h-7 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4" />
+              </svg>
               <h1 className="text-3xl font-black text-slate-900">{t("usuarios.title")}</h1>
             </div>
             <p className="text-slate-600">
@@ -186,7 +188,9 @@ export default function UsuariosPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-24">
-              <div className="text-5xl mb-4 opacity-50">👤</div>
+              <svg className="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
               <p className="text-slate-700 font-semibold text-lg">{t("usuarios.noUsers")}</p>
               <p className="text-slate-500 text-sm mt-1">{t("usuarios.tryFilters")}</p>
             </div>

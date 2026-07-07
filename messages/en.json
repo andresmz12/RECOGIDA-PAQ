@@ -189,7 +189,13 @@
     "saveSuccess": "Profile updated successfully",
     "saveError": "Error saving. Please try again.",
     "securityCode": "Pickup security code",
-    "securityCodeNote": "Give it to the courier at pickup"
+    "securityCodeNote": "Give it to the courier at pickup",
+    "recipientsTab": "Recipients",
+    "recipientsTitle": "Saved recipients",
+    "recipientsDesc": "Manage the recipients you've saved for faster recurring shipments.",
+    "noRecipients": "You haven't saved any recipients yet.",
+    "deleteRecipient": "Remove",
+    "deleteRecipientConfirm": "Remove this saved recipient?"
   },
   "map": {
     "title": "Route Map",
@@ -425,7 +431,10 @@
     "internalComments": "Internal Comments",
     "noComments": "No comments yet. Comments are private to the team.",
     "commentPlaceholder": "Add an internal note…",
-    "commentSend": "Send"
+    "commentSend": "Send",
+    "hsCode": "HS code",
+    "declaredValue": "Declared value",
+    "insuranceValue": "Insured value"
   },
   "guia": {
     "title": "Shipment Guide",
@@ -457,7 +466,11 @@
     "trackAt": "Track your shipment at:",
     "footer": "O'Globo Cargo · International Shipping Services",
     "securityCode": "Pickup security code",
-    "securityCodeNote": "Give this code to the courier at pickup. Don't share it beforehand."
+    "securityCodeNote": "Give this code to the courier at pickup. Don't share it beforehand.",
+    "customsSection": "Customs & Insurance",
+    "hsCode": "HS code",
+    "declaredValue": "Declared value",
+    "insuranceValue": "Insured value"
   },
   "landing": {
     "navFeatures": "Features",
@@ -616,7 +629,22 @@
     "discountOptional": "Have a code? Enter it here.",
     "dateNotice": "The date and time you choose are a preference, not a confirmed appointment. Our team will contact you to coordinate and confirm the exact pickup day and time.",
     "securityCodeLabel": "Pickup security code",
-    "securityCodeNote": "Give this code to the courier when they pick up your package. It confirms the pickup happened in person. It's also in your confirmation email."
+    "securityCodeNote": "Give this code to the courier when they pick up your package. It confirms the pickup happened in person. It's also in your confirmation email.",
+    "hsCode": "HS code (optional)",
+    "hsCodeHint": "Harmonized System tariff code for customs classification",
+    "declaredValue": "Declared value (USD)",
+    "declaredValueHint": "Customs value of the shipment contents",
+    "insuranceLabel": "Insure this shipment",
+    "insuranceHint": "Adds coverage for loss or damage during transit",
+    "insuranceValue": "Coverage amount (USD)",
+    "insuranceValueRequired": "Enter a coverage amount to insure this shipment.",
+    "useSavedRecipient": "Use a saved recipient",
+    "selectSavedRecipient": "Select a saved recipient...",
+    "saveRecipientLabel": "Save this recipient for next time",
+    "saveRecipientHint": "Recurring shipments to the same person will auto-fill their info",
+    "savedRecipientName": "Name for this recipient",
+    "savedRecipientNamePlaceholder": "e.g. Mom, Home, Main office",
+    "savedRecipientNameRequired": "Enter a name to save this recipient."
   },
   "rastreo": {
     "loading": "Loading tracking information...",

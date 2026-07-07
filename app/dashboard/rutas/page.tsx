@@ -111,7 +111,9 @@ export default function RutasPage() {
           <div className="mb-8 flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="text-3xl">📄</div>
+                <svg className="w-7 h-7 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
                 <h1 className="text-3xl font-black text-slate-900">{t("rutas.title")}</h1>
               </div>
               <p className="text-slate-600">{t("rutas.subtitle")}</p>
@@ -165,7 +167,11 @@ export default function RutasPage() {
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : "🔍"} {t("rutas.loadRoute")}
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                )} {t("rutas.loadRoute")}
               </button>
             </div>
           </div>
@@ -195,7 +201,12 @@ export default function RutasPage() {
                     <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1 print:text-slate-500">{t("rutas.courier")}</p>
                     <p className="text-2xl font-black mb-1">{routeData.courier.name}</p>
                     {routeData.courier.phone && (
-                      <p className="text-white/80 text-sm print:text-slate-600">📞 {routeData.courier.phone}</p>
+                      <p className="text-white/80 text-sm print:text-slate-600 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        {routeData.courier.phone}
+                      </p>
                     )}
                     <p className="text-white/70 text-xs mt-1 print:text-slate-500">{routeData.courier.email}</p>
                   </div>
@@ -215,7 +226,10 @@ export default function RutasPage() {
 
               {routeData.pickups.length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
-                  <div className="text-5xl mb-4 opacity-40">📭</div>
+                  <svg className="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V7a2 2 0 00-1-1.73l-6-3.46a2 2 0 00-2 0l-6 3.46A2 2 0 004 7v6a2 2 0 001 1.73l6 3.46a2 2 0 002 0l6-3.46A2 2 0 0020 13z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.27 6.96L12 12.01l7.73-5.05M12 22.08V12" />
+                  </svg>
                   <p className="font-bold text-slate-700 text-lg">{t("rutas.noPickups")}</p>
                   <p className="text-slate-500 text-sm mt-1">{t("rutas.noPickupsDesc")}</p>
                   <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 mt-4 inline-block">
@@ -236,7 +250,12 @@ export default function RutasPage() {
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
                               <p className="font-mono font-black text-indigo-600">{p.trackingCode}</p>
                               <StatusBadge status={p.status} />
-                              <span className="text-slate-400 text-sm">⏰ {p.preferredTimeWindow}</span>
+                              <span className="text-slate-400 text-sm flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {p.preferredTimeWindow}
+                              </span>
                             </div>
                             <div className="grid sm:grid-cols-2 gap-4">
                               <div>
@@ -255,7 +274,12 @@ export default function RutasPage() {
                             </div>
                             {p.specialInstructions && (
                               <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                                <p className="text-xs font-bold text-amber-700 mb-0.5">⚠️ {t("rutas.instructions")}</p>
+                                <p className="text-xs font-bold text-amber-700 mb-0.5 flex items-center gap-1.5">
+                                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                  </svg>
+                                  {t("rutas.instructions")}
+                                </p>
                                 <p className="text-amber-800 text-sm">{p.specialInstructions}</p>
                               </div>
                             )}
@@ -266,7 +290,10 @@ export default function RutasPage() {
                             rel="noopener noreferrer"
                             className="shrink-0 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1"
                           >
-                            🗺️ Maps
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            Maps
                           </a>
                         </div>
                       </div>
@@ -300,7 +327,7 @@ export default function RutasPage() {
                               <div>{p.pickupAddress}</div>
                               <div style={{ color: "#64748b", fontSize: "10px" }}>{p.pickupCity}{p.pickupState ? `, ${p.pickupState}` : ""}</div>
                               {p.specialInstructions && (
-                                <div style={{ color: "#b45309", fontSize: "10px", marginTop: "2px" }}>⚠️ {p.specialInstructions}</div>
+                                <div style={{ color: "#b45309", fontSize: "10px", marginTop: "2px" }}><strong>{t("rutas.instructions")}:</strong> {p.specialInstructions}</div>
                               )}
                             </td>
                             <td style={{ padding: "8px 6px" }}>
@@ -337,7 +364,9 @@ export default function RutasPage() {
 
           {!routeData && !loading && !error && (
             <div className="bg-white border-2 border-dashed border-slate-200 rounded-2xl p-16 text-center">
-              <div className="text-5xl mb-4 opacity-40">📄</div>
+              <svg className="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
               <p className="font-bold text-slate-700 text-lg mb-1">{t("rutas.selectPrompt")}</p>
               <p className="text-slate-400 text-sm">{t("rutas.selectPromptDesc")}</p>
             </div>

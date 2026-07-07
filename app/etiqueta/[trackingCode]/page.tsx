@@ -23,6 +23,8 @@ interface LabelData {
   destinationCountry: string;
   packageType: string;
   estimatedWeight: number | null;
+  hsCode: string | null;
+  declaredValue: number | null;
   preferredDate: string;
   preferredTimeWindow: string;
   specialInstructions: string | null;
@@ -97,9 +99,12 @@ export default function EtiquetaPage() {
       <div className="no-print fixed top-4 right-4 z-10 flex gap-2">
         <button
           onClick={() => window.print()}
-          className="px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-slate-700 transition-colors"
+          className="px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-lg shadow-lg hover:bg-slate-700 transition-colors inline-flex items-center gap-1.5"
         >
-          🖨️ Print label
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Print label
         </button>
         <button
           onClick={() => window.close()}
@@ -159,7 +164,7 @@ export default function EtiquetaPage() {
               {data.pickupCity}{data.pickupState ? `, ${data.pickupState}` : ""}{data.pickupPostalCode ? ` ${data.pickupPostalCode}` : ""}
             </div>
             <div style={{ fontSize: "9pt" }}>{data.pickupCountry}</div>
-            <div style={{ fontSize: "9pt", marginTop: "3px" }}>📞 {data.contactPhone}</div>
+            <div style={{ fontSize: "9pt", marginTop: "3px" }}>Tel: {data.contactPhone}</div>
           </div>
           {/* TO */}
           <div style={{ flex: 1, padding: "8px 10px" }}>
@@ -170,7 +175,7 @@ export default function EtiquetaPage() {
               {data.recipientCity}{data.recipientState ? `, ${data.recipientState}` : ""}{data.recipientPostalCode ? ` ${data.recipientPostalCode}` : ""}
             </div>
             <div style={{ fontSize: "9pt" }}>{data.destinationCountry || data.recipientCountry}</div>
-            <div style={{ fontSize: "9pt", marginTop: "3px" }}>📞 {data.recipientPhone}</div>
+            <div style={{ fontSize: "9pt", marginTop: "3px" }}>Tel: {data.recipientPhone}</div>
           </div>
         </div>
 
@@ -188,6 +193,24 @@ export default function EtiquetaPage() {
             </div>
           ))}
         </div>
+
+        {/* Customs row — only when provided */}
+        {(data.hsCode || data.declaredValue != null) && (
+          <div style={{ display: "flex", borderBottom: "1px solid #ccc", padding: "5px 10px", background: "#fff" }}>
+            {data.hsCode && (
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: "7pt", color: "#666", textTransform: "uppercase" }}>HS code: </span>
+                <span style={{ fontSize: "9pt", fontWeight: "bold" }}>{data.hsCode}</span>
+              </div>
+            )}
+            {data.declaredValue != null && (
+              <div style={{ flex: 1, textAlign: data.hsCode ? "right" : "left" }}>
+                <span style={{ fontSize: "7pt", color: "#666", textTransform: "uppercase" }}>Declared value: </span>
+                <span style={{ fontSize: "9pt", fontWeight: "bold" }}>${data.declaredValue.toFixed(2)} USD</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Pickup date / time */}
         <div style={{ display: "flex", borderBottom: "1px solid #ccc", padding: "5px 10px", background: "#fff" }}>

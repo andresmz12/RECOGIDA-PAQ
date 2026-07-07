@@ -37,8 +37,31 @@ model User {
   pickupRequests     PickupRequest[] @relation("CustomerRequests")
   courierAssignments PickupRequest[] @relation("CourierAssignments")
   comments           Comment[]       @relation("AuthoredComments")
+  savedRecipients    SavedRecipient[]
   termsAcceptedAt    DateTime?
   createdAt          DateTime        @default(now())
+}
+
+// A customer's saved recipient — lets recurring shippers (same person
+// receiving every time) skip re-typing recipient info on each request.
+model SavedRecipient {
+  id                      String   @id @default(cuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label                   String
+  recipientName           String
+  recipientPhone          String
+  recipientPhoneSecondary String?
+  recipientEmail          String?
+  recipientAddress        String
+  recipientCity           String
+  recipientState          String?
+  recipientPostalCode     String?
+  recipientCountry        String
+  destinationCountry      String
+  createdAt               DateTime @default(now())
+
+  @@index([userId])
 }
 
 model PickupRequest {
@@ -69,6 +92,11 @@ model PickupRequest {
   dimensions          String?
   packageContents     String?
   packageItems        String?
+  // International customs fields — declaredValue/insuranceValue are USD.
+  hsCode              String?
+  declaredValue       Float?
+  insuranceRequested  Boolean         @default(false)
+  insuranceValue      Float?
   preferredDate       DateTime
   preferredTimeWindow String
   specialInstructions String?

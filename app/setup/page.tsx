@@ -36,7 +36,7 @@ export default function SetupPage() {
         return;
       }
 
-      setSuccess("✅ Admin user created successfully!");
+      setSuccess("Admin user created successfully.");
       setTimeout(() => {
         router.push("/login");
       }, 2000);
