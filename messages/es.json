@@ -651,7 +651,9 @@
     "trackingNotFound": "Código de rastreo no encontrado",
     "errorLoad": "Error al cargar la información de rastreo",
     "share": "Compartir",
-    "linkCopied": "¡Enlace copiado!"
+    "linkCopied": "¡Enlace copiado!",
+    "backToAccount": "← Volver a mi cuenta",
+    "backToPanel": "← Volver al panel"
   },
   "auth": {
     "forgotTitle": "¿Olvidaste tu contraseña?",

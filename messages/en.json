@@ -651,7 +651,9 @@
     "trackingNotFound": "Tracking code not found",
     "errorLoad": "Error loading tracking information",
     "share": "Share",
-    "linkCopied": "Link copied!"
+    "linkCopied": "Link copied!",
+    "backToAccount": "← Back to my account",
+    "backToPanel": "← Back to dashboard"
   },
   "auth": {
     "forgotTitle": "Forgot password?",

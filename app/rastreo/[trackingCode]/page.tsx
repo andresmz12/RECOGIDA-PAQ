@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
@@ -43,7 +44,18 @@ function stepIndex(status: string) {
 
 export default function RastreoPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const { t, lang } = useT();
+
+  // "Back" should return the user to where they came from: customers to
+  // their account, staff to the dashboard, guests to the landing page.
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const backHref = !role ? "/" : role === "CUSTOMER" ? "/mi-cuenta" : "/dashboard";
+  const backLabel = !role
+    ? "rastreo.backHome"
+    : role === "CUSTOMER"
+    ? "rastreo.backToAccount"
+    : "rastreo.backToPanel";
   const locale = lang === "en" ? "en-US" : "es-CO";
   const trackingCode = params.trackingCode as string;
   const [tracking, setTracking] = useState<TrackingData | null>(null);
@@ -105,8 +117,8 @@ export default function RastreoPage() {
             <h1 className="text-2xl font-black text-slate-900 mb-3">{t("rastreo.notFound")}</h1>
             <p className="text-slate-600 mb-8">{error}</p>
             <div className="flex gap-3 justify-center">
-              <Link href="/">
-                <Button variant="outline">{t("rastreo.backHome")}</Button>
+              <Link href={backHref}>
+                <Button variant="outline">{t(backLabel)}</Button>
               </Link>
               <Link href="/recoger">
                 <Button variant="primary">{t("rastreo.createNew")}</Button>
@@ -140,8 +152,8 @@ export default function RastreoPage() {
       <Container size="md">
         {/* Back link + share + lang switcher */}
         <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5">
-            {t("rastreo.backHome")}
+          <Link href={backHref} className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5">
+            {t(backLabel)}
           </Link>
           <div className="flex items-center gap-3">
             <button
@@ -305,8 +317,8 @@ export default function RastreoPage() {
         <div className="text-center space-y-4">
           <p className="text-slate-600 font-medium">{t("rastreo.needHelp")}</p>
           <div className="flex gap-3 justify-center flex-wrap">
-            <Link href="/">
-              <Button variant="outline">{t("rastreo.backHome")}</Button>
+            <Link href={backHref}>
+              <Button variant="outline">{t(backLabel)}</Button>
             </Link>
             <Link href="/recoger">
               <Button variant="primary">{t("rastreo.createNew")} →</Button>
