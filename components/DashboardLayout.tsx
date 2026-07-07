@@ -64,6 +64,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/dashboard/soporte",
+    key: "nav.soporte",
+    exact: false,
+    roles: ["ADMIN", "DISPATCHER"],
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/usuarios",
     key: "nav.usuarios",
     exact: false,
@@ -115,6 +126,7 @@ const PAGE_TITLE_KEYS: Array<{ match: (p: string) => boolean; key: string }> = [
   { match: (p) => p.startsWith("/dashboard/solicitudes"), key: "pageTitles.solicitudes" },
   { match: (p) => p.startsWith("/dashboard/mapa"), key: "pageTitles.mapa" },
   { match: (p) => p.startsWith("/dashboard/mis-recogidas"), key: "pageTitles.misRecogidas" },
+  { match: (p) => p.startsWith("/dashboard/soporte"), key: "pageTitles.soporte" },
   { match: (p) => p.startsWith("/dashboard/usuarios"), key: "pageTitles.usuarios" },
   { match: (p) => p.startsWith("/dashboard/calendario"), key: "pageTitles.calendario" },
   { match: (p) => p.startsWith("/dashboard/rutas"), key: "pageTitles.rutasPdf" },
@@ -136,6 +148,21 @@ function SidebarContent({
   onNavigate?: () => void;
 }) {
   const { t } = useT();
+  const [unreadChats, setUnreadChats] = useState(0);
+
+  useEffect(() => {
+    if (!["ADMIN", "DISPATCHER"].includes(role)) return;
+    const load = () => {
+      fetch("/api/support-chat/unread-count")
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setUnreadChats(d.count); })
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, [role]);
+
   return (
     <>
       {/* Logo */}
@@ -174,7 +201,12 @@ function SidebarContent({
               <span className={isActive ? "text-white" : "text-slate-500"}>
                 {item.icon}
               </span>
-              {t(item.key)}
+              <span className="flex-1">{t(item.key)}</span>
+              {item.href === "/dashboard/soporte" && unreadChats > 0 && (
+                <span className="shrink-0 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center">
+                  {unreadChats}
+                </span>
+              )}
             </Link>
           );
         })}

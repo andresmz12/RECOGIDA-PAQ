@@ -11,7 +11,8 @@
     "navegacion": "Navigation",
     "cerrarSesion": "Sign out",
     "panelControl": "Control Panel",
-    "descuentos": "Discounts"
+    "descuentos": "Discounts",
+    "soporte": "Support"
   },
   "roles": {
     "ADMIN": "Administrator",
@@ -29,7 +30,8 @@
     "rutasPdf": "Routes PDF",
     "precios": "Pricing",
     "calendario": "Calendar",
-    "descuentos": "Discount Codes"
+    "descuentos": "Discount Codes",
+    "soporte": "Support"
   },
   "common": {
     "loading": "Loading...",
@@ -762,5 +764,20 @@
     "desc": "An unexpected error occurred. Please try again.",
     "retry": "Try again",
     "home": "Back to home"
+  },
+  "chat": {
+    "open": "Open support chat",
+    "title": "Support chat",
+    "subtitle": "We usually reply within a few hours",
+    "empty": "Send us a message and our team will reply here.",
+    "placeholder": "Type a message..."
+  },
+  "soporte": {
+    "title": "Customer Support",
+    "subtitle": "Conversations with customers — answered here, seen by them in their account.",
+    "noThreads": "No conversations yet.",
+    "selectPrompt": "Select a conversation to view it.",
+    "youPrefix": "You:",
+    "send": "Send"
   }
 }

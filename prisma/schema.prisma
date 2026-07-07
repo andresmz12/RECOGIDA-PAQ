@@ -38,6 +38,7 @@ model User {
   courierAssignments PickupRequest[] @relation("CourierAssignments")
   comments           Comment[]       @relation("AuthoredComments")
   savedRecipients    SavedRecipient[]
+  supportMessages    SupportMessage[] @relation("SupportThreadOwner")
   termsAcceptedAt    DateTime?
   createdAt          DateTime        @default(now())
 }
@@ -157,6 +158,28 @@ model Comment {
   createdAt       DateTime      @default(now())
 
   @@index([pickupRequestId])
+}
+
+// One continuous support conversation per customer — not tied to a single
+// pickup request. Separate from Comment (which is staff-internal notes and
+// must never reach the customer); every message here is visible to both
+// sides by design.
+model SupportMessage {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       User     @relation("SupportThreadOwner", fields: [customerId], references: [id], onDelete: Cascade)
+  senderId       String
+  senderName     String
+  senderRole     String
+  isFromCustomer Boolean
+  body           String
+  createdAt      DateTime @default(now())
+  // Read receipts are per side, not per staff member — any staff member
+  // reading the thread marks it read for "staff" as a whole.
+  readByCustomer Boolean  @default(false)
+  readByStaff    Boolean  @default(false)
+
+  @@index([customerId, createdAt])
 }
 
 model Pricing {

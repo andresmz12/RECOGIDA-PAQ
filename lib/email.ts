@@ -581,3 +581,48 @@ export async function sendPasswordChangedEmail(
 
   await sendEmail(email, copy.subject, html, text);
 }
+
+// ── Support chat reply notification ─────────────────────────────────
+export async function sendSupportReplyEmail(
+  email: string,
+  name: string,
+  lang: "en" | "es" = "es"
+) {
+  const chatUrl = `${BASE_URL}/mi-cuenta`;
+
+  const copy = lang === "es"
+    ? {
+        subject: "Nueva respuesta de soporte — O'Globo Cargo",
+        title: "Tienes una respuesta de soporte",
+        preheader: "Nuestro equipo respondió tu mensaje en el chat de soporte.",
+        hi: `Hola <strong>${esc(name)}</strong>,`,
+        hiText: `Hola ${name},`,
+        body: "Nuestro equipo de soporte respondió tu mensaje. Ingresa a tu cuenta para ver la conversación completa.",
+        cta: "Ver conversación →",
+        linkText: `Ver conversación: ${chatUrl}`,
+      }
+    : {
+        subject: "New support reply — O'Globo Cargo",
+        title: "You have a support reply",
+        preheader: "Our team replied to your message in the support chat.",
+        hi: `Hi <strong>${esc(name)}</strong>,`,
+        hiText: `Hi ${name},`,
+        body: "Our support team replied to your message. Sign in to your account to see the full conversation.",
+        cta: "View conversation →",
+        linkText: `View conversation: ${chatUrl}`,
+      };
+
+  const html = layout({
+    title: copy.title,
+    preheader: copy.preheader,
+    body: `
+      <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
+      <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.body}</p>
+      ${button(chatUrl, copy.cta)}
+    `,
+  });
+
+  const text = [copy.hiText, ``, copy.body, ``, copy.linkText, ``, `O'Globo Cargo — International Logistics`].join("\n");
+
+  await sendEmail(email, copy.subject, html, text);
+}

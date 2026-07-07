@@ -11,7 +11,8 @@
     "navegacion": "Navegación",
     "cerrarSesion": "Cerrar sesión",
     "panelControl": "Panel de Control",
-    "descuentos": "Descuentos"
+    "descuentos": "Descuentos",
+    "soporte": "Soporte"
   },
   "roles": {
     "ADMIN": "Administrador",
@@ -29,7 +30,8 @@
     "rutasPdf": "Rutas PDF",
     "precios": "Precios",
     "calendario": "Calendario",
-    "descuentos": "Códigos de Descuento"
+    "descuentos": "Códigos de Descuento",
+    "soporte": "Soporte"
   },
   "common": {
     "loading": "Cargando...",
@@ -762,5 +764,20 @@
     "desc": "Ocurrió un error inesperado. Por favor intenta de nuevo.",
     "retry": "Intentar de nuevo",
     "home": "Volver al inicio"
+  },
+  "chat": {
+    "open": "Abrir chat de soporte",
+    "title": "Chat de soporte",
+    "subtitle": "Normalmente respondemos en pocas horas",
+    "empty": "Escríbenos y nuestro equipo te responderá aquí.",
+    "placeholder": "Escribe un mensaje..."
+  },
+  "soporte": {
+    "title": "Soporte a Clientes",
+    "subtitle": "Conversaciones con clientes — respondidas aquí, visibles para ellos en su cuenta.",
+    "noThreads": "Aún no hay conversaciones.",
+    "selectPrompt": "Selecciona una conversación para verla.",
+    "youPrefix": "Tú:",
+    "send": "Enviar"
   }
 }

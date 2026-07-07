@@ -9,6 +9,7 @@ import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n-context";
+import SupportChatWidget from "@/components/SupportChatWidget";
 
 const COUNTRY_NAMES: Record<string, string> = {
   HN: "Honduras", GT: "Guatemala", SV: "El Salvador", NI: "Nicaragua",
@@ -451,6 +452,7 @@ export default function MiCuentaPage() {
           </div>
         )}
       </div>
+      {status === "authenticated" && <SupportChatWidget />}
     </div>
   );
 }
