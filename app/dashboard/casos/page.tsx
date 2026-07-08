@@ -18,7 +18,7 @@ interface CaseItem {
   resolutionNotes: string | null;
   createdByName: string;
   createdAt: string;
-  customer: { id: string; name: string; email: string };
+  customer: { id: string; name: string; email: string } | null;
   pickupRequest: { trackingCode: string; contactName: string; pickupCity: string };
 }
 
@@ -114,7 +114,7 @@ export default function CasosPage() {
                       </span>
                     </div>
                     <Link href={`/dashboard/solicitudes/${c.pickupRequestId}`} className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">
-                      {c.pickupRequest?.trackingCode} · {c.customer?.name} ({c.customer?.email})
+                      {c.pickupRequest?.trackingCode} · {c.customer ? `${c.customer.name} (${c.customer.email})` : `${c.pickupRequest?.contactName} · ${t("casos.guestCustomer")}`}
                     </Link>
                   </div>
                   <span className="text-xs text-slate-400 shrink-0">

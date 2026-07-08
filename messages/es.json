@@ -445,7 +445,6 @@
     "insuranceValue": "Valor asegurado",
     "casesTitle": "Casos",
     "caseOpenNew": "+ Abrir caso",
-    "caseNeedsAccount": "Esta solicitud no tiene una cuenta de cliente vinculada",
     "caseType": "Tipo de caso",
     "caseType_LOST": "Paquete perdido",
     "caseType_DAMAGED": "Paquete dañado",
@@ -810,6 +809,7 @@
     "status_IN_PROGRESS": "En proceso",
     "status_RESOLVED": "Resuelto",
     "resolutionPlaceholder": "Notas de resolución (opcional)",
-    "resolvedBy": "Abierto por {{name}}"
+    "resolvedBy": "Abierto por {{name}}",
+    "guestCustomer": "invitado (sin cuenta)"
   }
 }

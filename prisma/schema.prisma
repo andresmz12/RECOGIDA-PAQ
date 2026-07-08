@@ -199,15 +199,17 @@ model SupportMessage {
   @@index([customerId, createdAt])
 }
 
-// A support case opened by staff for a specific shipment problem (lost,
-// damaged, delayed, etc). Visible to the customer on their account, and
-// tracked by staff until resolved.
+// A support case opened by staff (ADMIN or DISPATCHER) for a specific
+// shipment problem (lost, damaged, delayed, etc). customerId is optional
+// because a pickup request can be created without an account (guest
+// checkout) — the case still needs to be openable; it just won't show up
+// under "Mi Cuenta" unless the pickup has a linked customer.
 model Case {
   id              String     @id @default(cuid())
   pickupRequestId String
   pickupRequest   PickupRequest @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
-  customerId      String
-  customer        User       @relation("CustomerCases", fields: [customerId], references: [id], onDelete: Cascade)
+  customerId      String?
+  customer        User?      @relation("CustomerCases", fields: [customerId], references: [id], onDelete: Cascade)
   createdById     String
   createdByName   String
   type            CaseType

@@ -445,7 +445,6 @@
     "insuranceValue": "Insured value",
     "casesTitle": "Cases",
     "caseOpenNew": "+ Open case",
-    "caseNeedsAccount": "This request has no linked customer account",
     "caseType": "Case type",
     "caseType_LOST": "Lost package",
     "caseType_DAMAGED": "Damaged package",
@@ -810,6 +809,7 @@
     "status_IN_PROGRESS": "In progress",
     "status_RESOLVED": "Resolved",
     "resolutionPlaceholder": "Resolution notes (optional)",
-    "resolvedBy": "Opened by {{name}}"
+    "resolvedBy": "Opened by {{name}}",
+    "guestCustomer": "guest (no account)"
   }
 }

@@ -184,7 +184,7 @@ interface CaseItem {
   createdAt: string;
 }
 
-function CasesSection({ pickupId, hasCustomer }: { pickupId: string; hasCustomer: boolean }) {
+function CasesSection({ pickupId }: { pickupId: string }) {
   const { t } = useT();
   const [cases, setCases] = useState<CaseItem[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -245,9 +245,7 @@ function CasesSection({ pickupId, hasCustomer }: { pickupId: string; hasCustomer
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            disabled={!hasCustomer}
-            title={!hasCustomer ? t("detail.caseNeedsAccount") : undefined}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-xs font-bold text-indigo-600 hover:text-indigo-700"
           >
             {t("detail.caseOpenNew")}
           </button>
@@ -696,7 +694,7 @@ export default function SolicitudDetailPage() {
 
             {/* Cases — lost/damaged/delayed shipment reports */}
             {["ADMIN", "DISPATCHER"].includes(role) && (
-              <CasesSection pickupId={pickup.id} hasCustomer={!!pickup.user} />
+              <CasesSection pickupId={pickup.id} />
             )}
 
             {/* Internal comments */}

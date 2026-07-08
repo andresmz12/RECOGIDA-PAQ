@@ -62,17 +62,11 @@ export async function POST(req: NextRequest) {
   if (!pickupRequest) {
     return NextResponse.json({ error: "Pickup request not found" }, { status: 404 });
   }
-  if (!pickupRequest.userId) {
-    return NextResponse.json(
-      { error: "This request has no linked customer account, so a case can't be opened for it" },
-      { status: 400 }
-    );
-  }
 
   const newCase = await prisma.case.create({
     data: {
       pickupRequestId,
-      customerId: pickupRequest.userId,
+      customerId: pickupRequest.userId ?? null,
       createdById: staff.id!,
       createdByName: staff.name ?? "O'Globo Cargo",
       type,
