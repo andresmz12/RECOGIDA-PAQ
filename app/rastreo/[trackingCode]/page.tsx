@@ -17,7 +17,11 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 interface StatusHistoryEntry {
   fromStatus: string | null;
   toStatus: string;
-  notes: string | null;
+  createdAt: string;
+}
+
+interface CaseEvent {
+  type: string;
   createdAt: string;
 }
 
@@ -28,7 +32,12 @@ interface TrackingData {
   preferredTimeWindow: string;
   lastUpdated: string;
   statusHistory: StatusHistoryEntry[];
+  caseEvents: CaseEvent[];
 }
+
+type TimelineItem =
+  | { kind: "status"; createdAt: string; fromStatus: string | null; toStatus: string }
+  | { kind: "case"; createdAt: string; type: string };
 
 const STEPS = ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"];
 const STATUS_MSG_KEY: Record<string, string> = {
@@ -273,8 +282,9 @@ export default function RastreoPage() {
           </div>
         )}
 
-        {/* Status History Timeline */}
-        {tracking.statusHistory.length > 0 && (
+        {/* Status History Timeline — merges status transitions with case-
+            opened events, sorted chronologically. */}
+        {(tracking.statusHistory.length > 0 || tracking.caseEvents.length > 0) && (
           <Card variant="default" padding="lg" className="mb-8">
             <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
               <svg className="w-5 h-5 text-navy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,44 +295,41 @@ export default function RastreoPage() {
             <div className="relative">
               <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
               <div className="space-y-6">
-                {[...tracking.statusHistory].reverse().map((entry, i) => {
-                  // A case-opened event doesn't change the shipment status
-                  // (fromStatus === toStatus) — flag it visually as an
-                  // incident note instead of a routine status transition.
-                  const isCaseEvent = !!entry.notes && entry.fromStatus === entry.toStatus;
+                {([
+                  ...tracking.statusHistory.map((e): TimelineItem => ({ kind: "status", createdAt: e.createdAt, fromStatus: e.fromStatus, toStatus: e.toStatus })),
+                  ...tracking.caseEvents.map((e): TimelineItem => ({ kind: "case", createdAt: e.createdAt, type: e.type })),
+                ] as TimelineItem[])
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((item, i) => {
+                  const isCaseEvent = item.kind === "case";
                   return (
                     <div key={i} className="flex gap-4 pl-10 relative">
                       <div className={`absolute left-0 w-6 h-6 bg-white border-2 rounded-full flex items-center justify-center shrink-0 ${isCaseEvent ? "border-amber-500" : "border-indigo-500"}`}>
                         <div className={`w-2 h-2 rounded-full ${isCaseEvent ? "bg-amber-500" : "bg-indigo-500"}`} />
                       </div>
                       <div className="flex-1">
-                        {isCaseEvent ? (
+                        {item.kind === "case" ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                             <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-amber-500" />
-                            {entry.notes}
+                            {t("account.caseOpenPill", { type: t(`account.caseType_${item.type}`) })}
                           </span>
                         ) : (
                           <div className="flex items-center gap-2 flex-wrap">
-                            {entry.fromStatus && (
+                            {item.fromStatus && (
                               <>
-                                <StatusBadge status={entry.fromStatus} />
+                                <StatusBadge status={item.fromStatus} />
                                 <span className="text-slate-300 text-sm">→</span>
                               </>
                             )}
-                            <StatusBadge status={entry.toStatus} />
+                            <StatusBadge status={item.toStatus} />
                           </div>
                         )}
                         <p className="text-xs text-slate-500 mt-1.5 font-medium">
-                          {new Date(entry.createdAt).toLocaleDateString(locale, {
+                          {new Date(item.createdAt).toLocaleDateString(locale, {
                             year: "numeric", month: "long", day: "numeric",
                             hour: "2-digit", minute: "2-digit",
                           })}
                         </p>
-                        {entry.notes && !isCaseEvent && (
-                          <p className="text-sm mt-2 px-3 py-2 rounded-lg border text-slate-700 bg-slate-50 border-slate-100">
-                            {entry.notes}
-                          </p>
-                        )}
                       </div>
                     </div>
                   );

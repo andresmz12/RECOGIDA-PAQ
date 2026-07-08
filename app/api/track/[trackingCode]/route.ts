@@ -15,16 +15,21 @@ export async function GET(
         preferredTimeWindow: true,
         updatedAt: true,
         statusHistory: {
-          // Public endpoint: internal staff notes stay hidden unless the
-          // entry is explicitly flagged safe to show (e.g. a case-opened
-          // event, written for the customer to read).
+          // Public endpoint: internal staff notes never leave this route.
           select: {
             fromStatus: true,
             toStatus: true,
             createdAt: true,
-            notes: true,
-            notesArePublic: true,
           },
+          orderBy: { createdAt: "asc" },
+        },
+        // Read straight from Case rather than a duplicated StatusHistory
+        // note — that way every case shows up here regardless of when it
+        // was opened, with no separate write path to fall out of sync.
+        // Only the case type is exposed; description/resolutionNotes are
+        // internal.
+        cases: {
+          select: { type: true, createdAt: true },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -39,12 +44,7 @@ export async function GET(
 
     const lastHistory = pickupRequest.statusHistory[pickupRequest.statusHistory.length - 1];
 
-    // Strip notes from every entry except the ones explicitly flagged
-    // public — never let an internal staff note slip onto the public page.
-    const statusHistory = pickupRequest.statusHistory.map(({ notesArePublic, notes, ...entry }) => ({
-      ...entry,
-      notes: notesArePublic ? notes : null,
-    }));
+    const caseEvents = pickupRequest.cases.map((c) => ({ type: c.type, createdAt: c.createdAt }));
 
     return NextResponse.json({
       trackingCode: pickupRequest.trackingCode,
@@ -52,7 +52,8 @@ export async function GET(
       estimatedPickupDate: pickupRequest.preferredDate,
       preferredTimeWindow: pickupRequest.preferredTimeWindow,
       lastUpdated: lastHistory?.createdAt || pickupRequest.updatedAt,
-      statusHistory,
+      statusHistory: pickupRequest.statusHistory,
+      caseEvents,
     });
   } catch (error) {
     console.error("Error tracking pickup request:", error);
