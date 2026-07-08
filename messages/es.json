@@ -204,7 +204,8 @@
     "caseType_DAMAGED": "Paquete dañado",
     "caseType_DELAYED": "Envío retrasado",
     "caseType_WRONG_ITEM": "Artículo incorrecto",
-    "caseType_OTHER": "Caso abierto"
+    "caseType_OTHER": "Caso abierto",
+    "caseOpenPill": "Caso abierto: {{type}}"
   },
   "map": {
     "title": "Mapa de Rutas",

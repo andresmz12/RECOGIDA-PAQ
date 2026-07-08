@@ -204,7 +204,8 @@
     "caseType_DAMAGED": "Damaged package",
     "caseType_DELAYED": "Delayed shipment",
     "caseType_WRONG_ITEM": "Wrong item",
-    "caseType_OTHER": "Case opened"
+    "caseType_OTHER": "Case opened",
+    "caseOpenPill": "Case opened: {{type}}"
   },
   "map": {
     "title": "Route Map",
