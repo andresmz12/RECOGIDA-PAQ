@@ -9,6 +9,13 @@ import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useT } from "@/lib/i18n-context";
 
+interface CaseNoteItem {
+  id: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
 interface CaseItem {
   id: string;
   pickupRequestId: string;
@@ -20,6 +27,7 @@ interface CaseItem {
   createdAt: string;
   customer: { id: string; name: string; email: string } | null;
   pickupRequest: { trackingCode: string; contactName: string; pickupCity: string };
+  notes: CaseNoteItem[];
 }
 
 const STATUS_TABS = ["OPEN", "IN_PROGRESS", "RESOLVED", ""] as const;
@@ -38,6 +46,8 @@ export default function CasosPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("OPEN");
   const [resolutionDraft, setResolutionDraft] = useState<Record<string, string>>({});
+  const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
+  const [addingNote, setAddingNote] = useState<string | null>(null);
 
   const role = (session?.user as any)?.role;
 
@@ -69,6 +79,25 @@ export default function CasosPage() {
       body: JSON.stringify(body),
     });
     load();
+  };
+
+  const addNote = async (caseId: string) => {
+    const body = (noteDraft[caseId] ?? "").trim();
+    if (!body) return;
+    setAddingNote(caseId);
+    try {
+      const res = await fetch(`/api/cases/${caseId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      if (res.ok) {
+        setNoteDraft(prev => ({ ...prev, [caseId]: "" }));
+        await load();
+      }
+    } finally {
+      setAddingNote(null);
+    }
   };
 
   return (
@@ -128,6 +157,44 @@ export default function CasosPage() {
                     {c.resolutionNotes}
                   </p>
                 )}
+
+                {/* Running notes log */}
+                <div className="border-t border-slate-100 pt-3 mb-3">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">{t("casos.notesTitle")}</p>
+                  {c.notes.length === 0 ? (
+                    <p className="text-xs text-slate-400 mb-2">{t("casos.noNotes")}</p>
+                  ) : (
+                    <div className="space-y-2 mb-2">
+                      {c.notes.map(n => (
+                        <div key={n.id} className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="font-bold text-slate-700 text-xs">{n.authorName}</span>
+                            <span className="text-[10px] text-slate-400">
+                              {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600">{n.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      value={noteDraft[c.id] ?? ""}
+                      onChange={e => setNoteDraft(prev => ({ ...prev, [c.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addNote(c.id); } }}
+                      placeholder={t("casos.addNotePlaceholder")}
+                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button
+                      onClick={() => addNote(c.id)}
+                      disabled={addingNote === c.id || !(noteDraft[c.id] ?? "").trim()}
+                      className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg transition-colors"
+                    >
+                      {t("casos.addNoteBtn")}
+                    </button>
+                  </div>
+                </div>
 
                 {c.status !== "RESOLVED" ? (
                   <div className="flex flex-wrap items-center gap-2">

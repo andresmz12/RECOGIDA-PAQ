@@ -219,10 +219,26 @@ model Case {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   resolvedAt      DateTime?
+  notes           CaseNote[]
 
   @@index([pickupRequestId])
   @@index([customerId])
   @@index([status])
+}
+
+// A running log of updates on a case — "called the customer", "FedEx
+// confirmed it's in transit", etc — separate from the final resolutionNotes
+// so staff can track progress while the case is still open.
+model CaseNote {
+  id         String   @id @default(cuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  authorId   String
+  authorName String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([caseId, createdAt])
 }
 
 model Pricing {

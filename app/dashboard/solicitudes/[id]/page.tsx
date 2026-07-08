@@ -174,6 +174,13 @@ const CASE_STATUS_COLORS: Record<string, string> = {
   RESOLVED: "bg-emerald-100 text-emerald-700",
 };
 
+interface CaseNoteItem {
+  id: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
 interface CaseItem {
   id: string;
   type: string;
@@ -182,6 +189,7 @@ interface CaseItem {
   resolutionNotes: string | null;
   createdByName: string;
   createdAt: string;
+  notes: CaseNoteItem[];
 }
 
 function CasesSection({ pickupId }: { pickupId: string }) {
@@ -192,6 +200,8 @@ function CasesSection({ pickupId }: { pickupId: string }) {
   const [description, setDescription] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [noteDraft, setNoteDraft] = useState<Record<string, string>>({});
+  const [addingNote, setAddingNote] = useState<string | null>(null);
 
   const load = () =>
     fetch(`/api/cases?pickupRequestId=${pickupId}`)
@@ -231,6 +241,25 @@ function CasesSection({ pickupId }: { pickupId: string }) {
       body: JSON.stringify({ status: newStatus }),
     });
     load();
+  };
+
+  const addNote = async (caseId: string) => {
+    const body = (noteDraft[caseId] ?? "").trim();
+    if (!body) return;
+    setAddingNote(caseId);
+    try {
+      const res = await fetch(`/api/cases/${caseId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      if (res.ok) {
+        setNoteDraft(prev => ({ ...prev, [caseId]: "" }));
+        await load();
+      }
+    } finally {
+      setAddingNote(null);
+    }
   };
 
   return (
@@ -319,6 +348,42 @@ function CasesSection({ pickupId }: { pickupId: string }) {
                   {c.resolutionNotes}
                 </p>
               )}
+
+              {/* Running notes log */}
+              <div className="border-t border-slate-200 pt-2 mb-2">
+                {c.notes.length > 0 && (
+                  <div className="space-y-1.5 mb-2">
+                    {c.notes.map(n => (
+                      <div key={n.id} className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="font-bold text-slate-600 text-[11px]">{n.authorName}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600">{n.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    value={noteDraft[c.id] ?? ""}
+                    onChange={e => setNoteDraft(prev => ({ ...prev, [c.id]: e.target.value }))}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addNote(c.id); } }}
+                    placeholder={t("casos.addNotePlaceholder")}
+                    className="flex-1 px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    onClick={() => addNote(c.id)}
+                    disabled={addingNote === c.id || !(noteDraft[c.id] ?? "").trim()}
+                    className="px-3 py-1.5 text-xs font-semibold bg-slate-700 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  >
+                    {t("casos.addNoteBtn")}
+                  </button>
+                </div>
+              </div>
+
               {c.status !== "RESOLVED" && (
                 <div className="flex gap-2">
                   {c.status === "OPEN" && (

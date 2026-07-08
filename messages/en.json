@@ -810,6 +810,10 @@
     "status_RESOLVED": "Resolved",
     "resolutionPlaceholder": "Resolution notes (optional)",
     "resolvedBy": "Opened by {{name}}",
-    "guestCustomer": "guest (no account)"
+    "guestCustomer": "guest (no account)",
+    "notesTitle": "Case notes",
+    "noNotes": "No notes yet — log updates here as you work the case.",
+    "addNotePlaceholder": "Add an update...",
+    "addNoteBtn": "Add"
   }
 }

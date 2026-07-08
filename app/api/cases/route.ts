@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
     include: {
       customer: { select: { id: true, name: true, email: true } },
       pickupRequest: { select: { trackingCode: true, contactName: true, pickupCity: true } },
+      notes: { orderBy: { createdAt: "asc" } },
     },
     orderBy: { createdAt: "desc" },
   });

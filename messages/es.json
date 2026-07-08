@@ -810,6 +810,10 @@
     "status_RESOLVED": "Resuelto",
     "resolutionPlaceholder": "Notas de resolución (opcional)",
     "resolvedBy": "Abierto por {{name}}",
-    "guestCustomer": "invitado (sin cuenta)"
+    "guestCustomer": "invitado (sin cuenta)",
+    "notesTitle": "Notas del caso",
+    "noNotes": "Aún no hay notas — deja aquí las actualizaciones mientras trabajas el caso.",
+    "addNotePlaceholder": "Agregar una actualización...",
+    "addNoteBtn": "Agregar"
   }
 }
