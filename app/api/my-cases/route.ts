@@ -16,7 +16,12 @@ export async function GET() {
 
   const cases = await prisma.case.findMany({
     where: { customerId: user.id },
-    include: {
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      // description/resolutionNotes are internal staff detail — never sent
+      // to the customer-facing account page (see PickupCard's openCase use).
       pickupRequest: { select: { trackingCode: true } },
     },
     orderBy: { createdAt: "desc" },
