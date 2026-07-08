@@ -88,9 +88,7 @@ export async function POST(req: NextRequest) {
   // status, just a note flagged safe to expose (see notesArePublic).
   const isEnglish = (pickupRequest as any).lang === "en";
   const typeLabel = (isEnglish ? CASE_TYPE_LABELS_EN : CASE_TYPE_LABELS_ES)[type];
-  const eventNote = isEnglish
-    ? `Case opened: ${typeLabel} — ${description.trim()}`
-    : `Caso abierto: ${typeLabel} — ${description.trim()}`;
+  const eventNote = isEnglish ? `Case opened: ${typeLabel}` : `Caso abierto: ${typeLabel}`;
   await prisma.statusHistory.create({
     data: {
       pickupRequestId,

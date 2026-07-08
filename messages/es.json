@@ -717,8 +717,7 @@
     "share": "Compartir",
     "linkCopied": "¡Enlace copiado!",
     "backToAccount": "← Volver a mi cuenta",
-    "backToPanel": "← Volver al panel",
-    "caseEventLabel": "Actualización de envío"
+    "backToPanel": "← Volver al panel"
   },
   "auth": {
     "forgotTitle": "¿Olvidaste tu contraseña?",

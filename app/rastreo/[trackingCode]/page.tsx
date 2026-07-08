@@ -297,7 +297,10 @@ export default function RastreoPage() {
                       </div>
                       <div className="flex-1">
                         {isCaseEvent ? (
-                          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">{t("rastreo.caseEventLabel")}</p>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-amber-500" />
+                            {entry.notes}
+                          </span>
                         ) : (
                           <div className="flex items-center gap-2 flex-wrap">
                             {entry.fromStatus && (
@@ -315,12 +318,8 @@ export default function RastreoPage() {
                             hour: "2-digit", minute: "2-digit",
                           })}
                         </p>
-                        {entry.notes && (
-                          <p className={`text-sm mt-2 px-3 py-2 rounded-lg border ${
-                            isCaseEvent
-                              ? "text-amber-800 bg-amber-50 border-amber-200"
-                              : "text-slate-700 bg-slate-50 border-slate-100"
-                          }`}>
+                        {entry.notes && !isCaseEvent && (
+                          <p className="text-sm mt-2 px-3 py-2 rounded-lg border text-slate-700 bg-slate-50 border-slate-100">
                             {entry.notes}
                           </p>
                         )}
