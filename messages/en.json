@@ -717,7 +717,8 @@
     "share": "Share",
     "linkCopied": "Link copied!",
     "backToAccount": "← Back to my account",
-    "backToPanel": "← Back to dashboard"
+    "backToPanel": "← Back to dashboard",
+    "caseEventLabel": "Shipment update"
   },
   "auth": {
     "forgotTitle": "Forgot password?",

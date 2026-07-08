@@ -285,35 +285,49 @@ export default function RastreoPage() {
             <div className="relative">
               <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
               <div className="space-y-6">
-                {[...tracking.statusHistory].reverse().map((entry, i) => (
-                  <div key={i} className="flex gap-4 pl-10 relative">
-                    <div className="absolute left-0 w-6 h-6 bg-white border-2 border-indigo-500 rounded-full flex items-center justify-center shrink-0">
-                      <div className="w-2 h-2 bg-indigo-500 rounded-full" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {entry.fromStatus && (
-                          <>
-                            <StatusBadge status={entry.fromStatus} />
-                            <span className="text-slate-300 text-sm">→</span>
-                          </>
-                        )}
-                        <StatusBadge status={entry.toStatus} />
+                {[...tracking.statusHistory].reverse().map((entry, i) => {
+                  // A case-opened event doesn't change the shipment status
+                  // (fromStatus === toStatus) — flag it visually as an
+                  // incident note instead of a routine status transition.
+                  const isCaseEvent = !!entry.notes && entry.fromStatus === entry.toStatus;
+                  return (
+                    <div key={i} className="flex gap-4 pl-10 relative">
+                      <div className={`absolute left-0 w-6 h-6 bg-white border-2 rounded-full flex items-center justify-center shrink-0 ${isCaseEvent ? "border-amber-500" : "border-indigo-500"}`}>
+                        <div className={`w-2 h-2 rounded-full ${isCaseEvent ? "bg-amber-500" : "bg-indigo-500"}`} />
                       </div>
-                      <p className="text-xs text-slate-500 mt-1.5 font-medium">
-                        {new Date(entry.createdAt).toLocaleDateString(locale, {
-                          year: "numeric", month: "long", day: "numeric",
-                          hour: "2-digit", minute: "2-digit",
-                        })}
-                      </p>
-                      {entry.notes && (
-                        <p className="text-sm text-slate-700 mt-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
-                          {entry.notes}
+                      <div className="flex-1">
+                        {isCaseEvent ? (
+                          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">{t("rastreo.caseEventLabel")}</p>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {entry.fromStatus && (
+                              <>
+                                <StatusBadge status={entry.fromStatus} />
+                                <span className="text-slate-300 text-sm">→</span>
+                              </>
+                            )}
+                            <StatusBadge status={entry.toStatus} />
+                          </div>
+                        )}
+                        <p className="text-xs text-slate-500 mt-1.5 font-medium">
+                          {new Date(entry.createdAt).toLocaleDateString(locale, {
+                            year: "numeric", month: "long", day: "numeric",
+                            hour: "2-digit", minute: "2-digit",
+                          })}
                         </p>
-                      )}
+                        {entry.notes && (
+                          <p className={`text-sm mt-2 px-3 py-2 rounded-lg border ${
+                            isCaseEvent
+                              ? "text-amber-800 bg-amber-50 border-amber-200"
+                              : "text-slate-700 bg-slate-50 border-slate-100"
+                          }`}>
+                            {entry.notes}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </Card>

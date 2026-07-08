@@ -158,6 +158,11 @@ model StatusHistory {
   toStatus        PickupStatus
   changedById     String?
   notes           String?
+  // Most `notes` are internal staff shorthand and must never reach the
+  // public tracking page. Case-opened entries are the one kind of note
+  // written specifically for the customer to read — this flag is the only
+  // thing that lets /api/track expose a note without risking a leak.
+  notesArePublic  Boolean        @default(false)
   createdAt       DateTime       @default(now())
 
   @@index([pickupRequestId])

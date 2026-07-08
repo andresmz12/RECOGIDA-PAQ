@@ -9,6 +9,15 @@ export const dynamic = "force-dynamic";
 const STAFF_ROLES = ["ADMIN", "DISPATCHER"];
 const CASE_TYPES = ["LOST", "DAMAGED", "DELAYED", "WRONG_ITEM", "OTHER"];
 
+const CASE_TYPE_LABELS_ES: Record<string, string> = {
+  LOST: "Paquete perdido", DAMAGED: "Paquete dañado", DELAYED: "Envío retrasado",
+  WRONG_ITEM: "Artículo incorrecto", OTHER: "Otro",
+};
+const CASE_TYPE_LABELS_EN: Record<string, string> = {
+  LOST: "Lost package", DAMAGED: "Damaged package", DELAYED: "Delayed shipment",
+  WRONG_ITEM: "Wrong item", OTHER: "Other",
+};
+
 async function requireStaff() {
   const session = await getServerSession(authOptions);
   const user = session?.user as { id?: string; role?: string; name?: string | null } | undefined;
@@ -58,7 +67,7 @@ export async function POST(req: NextRequest) {
 
   const pickupRequest = await prisma.pickupRequest.findUnique({
     where: { id: pickupRequestId },
-    select: { id: true, userId: true, trackingCode: true, contactEmail: true, contactName: true, lang: true },
+    select: { id: true, userId: true, trackingCode: true, contactEmail: true, contactName: true, lang: true, status: true },
   });
   if (!pickupRequest) {
     return NextResponse.json({ error: "Pickup request not found" }, { status: 404 });
@@ -72,6 +81,24 @@ export async function POST(req: NextRequest) {
       createdByName: staff.name ?? "O'Globo Cargo",
       type,
       description: description.trim(),
+    },
+  });
+
+  // Surface the case on the customer's public tracking timeline — same
+  // status, just a note flagged safe to expose (see notesArePublic).
+  const isEnglish = (pickupRequest as any).lang === "en";
+  const typeLabel = (isEnglish ? CASE_TYPE_LABELS_EN : CASE_TYPE_LABELS_ES)[type];
+  const eventNote = isEnglish
+    ? `Case opened: ${typeLabel} — ${description.trim()}`
+    : `Caso abierto: ${typeLabel} — ${description.trim()}`;
+  await prisma.statusHistory.create({
+    data: {
+      pickupRequestId,
+      fromStatus: pickupRequest.status,
+      toStatus: pickupRequest.status,
+      changedById: staff.id!,
+      notes: eventNote,
+      notesArePublic: true,
     },
   });
 
