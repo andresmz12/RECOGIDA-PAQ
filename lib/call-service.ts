@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { launchCall } from "@/lib/zyra-client";
+import { launchCall, CallCustomContext } from "@/lib/zyra-client";
 
 const AGENT_ID_CONFIRMATION = parseInt(
   process.env.ZYRA_AGENT_ID_CONFIRMATION || "0"
@@ -25,10 +25,11 @@ async function attemptCall(
   pickupRequestId: string,
   phone: string,
   agentId: number,
-  attemptsUsed: number
+  attemptsUsed: number,
+  customContext?: CallCustomContext
 ): Promise<void> {
   try {
-    const result = await launchCall(normalizePhone(phone), agentId);
+    const result = await launchCall(normalizePhone(phone), agentId, customContext);
 
     await prisma.pickupRequest.update({
       where: { id: pickupRequestId },
@@ -47,7 +48,7 @@ async function attemptCall(
 
     if (attemptsUsed + 1 < MAX_ATTEMPTS) {
       setTimeout(
-        () => attemptCall(pickupRequestId, phone, agentId, attemptsUsed + 1),
+        () => attemptCall(pickupRequestId, phone, agentId, attemptsUsed + 1, customContext),
         RETRY_DELAY_MS
       );
     } else {
@@ -64,7 +65,15 @@ export async function triggerConfirmationCall(
   try {
     const req = await prisma.pickupRequest.findUnique({
       where: { id: pickupRequestId },
-      select: { contactPhone: true, callAttempts: true },
+      select: {
+        contactPhone: true,
+        callAttempts: true,
+        trackingCode: true,
+        contactName: true,
+        pickupAddress: true,
+        recipientName: true,
+        recipientAddress: true,
+      },
     });
 
     if (!req) {
@@ -79,7 +88,15 @@ export async function triggerConfirmationCall(
       return;
     }
 
-    await attemptCall(pickupRequestId, req.contactPhone, AGENT_ID_CONFIRMATION, 0);
+    const customContext: CallCustomContext = {
+      trackingCode: req.trackingCode,
+      contactName: req.contactName,
+      pickupAddress: req.pickupAddress,
+      recipientName: req.recipientName,
+      recipientAddress: req.recipientAddress,
+    };
+
+    await attemptCall(pickupRequestId, req.contactPhone, AGENT_ID_CONFIRMATION, 0, customContext);
   } catch (err) {
     console.error("[call-service] triggerConfirmationCall error:", err);
   }
@@ -91,7 +108,15 @@ export async function triggerCourierCall(
   try {
     const req = await prisma.pickupRequest.findUnique({
       where: { id: pickupRequestId },
-      select: { contactPhone: true, callAttempts: true },
+      select: {
+        contactPhone: true,
+        callAttempts: true,
+        trackingCode: true,
+        contactName: true,
+        pickupAddress: true,
+        recipientName: true,
+        recipientAddress: true,
+      },
     });
 
     if (!req) {
@@ -106,7 +131,15 @@ export async function triggerCourierCall(
       return;
     }
 
-    await attemptCall(pickupRequestId, req.contactPhone, AGENT_ID_COURIER, 0);
+    const customContext: CallCustomContext = {
+      trackingCode: req.trackingCode,
+      contactName: req.contactName,
+      pickupAddress: req.pickupAddress,
+      recipientName: req.recipientName,
+      recipientAddress: req.recipientAddress,
+    };
+
+    await attemptCall(pickupRequestId, req.contactPhone, AGENT_ID_COURIER, 0, customContext);
   } catch (err) {
     console.error("[call-service] triggerCourierCall error:", err);
   }

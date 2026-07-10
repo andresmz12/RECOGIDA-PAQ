@@ -26,9 +26,18 @@ export function invalidateZyraToken() {
   cachedToken = null;
 }
 
+export interface CallCustomContext {
+  trackingCode: string;
+  contactName: string;
+  pickupAddress: string;
+  recipientName: string;
+  recipientAddress: string;
+}
+
 export async function launchCall(
   phone: string,
-  agentId: number
+  agentId: number,
+  customContext?: CallCustomContext
 ): Promise<{ call_id: string; retell_call_id: string; status: string }> {
   let token = await getZyraToken();
 
@@ -39,7 +48,11 @@ export async function launchCall(
         "Content-Type": "application/json",
         Authorization: `Bearer ${t}`,
       },
-      body: JSON.stringify({ phone, agent_id: agentId }),
+      body: JSON.stringify({
+        phone,
+        agent_id: agentId,
+        ...(customContext ? { custom_context: customContext } : {}),
+      }),
     });
   };
 
