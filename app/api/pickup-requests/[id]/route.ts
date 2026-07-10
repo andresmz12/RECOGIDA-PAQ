@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { sendStatusUpdateEmail } from "@/lib/email";
 import { triggerCourierCall } from "@/lib/call-service";
 import { dispatchWebhookEvent } from "@/lib/webhook-service";
+import { requireApiKey } from "@/lib/api-key-auth";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(
@@ -12,9 +13,23 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // External systems (e.g. the CRM) authenticate with an x-api-key header
+    // instead of a NextAuth session. If the header is present it must be
+    // valid; if it's absent, fall back to the existing session-based auth
+    // so the dashboard UI keeps working unchanged.
+    const providedApiKey = request.headers.get("x-api-key");
+    const isApiKeyAuth = !!providedApiKey;
 
-    if (!session?.user) {
+    if (isApiKeyAuth) {
+      const auth = await requireApiKey(request);
+      if (auth.ok === false) {
+        return NextResponse.json({ error: auth.error }, { status: auth.status });
+      }
+    }
+
+    const session = isApiKeyAuth ? null : await getServerSession(authOptions);
+
+    if (!isApiKeyAuth && !session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,9 +51,15 @@ export async function GET(
       );
     }
 
+    // API key callers get the full record — there's no per-role filtering
+    // to apply since they aren't a customer or courier.
+    if (isApiKeyAuth) {
+      return NextResponse.json(pickupRequest);
+    }
+
     // Check authorization
-    const role = (session.user as any).role;
-    const userId = (session.user as any).id;
+    const role = (session!.user as any).role;
+    const userId = (session!.user as any).id;
 
     if (
       role === "CUSTOMER" &&

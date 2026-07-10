@@ -316,3 +316,15 @@ model PasswordResetToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
+
+// Auth for external systems (CRM, etc) hitting protected API routes with an
+// x-api-key header instead of a NextAuth session. `key` stores the SHA-256
+// hash of the raw key — the raw value is only ever shown once, at creation.
+model ApiKey {
+  id         String    @id @default(cuid())
+  name       String
+  key        String    @unique
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+}
