@@ -63,6 +63,7 @@ model User {
   courierAssignments PickupRequest[] @relation("CourierAssignments")
   comments           Comment[]       @relation("AuthoredComments")
   savedRecipients    SavedRecipient[]
+  savedPickupAddresses SavedPickupAddress[]
   supportMessages    SupportMessage[] @relation("SupportThreadOwner")
   cases              Case[]          @relation("CustomerCases")
   termsAcceptedAt    DateTime?
@@ -87,6 +88,23 @@ model SavedRecipient {
   recipientCountry        String
   destinationCountry      String
   createdAt               DateTime @default(now())
+
+  @@index([userId])
+}
+
+// A customer's saved pickup (sender) address — lets a recurring shipper
+// who always ships from the same place skip re-typing it every time.
+model SavedPickupAddress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String
+  address    String
+  city       String
+  state      String?
+  postalCode String?
+  country    String
+  createdAt  DateTime @default(now())
 
   @@index([userId])
 }

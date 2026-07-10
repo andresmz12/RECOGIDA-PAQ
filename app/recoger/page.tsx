@@ -100,6 +100,16 @@ interface SavedRecipient {
   destinationCountry: string;
 }
 
+interface SavedPickupAddress {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+}
+
 const EMPTY = {
   // Sender
   contactName: "",
@@ -170,6 +180,10 @@ export default function RecogerPage() {
   const [selectedRecipientId, setSelectedRecipientId] = useState("");
   const [saveRecipient, setSaveRecipient] = useState(false);
   const [saveRecipientLabel, setSaveRecipientLabel] = useState("");
+  const [savedPickupAddresses, setSavedPickupAddresses] = useState<SavedPickupAddress[]>([]);
+  const [selectedPickupAddressId, setSelectedPickupAddressId] = useState("");
+  const [savePickupAddress, setSavePickupAddress] = useState(false);
+  const [savePickupAddressLabel, setSavePickupAddressLabel] = useState("");
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -179,6 +193,12 @@ export default function RecogerPage() {
   const setRecipientField = (field: string, value: string) => {
     set(field, value);
     setSelectedRecipientId(prev => (prev ? "" : prev));
+  };
+
+  // Same idea for the pickup address.
+  const setPickupField = (field: string, value: string) => {
+    set(field, value);
+    setSelectedPickupAddressId(prev => (prev ? "" : prev));
   };
 
   const addItem = useCallback(() =>
@@ -227,6 +247,16 @@ export default function RecogerPage() {
       .catch(() => {});
   }, [session]);
 
+  // Same idea for the sender's pickup address, for shippers who always
+  // ship from the same place.
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/saved-pickup-addresses")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.data) setSavedPickupAddresses(d.data); })
+      .catch(() => {});
+  }, [session]);
+
   const applySavedRecipient = (id: string) => {
     setSelectedRecipientId(id);
     const r = savedRecipients.find(sr => sr.id === id);
@@ -245,6 +275,23 @@ export default function RecogerPage() {
     // Already saved — no need to offer saving it again.
     setSaveRecipient(false);
     setSaveRecipientLabel("");
+  };
+
+  const applySavedPickupAddress = (id: string) => {
+    setSelectedPickupAddressId(id);
+    const a = savedPickupAddresses.find(sa => sa.id === id);
+    if (!a) return;
+    setForm(prev => ({
+      ...prev,
+      pickupAddress: a.address,
+      pickupCity: a.city,
+      pickupState: a.state || prev.pickupState,
+      pickupPostalCode: a.postalCode || "",
+      pickupCountry: a.country,
+    }));
+    // Already saved — no need to offer saving it again.
+    setSavePickupAddress(false);
+    setSavePickupAddressLabel("");
   };
 
   const isLoggedIn = !!session;
@@ -336,6 +383,10 @@ export default function RecogerPage() {
       setError(t("recoger.savedRecipientNameRequired"));
       return;
     }
+    if (savePickupAddress && !savePickupAddressLabel.trim()) {
+      setError(t("recoger.savedPickupAddressNameRequired"));
+      return;
+    }
 
     setLoading(true);
 
@@ -413,6 +464,22 @@ export default function RecogerPage() {
             recipientState: form.recipientState || null,
             recipientCountry: form.recipientCountry,
             destinationCountry: form.recipientCountry,
+          }),
+        }).catch(() => {});
+      }
+
+      // Save the pickup address for next time — best-effort, doesn't block success
+      if (savePickupAddress && savePickupAddressLabel.trim()) {
+        fetch("/api/saved-pickup-addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label: savePickupAddressLabel.trim(),
+            address: form.pickupAddress,
+            city: form.pickupCity,
+            state: form.pickupState || null,
+            postalCode: form.pickupPostalCode || null,
+            country: form.pickupCountry,
           }),
         }).catch(() => {});
       }
@@ -571,10 +638,26 @@ export default function RecogerPage() {
               </div>
               <h2 className="font-bold text-slate-900">{t("recoger.pickupSection")}</h2>
             </div>
+
+            {savedPickupAddresses.length > 0 && (
+              <Field label={t("recoger.useSavedPickupAddress")}>
+                <select
+                  className={inputCls + " bg-white"}
+                  value={selectedPickupAddressId}
+                  onChange={e => applySavedPickupAddress(e.target.value)}
+                >
+                  <option value="">{t("recoger.selectSavedPickupAddress")}</option>
+                  {savedPickupAddresses.map(a => (
+                    <option key={a.id} value={a.id}>{a.label}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
             <Field label={t("recoger.address")} required>
               <AddressAutocomplete
                 value={form.pickupAddress}
-                onChange={(v) => set("pickupAddress", v)}
+                onChange={(v) => setPickupField("pickupAddress", v)}
                 onSelect={(s) => {
                   setForm(prev => ({
                     ...prev,
@@ -585,6 +668,7 @@ export default function RecogerPage() {
                     pickupState: US_STATES.includes(s.state) ? s.state : prev.pickupState,
                     pickupPostalCode: s.postcode || prev.pickupPostalCode,
                   }));
+                  setSelectedPickupAddressId(prev => (prev ? "" : prev));
                 }}
                 countryCode="us"
                 required
@@ -593,17 +677,47 @@ export default function RecogerPage() {
             </Field>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <Field label={t("recoger.city")} required>
-                <input className={inputCls} value={form.pickupCity} onChange={e => set("pickupCity", e.target.value)} required />
+                <input className={inputCls} value={form.pickupCity} onChange={e => setPickupField("pickupCity", e.target.value)} required />
               </Field>
               <Field label={t("recoger.state")} required>
-                <select className={inputCls + " bg-white"} value={form.pickupState} onChange={e => set("pickupState", e.target.value)} required>
+                <select className={inputCls + " bg-white"} value={form.pickupState} onChange={e => setPickupField("pickupState", e.target.value)} required>
                   {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </Field>
               <Field label={t("recoger.zip")} required>
-                <input className={inputCls} value={form.pickupPostalCode} onChange={e => set("pickupPostalCode", e.target.value)} required />
+                <input className={inputCls} value={form.pickupPostalCode} onChange={e => setPickupField("pickupPostalCode", e.target.value)} required />
               </Field>
             </div>
+
+            {isLoggedIn && !selectedPickupAddressId && (
+              <div className="rounded-xl border border-slate-200 p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={savePickupAddress}
+                    onChange={e => setSavePickupAddress(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-800">{t("recoger.savePickupAddressLabel")}</span>
+                    <span className="block text-xs text-slate-500 mt-0.5">{t("recoger.savePickupAddressHint")}</span>
+                  </span>
+                </label>
+                {savePickupAddress && (
+                  <div className="mt-3 pl-7">
+                    <Field label={t("recoger.savedPickupAddressName")} required>
+                      <input
+                        className={inputCls + " max-w-xs"}
+                        value={savePickupAddressLabel}
+                        onChange={e => setSavePickupAddressLabel(e.target.value)}
+                        placeholder={t("recoger.savedPickupAddressNamePlaceholder")}
+                        required={savePickupAddress}
+                      />
+                    </Field>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* ── Destinatario ── */}
