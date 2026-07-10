@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { launchCall, CallCustomContext } from "@/lib/zyra-client";
+import {
+  launchCall,
+  createProspectAndCall,
+  CallCustomContext,
+} from "@/lib/zyra-client";
 
-const AGENT_ID_CONFIRMATION = parseInt(
-  process.env.ZYRA_AGENT_ID_CONFIRMATION || "0"
-);
 const AGENT_ID_COURIER = parseInt(process.env.ZYRA_AGENT_ID_COURIER || "0");
+const CAMPAIGN_ID_CONFIRMATION = parseInt(
+  process.env.ZYRA_CAMPAIGN_ID || "0"
+);
 const MAX_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 60_000;
 
@@ -23,13 +27,11 @@ function isValidPhone(phone: string | null | undefined): boolean {
 
 async function attemptCall(
   pickupRequestId: string,
-  phone: string,
-  agentId: number,
   attemptsUsed: number,
-  customContext?: CallCustomContext
+  makeCall: () => Promise<{ retell_call_id: string }>
 ): Promise<void> {
   try {
-    const result = await launchCall(normalizePhone(phone), agentId, customContext);
+    const result = await makeCall();
 
     await prisma.pickupRequest.update({
       where: { id: pickupRequestId },
@@ -42,13 +44,13 @@ async function attemptCall(
     });
   } catch (err) {
     console.error(
-      `[call-service] launchCall error (attempt ${attemptsUsed + 1}):`,
+      `[call-service] call error (attempt ${attemptsUsed + 1}):`,
       err
     );
 
     if (attemptsUsed + 1 < MAX_ATTEMPTS) {
       setTimeout(
-        () => attemptCall(pickupRequestId, phone, agentId, attemptsUsed + 1, customContext),
+        () => attemptCall(pickupRequestId, attemptsUsed + 1, makeCall),
         RETRY_DELAY_MS
       );
     } else {
@@ -96,7 +98,16 @@ export async function triggerConfirmationCall(
       recipientAddress: req.recipientAddress,
     };
 
-    await attemptCall(pickupRequestId, req.contactPhone, AGENT_ID_CONFIRMATION, 0, customContext);
+    const phone = normalizePhone(req.contactPhone);
+
+    await attemptCall(pickupRequestId, 0, () =>
+      createProspectAndCall(
+        phone,
+        req.contactName,
+        CAMPAIGN_ID_CONFIRMATION,
+        customContext
+      )
+    );
   } catch (err) {
     console.error("[call-service] triggerConfirmationCall error:", err);
   }
@@ -139,7 +150,11 @@ export async function triggerCourierCall(
       recipientAddress: req.recipientAddress,
     };
 
-    await attemptCall(pickupRequestId, req.contactPhone, AGENT_ID_COURIER, 0, customContext);
+    const phone = normalizePhone(req.contactPhone);
+
+    await attemptCall(pickupRequestId, 0, () =>
+      launchCall(phone, AGENT_ID_COURIER, customContext)
+    );
   } catch (err) {
     console.error("[call-service] triggerCourierCall error:", err);
   }

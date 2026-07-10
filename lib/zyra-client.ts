@@ -70,3 +70,89 @@ export async function launchCall(
 
   return res.json();
 }
+
+export interface ZyraProspect {
+  id: number;
+  [key: string]: unknown;
+}
+
+export async function createProspect(
+  phone: string,
+  name: string,
+  campaignId: number,
+  customContext?: CallCustomContext
+): Promise<ZyraProspect> {
+  let token = await getZyraToken();
+
+  const attempt = async (t: string) => {
+    return fetch(`${ZYRA_URL}/prospects`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${t}`,
+      },
+      body: JSON.stringify({
+        name,
+        phone,
+        campaign_id: campaignId,
+        ...(customContext ? { custom_context: customContext } : {}),
+      }),
+    });
+  };
+
+  let res = await attempt(token);
+
+  if (res.status === 401) {
+    invalidateZyraToken();
+    token = await getZyraToken();
+    res = await attempt(token);
+  }
+
+  if (!res.ok) {
+    throw new Error(`ZyraVoice createProspect failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function callProspect(
+  prospectId: number
+): Promise<{ call_id: string; retell_call_id: string; status: string }> {
+  let token = await getZyraToken();
+
+  const attempt = async (t: string) => {
+    return fetch(`${ZYRA_URL}/prospects/${prospectId}/call`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${t}`,
+      },
+    });
+  };
+
+  let res = await attempt(token);
+
+  if (res.status === 401) {
+    invalidateZyraToken();
+    token = await getZyraToken();
+    res = await attempt(token);
+  }
+
+  if (!res.ok) {
+    throw new Error(`ZyraVoice callProspect failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// Production flow: create the prospect record first, then trigger the real
+// call against it (replaces the /calls/demo shortcut).
+export async function createProspectAndCall(
+  phone: string,
+  name: string,
+  campaignId: number,
+  customContext?: CallCustomContext
+): Promise<{ call_id: string; retell_call_id: string; status: string }> {
+  const prospect = await createProspect(phone, name, campaignId, customContext);
+  return callProspect(prospect.id);
+}
