@@ -173,6 +173,14 @@ export default function RecogerPage() {
   const set = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  // Editing a field after picking a saved recipient means the data no
+  // longer matches exactly what's saved — clear the selection so the
+  // "save this recipient" option comes back if they want to save the edit.
+  const setRecipientField = (field: string, value: string) => {
+    set(field, value);
+    setSelectedRecipientId(prev => (prev ? "" : prev));
+  };
+
   const addItem = useCallback(() =>
     setItems(prev => [
       ...prev,
@@ -234,6 +242,9 @@ export default function RecogerPage() {
       recipientState: r.recipientState || "",
       recipientCountry: r.recipientCountry,
     }));
+    // Already saved — no need to offer saving it again.
+    setSaveRecipient(false);
+    setSaveRecipientLabel("");
   };
 
   const isLoggedIn = !!session;
@@ -623,24 +634,24 @@ export default function RecogerPage() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("recoger.recipientName")} required>
-                <input className={inputCls} value={form.recipientName} onChange={e => set("recipientName", e.target.value)} required />
+                <input className={inputCls} value={form.recipientName} onChange={e => setRecipientField("recipientName", e.target.value)} required />
               </Field>
               <Field label={t("recoger.primaryPhone")} required>
-                <input className={inputCls} value={form.recipientPhone} onChange={e => set("recipientPhone", e.target.value)} required />
+                <input className={inputCls} value={form.recipientPhone} onChange={e => setRecipientField("recipientPhone", e.target.value)} required />
               </Field>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label={t("recoger.secondaryPhone")} hint={t("recoger.secondaryPhoneHint")}>
-                <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => set("recipientPhoneSecondary", e.target.value)} />
+                <input className={inputCls} value={form.recipientPhoneSecondary} onChange={e => setRecipientField("recipientPhoneSecondary", e.target.value)} />
               </Field>
               <Field label={t("recoger.recipientEmail")} hint={t("recoger.recipientEmailHint")}>
-                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => set("recipientEmail", e.target.value)} />
+                <input type="email" className={inputCls} value={form.recipientEmail} onChange={e => setRecipientField("recipientEmail", e.target.value)} />
               </Field>
             </div>
 
             <Field label={t("recoger.deliveryAddress")} required>
-              <input className={inputCls} value={form.recipientAddress} onChange={e => set("recipientAddress", e.target.value)} required />
+              <input className={inputCls} value={form.recipientAddress} onChange={e => setRecipientField("recipientAddress", e.target.value)} required />
             </Field>
 
             <LocationPicker
@@ -656,10 +667,11 @@ export default function RecogerPage() {
                   recipientState: department,
                   recipientCity: city,
                 }));
+                setSelectedRecipientId(prev => (prev ? "" : prev));
               }}
             />
 
-            {isLoggedIn && (
+            {isLoggedIn && !selectedRecipientId && (
               <div className="rounded-xl border border-slate-200 p-4">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
