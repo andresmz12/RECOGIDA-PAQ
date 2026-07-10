@@ -7,6 +7,7 @@ import { sendPickupConfirmationEmail, sendWelcomeEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { triggerConfirmationCall } from "@/lib/call-service";
+import { dispatchWebhookEvent } from "@/lib/webhook-service";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -271,6 +272,11 @@ export async function POST(request: NextRequest) {
     // Trigger voice confirmation call in background (non-blocking)
     triggerConfirmationCall(pickupRequest.id).catch((err) =>
       console.error("[pickup-requests] triggerConfirmationCall error:", err)
+    );
+
+    // Notify external systems in background (non-blocking)
+    dispatchWebhookEvent(pickupRequest.id, "CREATED").catch((err) =>
+      console.error("[pickup-requests] dispatchWebhookEvent error:", err)
     );
 
     return NextResponse.json({

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendStatusUpdateEmail } from "@/lib/email";
 import { triggerCourierCall } from "@/lib/call-service";
+import { dispatchWebhookEvent } from "@/lib/webhook-service";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(
@@ -217,6 +218,14 @@ export async function PATCH(
           console.error("[pickup-requests/id] triggerCourierCall error:", err)
         );
       }
+
+      // Notify external systems in background (non-blocking)
+      dispatchWebhookEvent(params.id, "STATUS_CHANGED", {
+        fromStatus: oldStatus,
+        toStatus: status,
+      }).catch((err) =>
+        console.error("[pickup-requests/id] dispatchWebhookEvent error:", err)
+      );
     }
 
     // Re-fetch so the response includes the new status history entry

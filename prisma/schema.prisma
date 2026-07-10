@@ -41,6 +41,17 @@ enum CaseStatus {
   RESOLVED
 }
 
+enum WebhookEventType {
+  CREATED
+  STATUS_CHANGED
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model User {
   id                 String          @id @default(cuid())
   email              String          @unique
@@ -126,6 +137,7 @@ model PickupRequest {
   statusHistory       StatusHistory[]
   comments            Comment[]
   cases               Case[]
+  webhookDeliveries   WebhookDelivery[]
   discountCode        String?
   discountPercent     Float?
   lang                String?
@@ -244,6 +256,27 @@ model CaseNote {
   createdAt  DateTime @default(now())
 
   @@index([caseId, createdAt])
+}
+
+// One row per outbound webhook notification attempt-chain (pickup created,
+// or status changed). Persisted so retries survive a process restart and
+// can be swept by the /api/cron/retry-webhooks job — the equivalent of
+// StatusHistory but for external notifications instead of internal audit.
+model WebhookDelivery {
+  id              String                @id @default(cuid())
+  pickupRequestId String
+  pickupRequest   PickupRequest         @relation(fields: [pickupRequestId], references: [id], onDelete: Cascade)
+  eventType       WebhookEventType
+  payload         Json
+  status          WebhookDeliveryStatus @default(PENDING)
+  attempts        Int                   @default(0)
+  lastAttemptAt   DateTime?
+  nextRetryAt     DateTime?
+  responseCode    Int?
+  createdAt       DateTime              @default(now())
+
+  @@index([pickupRequestId])
+  @@index([status, nextRetryAt])
 }
 
 model Pricing {
