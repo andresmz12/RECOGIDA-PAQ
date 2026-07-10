@@ -21,9 +21,21 @@ export function generateTrackingCode(): string {
 export function generateSecurityCode(): string {
   // 4-digit pickup verification code the customer hands to the courier.
   // Brute force is stopped server-side by an attempt limit, not by length.
+  // Reject codes where the same digit repeats 3+ times (e.g. "7777",
+  // "1112") — those read as suspicious/typo-prone to customers.
   const bytes = new Uint32Array(1);
-  globalThis.crypto.getRandomValues(bytes);
-  return String(bytes[0] % 10000).padStart(4, "0");
+  let code: string;
+  do {
+    globalThis.crypto.getRandomValues(bytes);
+    code = String(bytes[0] % 10000).padStart(4, "0");
+  } while (hasRepeatedDigit(code));
+  return code;
+}
+
+function hasRepeatedDigit(code: string): boolean {
+  const counts: Record<string, number> = {};
+  for (const ch of code) counts[ch] = (counts[ch] ?? 0) + 1;
+  return Object.values(counts).some((n) => n >= 3);
 }
 
 // preferredDate/estimatedPickupDate are stored as UTC-midnight, date-only

@@ -418,7 +418,7 @@ export default function RecogerPage() {
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
-        style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+        style={{ background: "linear-gradient(135deg, #0b1f3a, #1d4f86, #123058)" }}>
         <div className="w-full max-w-md text-center">
           <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-900/40">
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
