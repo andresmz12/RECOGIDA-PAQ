@@ -674,7 +674,7 @@
     "useSavedPickupAddress": "Usar una dirección de recogida guardada",
     "selectSavedPickupAddress": "Selecciona una dirección guardada...",
     "savePickupAddressLabel": "Guardar esta dirección para la próxima vez",
-    "savePickupAddressHint": "Si siempre recoges en el mismo lugar, guárdala para no volver a escribirla",
+    "savePickupAddressHint": "La próxima vez podrás seleccionarla en lugar de escribirla de nuevo",
     "savedPickupAddressName": "Nombre para esta dirección",
     "savedPickupAddressNamePlaceholder": "Ej: Casa, Oficina, Bodega",
     "savedPickupAddressNameRequired": "Ingresa un nombre para guardar esta dirección.",

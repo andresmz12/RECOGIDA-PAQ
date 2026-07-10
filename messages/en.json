@@ -674,7 +674,7 @@
     "useSavedPickupAddress": "Use a saved pickup address",
     "selectSavedPickupAddress": "Select a saved address...",
     "savePickupAddressLabel": "Save this address for next time",
-    "savePickupAddressHint": "If you always ship from the same place, save it so you don't have to type it again",
+    "savePickupAddressHint": "Next time you'll be able to select it instead of typing it again",
     "savedPickupAddressName": "Name for this address",
     "savedPickupAddressNamePlaceholder": "e.g. Home, Office, Warehouse",
     "savedPickupAddressNameRequired": "Enter a name to save this address.",
