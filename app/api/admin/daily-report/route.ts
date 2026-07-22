@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { esc } from "@/lib/email";
 import sgMail from "@sendgrid/mail";
 
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!session || user?.role !== "ADMIN") {
@@ -36,11 +37,11 @@ export async function POST(req: NextRequest) {
 
   const rows = todayPickups.map(p => `
     <tr style="border-bottom:1px solid #e2e8f0;">
-      <td style="padding:8px 12px;font-family:monospace;color:#4f46e5;">${p.trackingCode}</td>
-      <td style="padding:8px 12px;">${p.contactName}</td>
-      <td style="padding:8px 12px;">${p.pickupCity}, ${p.pickupState}</td>
-      <td style="padding:8px 12px;">${p.assignedCourier?.name ?? "—"}</td>
-      <td style="padding:8px 12px;">${p.preferredTimeWindow}</td>
+      <td style="padding:8px 12px;font-family:monospace;color:#4f46e5;">${esc(p.trackingCode)}</td>
+      <td style="padding:8px 12px;">${esc(p.contactName)}</td>
+      <td style="padding:8px 12px;">${esc(p.pickupCity)}, ${esc(p.pickupState)}</td>
+      <td style="padding:8px 12px;">${esc(p.assignedCourier?.name ?? "—")}</td>
+      <td style="padding:8px 12px;">${esc(p.preferredTimeWindow)}</td>
       <td style="padding:8px 12px;">
         <span style="padding:2px 8px;border-radius:9999px;font-size:12px;font-weight:600;background:${
           p.status === "PENDING" ? "#fef3c7" : p.status === "ASSIGNED" ? "#dbeafe" : "#d1fae5"
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
   const html = `
 <!DOCTYPE html><html><body style="margin:0;padding:0;background:#f8fafc;font-family:sans-serif;">
 <div style="max-width:700px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
-  <div style="background:linear-gradient(135deg,#0f0c29,#302b63);padding:32px;text-align:center;">
+  <div style="background:linear-gradient(135deg,#0d2338,#1d4f86,#14314f);padding:32px;text-align:center;">
     <div style="width:40px;height:40px;background:linear-gradient(135deg,#1d4f86,#2c629b);border-radius:10px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;">
       <span style="color:#fff;font-weight:900;font-size:14px;">OG</span>
     </div>
@@ -95,11 +96,12 @@ export async function POST(req: NextRequest) {
 </div>
 </body></html>`;
 
-  const adminEmail = req.headers.get("x-report-email") || user?.email;
-
-  if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL) {
+  // Always send to the requesting admin's own session email — an
+  // attacker-controlled header here would let anyone with an admin
+  // session exfiltrate today's customer PII to an arbitrary address.
+  if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL && user?.email) {
     await sgMail.send({
-      to: adminEmail,
+      to: user.email,
       from: process.env.SENDGRID_FROM_EMAIL,
       subject: `Daily Report – ${dateStr} · ${todayPickups.length} pickups`,
       html,

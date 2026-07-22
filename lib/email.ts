@@ -8,7 +8,7 @@ const FROM_NAME = "O'Globo Cargo";
 const BASE_URL = process.env.NEXTAUTH_URL || "";
 
 // Escape user-supplied values before interpolating them into email HTML
-function esc(v: unknown): string {
+export function esc(v: unknown): string {
   return String(v ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
