@@ -153,12 +153,19 @@ export default function MisRecogidasPage() {
 
   const filtered = pickups.filter(matchesDate);
 
+  // A pickup is overdue once its preferred date has passed and it still
+  // hasn't been picked up (or cancelled) — the courier missed the window.
+  const isOverdue = (p: PickupRequest) =>
+    dateKeyOf(p.preferredDate) < todayKey && p.status !== "PICKED_UP" && p.status !== "CANCELLED";
+
+  const overduePickups = filtered.filter(isOverdue);
   const todayPickups = filtered.filter((p) => dateKeyOf(p.preferredDate) === todayKey);
   // Completed pickups from other days are noise in the default view, but
   // when the courier explicitly filters by "Recogido" they must show up.
   const otherPickups = filtered.filter(
     (p) =>
       dateKeyOf(p.preferredDate) !== todayKey &&
+      !isOverdue(p) &&
       (statusFilter === "PICKED_UP" ||
         (p.status !== "PICKED_UP" && p.status !== "CANCELLED"))
   );
@@ -317,11 +324,26 @@ export default function MisRecogidasPage() {
           // Flat filtered list when a specific date filter is active
           <div className="space-y-4">
             {filtered.map((p) => (
-              <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} />
+              <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} overdue={isOverdue(p)} />
             ))}
           </div>
         ) : (
           <div className="space-y-10">
+            {overduePickups.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-2 h-2 bg-red-500 rounded-full" />
+                  <h2 className="font-bold text-red-700">{t("pickups.overdueSection")}</h2>
+                  <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{overduePickups.length}</span>
+                </div>
+                <div className="space-y-4">
+                  {overduePickups.map(p => (
+                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} overdue />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {todayPickups.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
@@ -394,10 +416,12 @@ function PickupActionCard({
   pickup,
   onAction,
   locale,
+  overdue = false,
 }: {
   pickup: PickupRequest;
   onAction: (id: string, status: string, notes?: string, proofPhotoUrl?: string, securityCode?: string) => Promise<boolean>;
   locale: string;
+  overdue?: boolean;
 }) {
   const { t } = useT();
   const [notes, setNotes] = useState("");
@@ -448,11 +472,19 @@ function PickupActionCard({
 
   return (
     <div className={`bg-white rounded-3xl border-2 transition-all ${
+      overdue ? "border-red-300 shadow-lg shadow-red-50" :
       isPending ? "border-amber-200" :
       isOnTheWay ? "border-indigo-300 shadow-lg shadow-indigo-50" :
       isDone ? "border-slate-100" : "border-slate-200"
     }`}>
-      {isOnTheWay && (
+      {overdue ? (
+        <div className="bg-red-600 text-white text-xs font-bold px-6 py-2 rounded-t-[22px] flex items-center gap-2">
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          {t("pickups.overdueBanner")}
+        </div>
+      ) : isOnTheWay && (
         <div className="bg-indigo-600 text-white text-xs font-bold px-6 py-2 rounded-t-[22px] flex items-center gap-2">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
           {t("pickups.onTheWayBanner")}
@@ -465,9 +497,14 @@ function PickupActionCard({
             <span className="inline-block font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl text-sm mb-2">
               {pickup.trackingCode}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <StatusBadge status={pickup.status} />
-              <span className="text-slate-500 text-xs">
+              {overdue && (
+                <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {t("pickups.overdue")}
+                </span>
+              )}
+              <span className={`text-xs ${overdue ? "text-red-600 font-semibold" : "text-slate-500"}`}>
                 {formatPickupDate(pickup.preferredDate, locale, { day: "numeric", month: "short" })} · {pickup.preferredTimeWindow}
               </span>
             </div>
