@@ -639,11 +639,11 @@ export async function sendCaseOpenedEmail(
 
   const TYPE_LABELS_ES: Record<string, string> = {
     LOST: "Paquete perdido", DAMAGED: "Paquete dañado", DELAYED: "Envío retrasado",
-    WRONG_ITEM: "Artículo incorrecto", OTHER: "Otro",
+    WRONG_ITEM: "Artículo incorrecto", NOT_HOME: "Intento de recogida fallido", OTHER: "Otro",
   };
   const TYPE_LABELS_EN: Record<string, string> = {
     LOST: "Lost package", DAMAGED: "Damaged package", DELAYED: "Delayed shipment",
-    WRONG_ITEM: "Wrong item", OTHER: "Other",
+    WRONG_ITEM: "Wrong item", NOT_HOME: "Missed pickup attempt", OTHER: "Other",
   };
   const typeLabel = (lang === "es" ? TYPE_LABELS_ES : TYPE_LABELS_EN)[caseType] ?? caseType;
 

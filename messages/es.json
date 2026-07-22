@@ -50,7 +50,9 @@
     "search": "Buscar",
     "filter": "Filtrar",
     "error": "Ocurrió un error. Intenta de nuevo.",
-    "success": "¡Listo!"
+    "success": "¡Listo!",
+    "dateUnconfirmed": "Sin confirmar",
+    "dateConfirmed": "Confirmada"
   },
   "status": {
     "PENDING": "Pendiente",
@@ -152,7 +154,14 @@
     "wrongSecurityCode": "Código incorrecto. Pídele al cliente el código que aparece en su guía o correo.",
     "tooManyCodeAttempts": "Demasiados intentos incorrectos. Espera 10 minutos o contacta al despachador.",
     "actionError": "No se pudo completar la acción. Intenta de nuevo.",
-    "securityCodeRequired": "Debes ingresar el código de seguridad del cliente para confirmar la recogida."
+    "securityCodeRequired": "Debes ingresar el código de seguridad del cliente para confirmar la recogida.",
+    "reportIssue": "Reportar novedad",
+    "issueTypeNotHome": "Cliente no se encontraba",
+    "issueTypeOther": "Otra novedad",
+    "issueDefaultNotHome": "El cliente no se encontraba en la dirección de recogida.",
+    "issueDescriptionPlaceholder": "Describe qué pasó...",
+    "submitIssue": "Enviar reporte",
+    "issueReported": "Novedad reportada. La oficina fue notificada."
   },
   "account": {
     "home": "Inicio",
@@ -218,6 +227,7 @@
     "caseType_DAMAGED": "Paquete dañado",
     "caseType_DELAYED": "Envío retrasado",
     "caseType_WRONG_ITEM": "Artículo incorrecto",
+    "caseType_NOT_HOME": "Cliente no se encontraba",
     "caseType_OTHER": "Caso abierto",
     "caseOpenPill": "Caso abierto: {{type}}"
   },
@@ -465,6 +475,7 @@
     "caseType_DAMAGED": "Paquete dañado",
     "caseType_DELAYED": "Envío retrasado",
     "caseType_WRONG_ITEM": "Artículo incorrecto",
+    "caseType_NOT_HOME": "Cliente no se encontraba",
     "caseType_OTHER": "Otro",
     "caseDescription": "¿Qué pasó?",
     "caseSubmit": "Abrir caso",

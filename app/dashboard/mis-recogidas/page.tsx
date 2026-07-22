@@ -111,6 +111,23 @@ export default function MisRecogidasPage() {
     return false;
   };
 
+  // Lets the courier flag a failed pickup attempt (customer not there, etc.)
+  // from the field — opens a Case that dispatch/admin see in /dashboard/casos.
+  const reportIssue = async (pickupId: string, issueType: string, description: string): Promise<boolean> => {
+    const res = await fetch("/api/cases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pickupRequestId: pickupId, type: issueType, description }),
+    });
+    if (res.ok) {
+      showToast(t("pickups.issueReported"));
+      return true;
+    }
+    const data = await res.json().catch(() => ({}));
+    showToast(data.error || t("pickups.actionError"));
+    return false;
+  };
+
   // ── Date helpers ────────────────────────────────────────────────
   // preferredDate is stored as a date-only value (UTC midnight), so compare
   // calendar dates as YYYY-MM-DD strings — converting through local time
@@ -324,7 +341,7 @@ export default function MisRecogidasPage() {
           // Flat filtered list when a specific date filter is active
           <div className="space-y-4">
             {filtered.map((p) => (
-              <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} overdue={isOverdue(p)} />
+              <PickupActionCard key={p.id} pickup={p} onAction={handleAction} onReportIssue={reportIssue} locale={locale} overdue={isOverdue(p)} />
             ))}
           </div>
         ) : (
@@ -338,7 +355,7 @@ export default function MisRecogidasPage() {
                 </div>
                 <div className="space-y-4">
                   {overduePickups.map(p => (
-                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} overdue />
+                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} onReportIssue={reportIssue} locale={locale} overdue />
                   ))}
                 </div>
               </section>
@@ -355,7 +372,7 @@ export default function MisRecogidasPage() {
                 </div>
                 <div className="space-y-4">
                   {todayPickups.map(p => (
-                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} />
+                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} onReportIssue={reportIssue} locale={locale} />
                   ))}
                 </div>
               </section>
@@ -369,7 +386,7 @@ export default function MisRecogidasPage() {
                 </div>
                 <div className="space-y-4">
                   {otherPickups.map(p => (
-                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} locale={locale} />
+                    <PickupActionCard key={p.id} pickup={p} onAction={handleAction} onReportIssue={reportIssue} locale={locale} />
                   ))}
                 </div>
               </section>
@@ -415,17 +432,24 @@ function NavButtons({ address }: { address: string }) {
 function PickupActionCard({
   pickup,
   onAction,
+  onReportIssue,
   locale,
   overdue = false,
 }: {
   pickup: PickupRequest;
   onAction: (id: string, status: string, notes?: string, proofPhotoUrl?: string, securityCode?: string) => Promise<boolean>;
+  onReportIssue: (id: string, issueType: string, description: string) => Promise<boolean>;
   locale: string;
   overdue?: boolean;
 }) {
   const { t } = useT();
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueType, setIssueType] = useState("NOT_HOME");
+  const [issueNote, setIssueNote] = useState("");
+  const [reportingIssue, setReportingIssue] = useState(false);
+  const [issueReported, setIssueReported] = useState(false);
   const [acting, setActing] = useState(false);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
@@ -462,6 +486,20 @@ function PickupActionCard({
       setCodeInput("");
     }
     setActing(false);
+  };
+
+  const submitIssue = async () => {
+    const description = issueNote.trim() || (issueType === "NOT_HOME" ? t("pickups.issueDefaultNotHome") : "");
+    if (!description) return;
+    setReportingIssue(true);
+    const ok = await onReportIssue(pickup.id, issueType, description);
+    setReportingIssue(false);
+    if (ok) {
+      setShowIssueForm(false);
+      setIssueNote("");
+      setIssueType("NOT_HOME");
+      setIssueReported(true);
+    }
   };
 
   const isPending = pickup.status === "ASSIGNED";
@@ -608,6 +646,61 @@ function PickupActionCard({
                 rows={3}
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all"
               />
+            )}
+
+            {/* Report an issue — e.g. customer wasn't there — opens a Case
+                dispatch/admin can follow up on from /dashboard/casos */}
+            {issueReported ? (
+              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-semibold">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {t("pickups.issueReported")}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowIssueForm(!showIssueForm)}
+                className="w-full text-left flex items-center justify-between px-4 py-3 bg-red-50 hover:bg-red-100 rounded-xl text-sm text-red-700 font-medium transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                  {t("pickups.reportIssue")}
+                </span>
+                <span className="text-xs">{showIssueForm ? "▲" : "▼"}</span>
+              </button>
+            )}
+
+            {showIssueForm && !issueReported && (
+              <div className="rounded-xl border-2 border-red-200 p-4 bg-red-50/50 space-y-3">
+                <select
+                  value={issueType}
+                  onChange={(e) => setIssueType(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-lg border-2 border-red-200 text-sm text-slate-900 focus:outline-none focus:border-red-400 bg-white"
+                >
+                  <option value="NOT_HOME">{t("pickups.issueTypeNotHome")}</option>
+                  <option value="OTHER">{t("pickups.issueTypeOther")}</option>
+                </select>
+                <textarea
+                  value={issueNote}
+                  onChange={(e) => setIssueNote(e.target.value)}
+                  placeholder={issueType === "NOT_HOME" ? t("pickups.issueDefaultNotHome") : t("pickups.issueDescriptionPlaceholder")}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-red-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-400 bg-white"
+                />
+                <button
+                  onClick={submitIssue}
+                  disabled={reportingIssue || (issueType === "OTHER" && !issueNote.trim())}
+                  className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl transition-all text-sm"
+                >
+                  {reportingIssue ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    t("pickups.submitIssue")
+                  )}
+                </button>
+              </div>
             )}
 
             {/* Photo proof — shown when courier is on the way */}

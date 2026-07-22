@@ -752,11 +752,25 @@ function PickupCard({ pickup, cancelling, onCancel, openCase }: {
 
         {/* Meta */}
         <div className="flex items-center gap-4 text-xs text-slate-500 border-t border-slate-100 pt-3">
-          <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             {formatDate(pickup.preferredDate)}
+            {!isCancelled && (
+              pickup.status === "PENDING" ? (
+                <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                  {t("common.dateUnconfirmed")}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                  <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {t("common.dateConfirmed")}
+                </span>
+              )
+            )}
           </span>
           {pickup.packageType && (
             <span className="flex items-center gap-1">

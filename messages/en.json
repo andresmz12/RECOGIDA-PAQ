@@ -50,7 +50,9 @@
     "search": "Search",
     "filter": "Filter",
     "error": "An error occurred. Please try again.",
-    "success": "Done!"
+    "success": "Done!",
+    "dateUnconfirmed": "Unconfirmed",
+    "dateConfirmed": "Confirmed"
   },
   "status": {
     "PENDING": "Pending",
@@ -152,7 +154,14 @@
     "wrongSecurityCode": "Incorrect security code. Ask the customer for the code on their guía or email.",
     "tooManyCodeAttempts": "Too many incorrect attempts. Wait 10 minutes or contact dispatch.",
     "actionError": "Could not complete the action. Try again.",
-    "securityCodeRequired": "You must enter the customer's security code to confirm the pickup."
+    "securityCodeRequired": "You must enter the customer's security code to confirm the pickup.",
+    "reportIssue": "Report an issue",
+    "issueTypeNotHome": "Customer not present",
+    "issueTypeOther": "Other issue",
+    "issueDefaultNotHome": "The customer was not at the pickup address.",
+    "issueDescriptionPlaceholder": "Describe what happened...",
+    "submitIssue": "Send report",
+    "issueReported": "Issue reported. Dispatch has been notified."
   },
   "account": {
     "home": "Home",
@@ -218,6 +227,7 @@
     "caseType_DAMAGED": "Damaged package",
     "caseType_DELAYED": "Delayed shipment",
     "caseType_WRONG_ITEM": "Wrong item",
+    "caseType_NOT_HOME": "Customer not present",
     "caseType_OTHER": "Case opened",
     "caseOpenPill": "Case opened: {{type}}"
   },
@@ -465,6 +475,7 @@
     "caseType_DAMAGED": "Damaged package",
     "caseType_DELAYED": "Delayed shipment",
     "caseType_WRONG_ITEM": "Wrong item",
+    "caseType_NOT_HOME": "Customer not present",
     "caseType_OTHER": "Other",
     "caseDescription": "What happened?",
     "caseSubmit": "Open case",

@@ -266,7 +266,21 @@ export default function RastreoPage() {
                 {t("rastreo.estimatedDate")}
               </h3>
               <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
-              <p className="text-xs text-slate-500 mt-2">{t("rastreo.scheduledDate")}</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-slate-500">{t("rastreo.scheduledDate")}</p>
+                {tracking.status === "PENDING" ? (
+                  <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                    {t("common.dateUnconfirmed")}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                    <svg className="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {t("common.dateConfirmed")}
+                  </span>
+                )}
+              </div>
             </Card>
 
             <Card variant="default" padding="lg">

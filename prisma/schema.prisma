@@ -32,6 +32,7 @@ enum CaseType {
   DAMAGED
   DELAYED
   WRONG_ITEM
+  NOT_HOME
   OTHER
 }
 

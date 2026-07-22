@@ -167,7 +167,7 @@ function InternalComments({ pickupId }: { pickupId: string }) {
   );
 }
 
-const CASE_TYPES = ["LOST", "DAMAGED", "DELAYED", "WRONG_ITEM", "OTHER"] as const;
+const CASE_TYPES = ["LOST", "DAMAGED", "DELAYED", "WRONG_ITEM", "NOT_HOME", "OTHER"] as const;
 const CASE_STATUS_COLORS: Record<string, string> = {
   OPEN: "bg-red-100 text-red-700",
   IN_PROGRESS: "bg-amber-100 text-amber-700",
