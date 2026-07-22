@@ -123,9 +123,15 @@ export default function MiCuentaPage() {
   const [recipients, setRecipients] = useState<SavedRecipient[]>([]);
   const [recipientsLoading, setRecipientsLoading] = useState(false);
   const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
+  const [editingRecipientId, setEditingRecipientId] = useState<string | null>(null);
+  const [recipientEditForm, setRecipientEditForm] = useState({ label: "", recipientName: "", recipientPhone: "", recipientAddress: "", recipientCity: "", recipientState: "" });
+  const [savingRecipient, setSavingRecipient] = useState(false);
   const [pickupAddresses, setPickupAddresses] = useState<SavedPickupAddress[]>([]);
   const [pickupAddressesLoading, setPickupAddressesLoading] = useState(false);
   const [deletingPickupAddress, setDeletingPickupAddress] = useState<string | null>(null);
+  const [editingPickupAddressId, setEditingPickupAddressId] = useState<string | null>(null);
+  const [pickupAddressEditForm, setPickupAddressEditForm] = useState({ label: "", address: "", city: "", state: "" });
+  const [savingPickupAddress, setSavingPickupAddress] = useState(false);
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", currentPassword: "", newPassword: "", confirmPassword: "" });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -204,6 +210,36 @@ export default function MiCuentaPage() {
     }
   };
 
+  const startEditRecipient = (r: SavedRecipient) => {
+    setEditingRecipientId(r.id);
+    setRecipientEditForm({
+      label: r.label,
+      recipientName: r.recipientName,
+      recipientPhone: r.recipientPhone,
+      recipientAddress: r.recipientAddress,
+      recipientCity: r.recipientCity,
+      recipientState: r.recipientState ?? "",
+    });
+  };
+
+  const saveRecipient = async (id: string) => {
+    setSavingRecipient(true);
+    try {
+      const res = await fetch(`/api/saved-recipients/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recipientEditForm),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecipients(prev => prev.map(r => (r.id === id ? { ...r, ...data.recipient } : r)));
+        setEditingRecipientId(null);
+      }
+    } finally {
+      setSavingRecipient(false);
+    }
+  };
+
   const fetchPickupAddresses = async () => {
     setPickupAddressesLoading(true);
     try {
@@ -229,6 +265,29 @@ export default function MiCuentaPage() {
       if (res.ok) setPickupAddresses(prev => prev.filter(a => a.id !== id));
     } finally {
       setDeletingPickupAddress(null);
+    }
+  };
+
+  const startEditPickupAddress = (a: SavedPickupAddress) => {
+    setEditingPickupAddressId(a.id);
+    setPickupAddressEditForm({ label: a.label, address: a.address, city: a.city, state: a.state ?? "" });
+  };
+
+  const savePickupAddress = async (id: string) => {
+    setSavingPickupAddress(true);
+    try {
+      const res = await fetch(`/api/saved-pickup-addresses/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pickupAddressEditForm),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPickupAddresses(prev => prev.map(a => (a.id === id ? { ...a, ...data.address } : a)));
+        setEditingPickupAddressId(null);
+      }
+    } finally {
+      setSavingPickupAddress(false);
     }
   };
 
@@ -374,22 +433,51 @@ export default function MiCuentaPage() {
             ) : (
               <div className="space-y-3">
                 {recipients.map(r => (
-                  <div key={r.id} className="flex items-start justify-between gap-4 border border-slate-100 rounded-xl p-4">
-                    <div>
-                      <p className="font-bold text-slate-900 text-sm">{r.label}</p>
-                      <p className="text-slate-600 text-sm">{r.recipientName} · {r.recipientPhone}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">
-                        {r.recipientAddress}, {r.recipientCity}{r.recipientState ? `, ${r.recipientState}` : ""}
-                      </p>
+                  editingRecipientId === r.id ? (
+                    <div key={r.id} className="border border-blue-200 rounded-xl p-4 space-y-2.5 bg-blue-50/30">
+                      <input value={recipientEditForm.label} onChange={e => setRecipientEditForm(f => ({ ...f, label: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <input value={recipientEditForm.recipientName} onChange={e => setRecipientEditForm(f => ({ ...f, recipientName: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input value={recipientEditForm.recipientPhone} onChange={e => setRecipientEditForm(f => ({ ...f, recipientPhone: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <input value={recipientEditForm.recipientAddress} onChange={e => setRecipientEditForm(f => ({ ...f, recipientAddress: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <input value={recipientEditForm.recipientCity} onChange={e => setRecipientEditForm(f => ({ ...f, recipientCity: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input value={recipientEditForm.recipientState} onChange={e => setRecipientEditForm(f => ({ ...f, recipientState: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button onClick={() => setEditingRecipientId(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700">{t("common.cancel")}</button>
+                        <button onClick={() => saveRecipient(r.id)} disabled={savingRecipient} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white disabled:opacity-60" style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
+                          {savingRecipient ? t("common.loading") : t("common.save")}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => deleteRecipient(r.id)}
-                      disabled={deletingRecipient === r.id}
-                      className="shrink-0 text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
-                    >
-                      {deletingRecipient === r.id ? t("common.loading") : t("account.deleteRecipient")}
-                    </button>
-                  </div>
+                  ) : (
+                    <div key={r.id} className="flex items-start justify-between gap-4 border border-slate-100 rounded-xl p-4">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{r.label}</p>
+                        <p className="text-slate-600 text-sm">{r.recipientName} · {r.recipientPhone}</p>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                          {r.recipientAddress}, {r.recipientCity}{r.recipientState ? `, ${r.recipientState}` : ""}
+                        </p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-3">
+                        <button
+                          onClick={() => startEditRecipient(r)}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold"
+                        >
+                          {t("account.editRecipient")}
+                        </button>
+                        <button
+                          onClick={() => deleteRecipient(r.id)}
+                          disabled={deletingRecipient === r.id}
+                          className="text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
+                        >
+                          {deletingRecipient === r.id ? t("common.loading") : t("account.deleteRecipient")}
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ))}
               </div>
             )}
@@ -406,21 +494,46 @@ export default function MiCuentaPage() {
             ) : (
               <div className="space-y-3">
                 {pickupAddresses.map(a => (
-                  <div key={a.id} className="flex items-start justify-between gap-4 border border-slate-100 rounded-xl p-4">
-                    <div>
-                      <p className="font-bold text-slate-900 text-sm">{a.label}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">
-                        {a.address}, {a.city}{a.state ? `, ${a.state}` : ""}
-                      </p>
+                  editingPickupAddressId === a.id ? (
+                    <div key={a.id} className="border border-blue-200 rounded-xl p-4 space-y-2.5 bg-blue-50/30">
+                      <input value={pickupAddressEditForm.label} onChange={e => setPickupAddressEditForm(f => ({ ...f, label: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input value={pickupAddressEditForm.address} onChange={e => setPickupAddressEditForm(f => ({ ...f, address: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <input value={pickupAddressEditForm.city} onChange={e => setPickupAddressEditForm(f => ({ ...f, city: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input value={pickupAddressEditForm.state} onChange={e => setPickupAddressEditForm(f => ({ ...f, state: e.target.value }))} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button onClick={() => setEditingPickupAddressId(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700">{t("common.cancel")}</button>
+                        <button onClick={() => savePickupAddress(a.id)} disabled={savingPickupAddress} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white disabled:opacity-60" style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
+                          {savingPickupAddress ? t("common.loading") : t("common.save")}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => deletePickupAddress(a.id)}
-                      disabled={deletingPickupAddress === a.id}
-                      className="shrink-0 text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
-                    >
-                      {deletingPickupAddress === a.id ? t("common.loading") : t("account.deletePickupAddress")}
-                    </button>
-                  </div>
+                  ) : (
+                    <div key={a.id} className="flex items-start justify-between gap-4 border border-slate-100 rounded-xl p-4">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{a.label}</p>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                          {a.address}, {a.city}{a.state ? `, ${a.state}` : ""}
+                        </p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-3">
+                        <button
+                          onClick={() => startEditPickupAddress(a)}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold"
+                        >
+                          {t("account.editPickupAddress")}
+                        </button>
+                        <button
+                          onClick={() => deletePickupAddress(a.id)}
+                          disabled={deletingPickupAddress === a.id}
+                          className="text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
+                        >
+                          {deletingPickupAddress === a.id ? t("common.loading") : t("account.deletePickupAddress")}
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ))}
               </div>
             )}

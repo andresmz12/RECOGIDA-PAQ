@@ -108,7 +108,8 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, assignedCourierId, notes, preferredDate, preferredTimeWindow, proofPhotoUrl, securityCode } = body;
+    let { assignedCourierId, preferredDate, preferredTimeWindow, proofPhotoUrl } = body;
+    const { status, notes, securityCode } = body;
 
     const VALID_STATUSES = ["PENDING", "ASSIGNED", "SCHEDULED", "EN_CAMINO", "PICKED_UP", "CANCELLED"];
     if (status && !VALID_STATUSES.includes(status)) {
@@ -143,6 +144,13 @@ export async function PATCH(
           { status: 403 }
         );
       }
+      // A customer cancelling their own request may only change `status` —
+      // strip anything else so a crafted body can't reassign a courier,
+      // reschedule, or attach a proof photo on their way to cancelling.
+      assignedCourierId = undefined;
+      preferredDate = undefined;
+      preferredTimeWindow = undefined;
+      proofPhotoUrl = undefined;
     }
 
     // Couriers can only update pickups assigned to them

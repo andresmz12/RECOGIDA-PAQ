@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { trackingCode: string } }
 ) {
   try {
+    // Public endpoint with no auth — throttle per IP so tracking codes
+    // can't be brute-forced by enumeration.
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const rl = rateLimit(`track:${ip}`, { limit: 20, windowMs: 60_000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again in a minute." },
+        { status: 429 }
+      );
+    }
+
     const pickupRequest = await prisma.pickupRequest.findUnique({
       where: { trackingCode: params.trackingCode },
       select: {

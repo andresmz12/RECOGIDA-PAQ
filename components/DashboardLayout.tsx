@@ -184,12 +184,12 @@ function SidebarContent({
     <>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 h-14 border-b border-slate-800/80 shrink-0">
-        <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-900/50 shrink-0">
+        <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-md shadow-blue-900/50 shrink-0">
           <span className="text-white font-black text-xs">OG</span>
         </div>
         <div className="min-w-0">
           <p className="text-white font-bold text-sm leading-none truncate">O&apos;Globo Cargo</p>
-          <p className="text-indigo-400 text-xs mt-0.5 truncate">
+          <p className="text-blue-400 text-xs mt-0.5 truncate">
             {t("nav.panelControl")}{role ? ` · ${t(`roles.${role}`)}` : ""}
           </p>
         </div>
@@ -211,7 +211,7 @@ function SidebarContent({
               onClick={onNavigate}
               className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-900/50"
+                  ? "bg-blue-700 text-white shadow-sm shadow-blue-900/50"
                   : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               }`}
             >
@@ -237,7 +237,7 @@ function SidebarContent({
       {/* User section */}
       <div className="px-2.5 py-3 border-t border-slate-800/80 shrink-0">
         <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg mb-1">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-xs font-bold shrink-0">
             {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
           </div>
           <div className="min-w-0 flex-1">
@@ -306,7 +306,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
           <p className="text-slate-500 text-sm">{t("common.loading")}</p>
         </div>
       </div>
@@ -469,7 +469,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setUserMenuOpen((v) => !v)}
                 className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
                 </div>
                 <span className="text-sm font-medium text-slate-700 max-w-[80px] truncate hidden sm:block">
@@ -485,7 +485,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-sm font-semibold text-slate-900 truncate">{session?.user?.name}</p>
                     <p className="text-xs text-slate-500 truncate">{session?.user?.email}</p>
-                    <p className="text-xs text-indigo-500 font-semibold mt-0.5">{t(`roles.${role}`)}</p>
+                    <p className="text-xs text-blue-600 font-semibold mt-0.5">{t(`roles.${role}`)}</p>
                   </div>
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
