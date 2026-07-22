@@ -198,6 +198,7 @@
     "securityCode": "Pickup security code",
     "securityCodeNote": "Give it to the courier at pickup",
     "recipientsTab": "Recipients",
+    "addressesTab": "Addresses",
     "recipientsTitle": "Saved recipients",
     "recipientsDesc": "Manage the recipients you've saved for faster recurring shipments.",
     "noRecipients": "You haven't saved any recipients yet.",

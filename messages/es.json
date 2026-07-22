@@ -198,6 +198,7 @@
     "securityCode": "Código de seguridad de recogida",
     "securityCodeNote": "Entrégalo al mensajero en la recogida",
     "recipientsTab": "Destinatarios",
+    "addressesTab": "Direcciones",
     "recipientsTitle": "Destinatarios guardados",
     "recipientsDesc": "Administra los destinatarios que has guardado para envíos recurrentes más rápidos.",
     "noRecipients": "Aún no has guardado ningún destinatario.",

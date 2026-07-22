@@ -119,7 +119,7 @@ export default function MiCuentaPage() {
   const [openCasesByTracking, setOpenCasesByTracking] = useState<Record<string, { type: string }>>({});
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
-  const [tab, setTab] = useState<"active" | "history" | "profile" | "recipients">("active");
+  const [tab, setTab] = useState<"active" | "history" | "profile" | "recipients" | "addresses">("active");
   const [recipients, setRecipients] = useState<SavedRecipient[]>([]);
   const [recipientsLoading, setRecipientsLoading] = useState(false);
   const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
@@ -254,7 +254,7 @@ export default function MiCuentaPage() {
   };
 
   useEffect(() => {
-    if (tab === "recipients" && status === "authenticated") fetchPickupAddresses();
+    if (tab === "addresses" && status === "authenticated") fetchPickupAddresses();
   }, [tab, status]);
 
   const deletePickupAddress = async (id: string) => {
@@ -412,6 +412,9 @@ export default function MiCuentaPage() {
             <button onClick={() => setTab("recipients")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "recipients" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.recipientsTab")}
             </button>
+            <button onClick={() => setTab("addresses")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "addresses" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+              {t("account.addressesTab")}
+            </button>
             <button onClick={() => setTab("profile")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.profileTab")}
             </button>
@@ -482,8 +485,13 @@ export default function MiCuentaPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mt-4">
+      {/* Saved pickup addresses tab */}
+      {tab === "addresses" && (
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-1">{t("account.pickupAddressesTitle")}</h2>
             <p className="text-slate-500 text-sm mb-5">{t("account.pickupAddressesDesc")}</p>
 
@@ -597,7 +605,7 @@ export default function MiCuentaPage() {
       )}
 
       {/* Content */}
-      <div className={`max-w-3xl mx-auto px-4 py-6 ${tab === "profile" || tab === "recipients" ? "hidden" : ""}`}>
+      <div className={`max-w-3xl mx-auto px-4 py-6 ${tab === "profile" || tab === "recipients" || tab === "addresses" ? "hidden" : ""}`}>
         <div className="flex items-center justify-between mb-5">
           <p className="text-slate-500 text-sm font-medium">
             {loading ? t("account.loadingShipments") : displayed.length === 0
