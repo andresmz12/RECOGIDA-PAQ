@@ -102,6 +102,15 @@ interface SavedRecipient {
   recipientCountry: string;
 }
 
+interface SavedPickupAddress {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  state: string | null;
+  country: string;
+}
+
 export default function MiCuentaPage() {
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
@@ -114,6 +123,9 @@ export default function MiCuentaPage() {
   const [recipients, setRecipients] = useState<SavedRecipient[]>([]);
   const [recipientsLoading, setRecipientsLoading] = useState(false);
   const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
+  const [pickupAddresses, setPickupAddresses] = useState<SavedPickupAddress[]>([]);
+  const [pickupAddressesLoading, setPickupAddressesLoading] = useState(false);
+  const [deletingPickupAddress, setDeletingPickupAddress] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", currentPassword: "", newPassword: "", confirmPassword: "" });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -192,6 +204,34 @@ export default function MiCuentaPage() {
     }
   };
 
+  const fetchPickupAddresses = async () => {
+    setPickupAddressesLoading(true);
+    try {
+      const res = await fetch("/api/saved-pickup-addresses");
+      const data = await res.json();
+      setPickupAddresses(data.data || []);
+    } catch {
+      /* silent */
+    } finally {
+      setPickupAddressesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "recipients" && status === "authenticated") fetchPickupAddresses();
+  }, [tab, status]);
+
+  const deletePickupAddress = async (id: string) => {
+    if (!confirm(t("account.deletePickupAddressConfirm"))) return;
+    setDeletingPickupAddress(id);
+    try {
+      const res = await fetch(`/api/saved-pickup-addresses/${id}`, { method: "DELETE" });
+      if (res.ok) setPickupAddresses(prev => prev.filter(a => a.id !== id));
+    } finally {
+      setDeletingPickupAddress(null);
+    }
+  };
+
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (profile.newPassword && profile.newPassword !== profile.confirmPassword) {
@@ -243,7 +283,7 @@ export default function MiCuentaPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero header */}
-      <div style={{ background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }}>
+      <div style={{ background: "linear-gradient(135deg, #0d2338, #1d4f86, #14314f)" }}>
         <div className="max-w-3xl mx-auto px-4 py-8">
           {/* Top bar */}
           <div className="flex items-center justify-between mb-8">
@@ -275,7 +315,7 @@ export default function MiCuentaPage() {
           {/* User info + stats */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-indigo-900/50 shrink-0"
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-xl shadow-blue-900/50 shrink-0"
                 style={{ background: "linear-gradient(135deg,#1d4f86,#2c629b)" }}>
                 {initial}
               </div>
@@ -304,16 +344,16 @@ export default function MiCuentaPage() {
             phone screens instead of running the last tab off-screen */}
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex gap-1 border-b border-white/10 overflow-x-auto no-scrollbar">
-            <button onClick={() => setTab("active")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "active" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("active")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "active" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.activeTab")}{active.length > 0 ? ` (${active.length})` : ""}
             </button>
-            <button onClick={() => setTab("history")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "history" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("history")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "history" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.historyTab")}{done.length > 0 ? ` (${done.length})` : ""}
             </button>
-            <button onClick={() => setTab("recipients")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "recipients" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("recipients")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "recipients" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.recipientsTab")}
             </button>
-            <button onClick={() => setTab("profile")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-indigo-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
+            <button onClick={() => setTab("profile")} className={`shrink-0 px-3.5 sm:px-5 py-3 text-sm font-semibold whitespace-nowrap transition-all border-b-2 -mb-px ${tab === "profile" ? "text-white border-blue-400" : "text-white/40 border-transparent hover:text-white/70"}`}>
               {t("account.profileTab")}
             </button>
           </div>
@@ -348,6 +388,37 @@ export default function MiCuentaPage() {
                       className="shrink-0 text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
                     >
                       {deletingRecipient === r.id ? t("common.loading") : t("account.deleteRecipient")}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 mt-4">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">{t("account.pickupAddressesTitle")}</h2>
+            <p className="text-slate-500 text-sm mb-5">{t("account.pickupAddressesDesc")}</p>
+
+            {pickupAddressesLoading ? (
+              <p className="text-slate-400 text-sm">{t("common.loading")}</p>
+            ) : pickupAddresses.length === 0 ? (
+              <p className="text-slate-400 text-sm">{t("account.noPickupAddresses")}</p>
+            ) : (
+              <div className="space-y-3">
+                {pickupAddresses.map(a => (
+                  <div key={a.id} className="flex items-start justify-between gap-4 border border-slate-100 rounded-xl p-4">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">{a.label}</p>
+                      <p className="text-slate-400 text-xs mt-0.5">
+                        {a.address}, {a.city}{a.state ? `, ${a.state}` : ""}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => deletePickupAddress(a.id)}
+                      disabled={deletingPickupAddress === a.id}
+                      className="shrink-0 text-red-500 hover:text-red-700 text-xs font-semibold disabled:opacity-50"
+                    >
+                      {deletingPickupAddress === a.id ? t("common.loading") : t("account.deletePickupAddress")}
                     </button>
                   </div>
                 ))}

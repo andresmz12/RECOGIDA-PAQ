@@ -13,7 +13,10 @@
     "panelControl": "Control Panel",
     "descuentos": "Discounts",
     "soporte": "Support",
-    "casos": "Cases"
+    "casos": "Cases",
+    "notifTitle": "Pending requests",
+    "notifEmpty": "Nothing pending right now",
+    "notifViewAll": "View all pending"
   },
   "roles": {
     "ADMIN": "Administrator",
@@ -200,6 +203,11 @@
     "noRecipients": "You haven't saved any recipients yet.",
     "deleteRecipient": "Remove",
     "deleteRecipientConfirm": "Remove this saved recipient?",
+    "pickupAddressesTitle": "Saved pickup addresses",
+    "pickupAddressesDesc": "Manage the pickup addresses you've saved for faster recurring shipments.",
+    "noPickupAddresses": "You haven't saved any pickup addresses yet.",
+    "deletePickupAddress": "Remove",
+    "deletePickupAddressConfirm": "Remove this saved pickup address?",
     "caseType_LOST": "Lost package",
     "caseType_DAMAGED": "Damaged package",
     "caseType_DELAYED": "Delayed shipment",

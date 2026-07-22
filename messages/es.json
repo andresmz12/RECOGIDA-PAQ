@@ -13,7 +13,10 @@
     "panelControl": "Panel de Control",
     "descuentos": "Descuentos",
     "soporte": "Soporte",
-    "casos": "Casos"
+    "casos": "Casos",
+    "notifTitle": "Solicitudes pendientes",
+    "notifEmpty": "No hay nada pendiente por ahora",
+    "notifViewAll": "Ver todas las pendientes"
   },
   "roles": {
     "ADMIN": "Administrador",
@@ -200,6 +203,11 @@
     "noRecipients": "Aún no has guardado ningún destinatario.",
     "deleteRecipient": "Eliminar",
     "deleteRecipientConfirm": "¿Eliminar este destinatario guardado?",
+    "pickupAddressesTitle": "Direcciones de recogida guardadas",
+    "pickupAddressesDesc": "Administra las direcciones de recogida que has guardado para envíos recurrentes más rápidos.",
+    "noPickupAddresses": "Aún no has guardado ninguna dirección de recogida.",
+    "deletePickupAddress": "Eliminar",
+    "deletePickupAddressConfirm": "¿Eliminar esta dirección de recogida guardada?",
     "caseType_LOST": "Paquete perdido",
     "caseType_DAMAGED": "Paquete dañado",
     "caseType_DELAYED": "Envío retrasado",

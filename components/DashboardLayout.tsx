@@ -270,6 +270,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifItems, setNotifItems] = useState<
+    { id: string; trackingCode: string; contactName: string; pickupCity: string }[]
+  >([]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -278,6 +282,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     setUserMenuOpen(false);
     setMobileOpen(false);
+    setNotifOpen(false);
   }, [pathname]);
 
   // Poll for pending pickups every 60s (ADMIN/DISPATCHER only)
@@ -285,9 +290,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const role = (session?.user as any)?.role;
     if (!["ADMIN", "DISPATCHER"].includes(role)) return;
     const check = () =>
-      fetch("/api/pickup-requests?status=PENDING&limit=1")
+      fetch("/api/pickup-requests?status=PENDING&limit=5")
         .then((r) => r.json())
-        .then((d) => setPendingCount(d.pagination?.total ?? 0))
+        .then((d) => {
+          setPendingCount(d.pagination?.total ?? 0);
+          setNotifItems(d.data ?? []);
+        })
         .catch(() => {});
     check();
     const id = setInterval(check, 60_000);
@@ -393,22 +401,65 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="w-px h-5 bg-slate-200" />
 
             {/* Notification bell with pending count */}
-            <button
-              className="relative p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              title={pendingCount > 0 ? `${pendingCount} pending` : "Notifications"}
-              onClick={() => router.push("/dashboard/solicitudes?status=PENDING")}
-            >
-              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {pendingCount > 0 ? (
-                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
-                  {pendingCount > 99 ? "99+" : pendingCount}
-                </span>
-              ) : (
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+            <div className="relative">
+              <button
+                className="relative p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                title={pendingCount > 0 ? `${pendingCount} pending` : "Notifications"}
+                onClick={() => setNotifOpen((v) => !v)}
+              >
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {pendingCount > 0 ? (
+                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                ) : (
+                  <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-80 max-w-[90vw] bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50">
+                  <div className="px-3.5 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-slate-900">{t("nav.notifTitle")}</p>
+                    {pendingCount > 0 && (
+                      <span className="text-xs font-bold text-red-600">{pendingCount}</span>
+                    )}
+                  </div>
+
+                  {notifItems.length === 0 ? (
+                    <p className="px-3.5 py-4 text-sm text-slate-400 text-center">{t("nav.notifEmpty")}</p>
+                  ) : (
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifItems.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setNotifOpen(false);
+                            router.push(`/dashboard/solicitudes/${item.id}`);
+                          }}
+                          className="w-full flex flex-col items-start gap-0.5 px-3.5 py-2 text-left hover:bg-slate-50 transition-colors"
+                        >
+                          <span className="text-xs font-bold text-blue-700">{item.trackingCode}</span>
+                          <span className="text-sm text-slate-700 truncate w-full">{item.contactName} · {item.pickupCity}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setNotifOpen(false);
+                      router.push("/dashboard/solicitudes?status=PENDING");
+                    }}
+                    className="w-full text-center px-3.5 py-2 text-xs font-semibold text-blue-600 hover:bg-slate-50 transition-colors border-t border-slate-100 mt-1"
+                  >
+                    {t("nav.notifViewAll")}
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
 
             <div className="w-px h-5 bg-slate-200 mx-0.5" />
 
