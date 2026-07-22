@@ -56,6 +56,7 @@ export default function PreciosPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null); // "mode:country:packageType"
   const [saved, setSaved] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [globalThreshold, setGlobalThreshold] = useState("20");
   const [globalRate, setGlobalRate] = useState("1.00");
 
@@ -114,11 +115,18 @@ export default function PreciosPage() {
         }));
         setSaved(key);
         setTimeout(() => setSaved(null), 2000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setSaveError(data.error || (lang === "en" ? "Couldn't save. Try again." : "No se pudo guardar. Intenta de nuevo."));
+        setTimeout(() => setSaveError(null), 6000);
       }
+    } catch {
+      setSaveError(lang === "en" ? "Couldn't save. Try again." : "No se pudo guardar. Intenta de nuevo.");
+      setTimeout(() => setSaveError(null), 6000);
     } finally {
       setSaving(null);
     }
-  }, [globalThreshold, globalRate]);
+  }, [globalThreshold, globalRate, lang]);
 
   const saveAll = async () => {
     for (const [country, byMode] of Object.entries(priceMap)) {
@@ -137,6 +145,14 @@ export default function PreciosPage() {
 
   return (
     <DashboardLayout>
+      {saveError && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold flex items-center gap-2">
+          <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          {saveError}
+        </div>
+      )}
       <div className="p-6 md:p-8 space-y-10">
         {/* Header */}
         <div>
@@ -388,9 +404,28 @@ function PerLbRow({ country, rule, defaultMin, defaultMax, saving, saved, onSave
   saved: boolean;
   onSave: (fields: { pricePerLb: string; minWeight: string; maxWeight: string }) => void;
 }) {
+  const { lang } = useT();
   const [rate, setRate] = useState(rule?.pricePerLb != null ? String(rule.pricePerLb) : "");
   const [min, setMin] = useState(rule?.minWeight != null ? String(rule.minWeight) : (defaultMin != null ? String(defaultMin) : ""));
   const [max, setMax] = useState(rule?.maxWeight != null ? String(rule.maxWeight) : (defaultMax != null ? String(defaultMax) : ""));
+  // Keep local state in sync once the parent confirms a save, same as the
+  // maritime table's cells — otherwise a slow network re-render could show
+  // stale values after a successful save.
+  useEffect(() => {
+    if (saving) return;
+    setRate(rule?.pricePerLb != null ? String(rule.pricePerLb) : "");
+    setMin(rule?.minWeight != null ? String(rule.minWeight) : (defaultMin != null ? String(defaultMin) : ""));
+    setMax(rule?.maxWeight != null ? String(rule.maxWeight) : (defaultMax != null ? String(defaultMax) : ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rule]);
+
+  // Auto-save on blur, same as every other price table on this page — a
+  // price typed here previously only persisted if the courier noticed and
+  // clicked the small icon button, which was easy to miss entirely.
+  const commit = () => {
+    if (!rate.trim()) return;
+    onSave({ pricePerLb: rate, minWeight: min, maxWeight: max });
+  };
 
   return (
     <tr className="hover:bg-slate-50/40 transition-colors">
@@ -407,6 +442,8 @@ function PerLbRow({ country, rule, defaultMin, defaultMax, saving, saved, onSave
             type="number" min="0" step="0.01"
             value={rate}
             onChange={e => setRate(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
             className="w-24 pl-5 pr-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
@@ -416,6 +453,8 @@ function PerLbRow({ country, rule, defaultMin, defaultMax, saving, saved, onSave
           type="number" min="0" step="1"
           value={min}
           onChange={e => setMin(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
           className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </td>
@@ -425,11 +464,14 @@ function PerLbRow({ country, rule, defaultMin, defaultMax, saving, saved, onSave
             type="number" min="0" step="1"
             value={max}
             onChange={e => setMax(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
             className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
-            onClick={() => onSave({ pricePerLb: rate, minWeight: min, maxWeight: max })}
+            onClick={commit}
             disabled={saving || !rate}
+            title={lang === "en" ? "Save" : "Guardar"}
             className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 disabled:opacity-40 transition-colors"
           >
             {saving ? (
