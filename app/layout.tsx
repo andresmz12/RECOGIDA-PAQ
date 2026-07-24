@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Sans, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 // Display: strong, corporate grotesque for headlines (replaces Poppins)
 const archivo = Archivo({
@@ -61,6 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${archivo.variable} ${plex.variable} ${grotesk.variable} ${plexMono.variable}`}>
       <body className="antialiased">
+        <ServiceWorkerRegister />
         <Providers>{children}</Providers>
       </body>
     </html>
