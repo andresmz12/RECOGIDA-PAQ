@@ -1,0 +1,7 @@
+# Copy this file to android/key.properties (git-ignored) and fill in the
+# real values from the keystore credentials file you were given. Paths are
+# relative to the android/ directory.
+storeFile=keystore/oglobocargo-upload.jks
+storePassword=REPLACE_ME
+keyAlias=oglobocargo
+keyPassword=REPLACE_ME

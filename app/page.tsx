@@ -753,6 +753,7 @@ export default function Home() {
               { href: "/recoger", label: t("landing.footerRequest") },
               { href: "#track", label: t("landing.footerTrack") },
               { href: "/terminos", label: t("landing.footerTerms") },
+              { href: "/privacidad", label: t("landing.footerPrivacy") },
             ].map((l) => (
               <Link key={l.href} href={l.href} className="font-mono text-[11px] tracking-[0.15em] uppercase text-white/50 hover:text-accent-400 transition-colors">
                 {l.label}

@@ -1,5 +1,18 @@
 apply plugin: 'com.android.application'
 
+// Release signing config — loaded from android/key.properties locally (see
+// key.properties.example), or from CI-injected env vars in GitHub Actions.
+// Never hardcode real credentials here; the keystore file itself is
+// git-ignored (android/.gitignore: *.jks).
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+def hasKeystoreProperties = keystorePropertiesFile.exists()
+if (hasKeystoreProperties) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+def envStorePassword = System.getenv("ANDROID_STORE_PASSWORD")
+def hasSigningConfig = hasKeystoreProperties || envStorePassword != null
+
 android {
     namespace = "com.oglobocargo.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,10 +29,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasSigningConfig) {
+            release {
+                storeFile hasKeystoreProperties ? rootProject.file(keystoreProperties['storeFile']) : file(System.getenv("ANDROID_KEYSTORE_PATH"))
+                storePassword hasKeystoreProperties ? keystoreProperties['storePassword'] : envStorePassword
+                keyAlias hasKeystoreProperties ? keystoreProperties['keyAlias'] : System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword hasKeystoreProperties ? keystoreProperties['keyPassword'] : System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasSigningConfig) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

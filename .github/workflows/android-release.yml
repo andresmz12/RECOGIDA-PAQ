@@ -1,0 +1,63 @@
+name: Build signed Android AAB
+
+# Builds a signed .aab (Play Store upload format) using the real Android
+# SDK, which isn't available in this repo's normal dev environment. Run it
+# manually from the Actions tab whenever you're ready to ship a build to
+# the Play Console.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64  — `base64 -i oglobocargo-upload.jks | pbcopy` (or -w0 on Linux)
+#   ANDROID_KEY_ALIAS        — oglobocargo
+#   ANDROID_STORE_PASSWORD   — from the keystore credentials file
+#   ANDROID_KEY_PASSWORD     — same as ANDROID_STORE_PASSWORD (PKCS12 keystore)
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Decode signing keystore
+        run: |
+          mkdir -p android/keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/keystore/oglobocargo-upload.jks
+
+      - name: Write key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storeFile=keystore/oglobocargo-upload.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build release AAB
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oglobocargo-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Clean up signing material
+        if: always()
+        run: rm -f android/keystore/oglobocargo-upload.jks android/key.properties
