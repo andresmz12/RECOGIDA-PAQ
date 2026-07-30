@@ -11,6 +11,7 @@ export default function SetupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [setupSecret, setSetupSecret] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -25,7 +26,7 @@ export default function SetupPage() {
       const res = await fetch("/api/setup/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, setupSecret }),
       });
 
       const data = await res.json();
@@ -102,6 +103,22 @@ export default function SetupPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Setup secret
+            </label>
+            <input
+              type="password"
+              value={setupSecret}
+              onChange={(e) => setSetupSecret(e.target.value)}
+              placeholder="SETUP_SECRET value from the environment"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Required if SETUP_SECRET is configured in the environment.
+            </p>
           </div>
 
           <button

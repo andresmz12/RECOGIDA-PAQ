@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -27,8 +28,9 @@ export async function POST(request: NextRequest) {
   }
 
   const { token, password } = parsed.data;
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-  const record = await prisma.passwordResetToken.findUnique({ where: { token } });
+  const record = await prisma.passwordResetToken.findUnique({ where: { token: tokenHash } });
   if (!record || record.expiresAt < new Date()) {
     return NextResponse.json(
       { error: "This reset link is invalid or has expired." },
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     select: { email: true, name: true },
   });
 
-  await prisma.passwordResetToken.delete({ where: { token } });
+  await prisma.passwordResetToken.delete({ where: { token: tokenHash } });
 
   // Security alert so the owner notices if someone else reset their password
   sendPasswordChangedEmail(user.email, user.name).catch((err) =>

@@ -30,11 +30,15 @@ export async function POST(request: NextRequest) {
     // Delete any existing token for this email
     await prisma.passwordResetToken.deleteMany({ where: { email } });
 
+    // The raw token goes out in the email link; only its hash is stored,
+    // same approach as ApiKey — a DB read (or backup leak) alone can't be
+    // used to reset the account.
     const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await prisma.passwordResetToken.create({
-      data: { email, token, expiresAt },
+      data: { email, token: tokenHash, expiresAt },
     });
 
     await sendPasswordResetEmail(email, user.name, token);
