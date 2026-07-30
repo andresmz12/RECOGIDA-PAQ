@@ -31,7 +31,7 @@ export default function Card({
     <div
       {...props}
       className={`
-        rounded-xl transition-all duration-300
+        rounded-lg transition-all duration-300
         ${variantStyles[variant]}
         ${paddingStyles[padding]}
         ${className}

@@ -184,7 +184,7 @@ function SidebarContent({
     <>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 h-14 border-b border-slate-800/80 shrink-0">
-        <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-md shadow-blue-900/50 shrink-0">
+        <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-md flex items-center justify-center shadow-sm shrink-0">
           <span className="text-white font-black text-xs">OG</span>
         </div>
         <div className="min-w-0">
@@ -209,9 +209,9 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+              className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-md text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? "bg-blue-700 text-white shadow-sm shadow-blue-900/50"
+                  ? "bg-blue-700 text-white shadow-sm"
                   : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               }`}
             >
@@ -420,7 +420,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-80 max-w-[90vw] bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50">
+                <div className="absolute right-0 top-full mt-1.5 w-80 max-w-[90vw] bg-white border border-slate-200 rounded-lg shadow-lg py-1.5 z-50">
                   <div className="px-3.5 py-2 border-b border-slate-100 mb-1 flex items-center justify-between">
                     <p className="text-sm font-semibold text-slate-900">{t("nav.notifTitle")}</p>
                     {pendingCount > 0 && (
@@ -481,7 +481,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-50">
+                <div className="absolute right-0 top-full mt-1.5 w-52 bg-white border border-slate-200 rounded-lg shadow-lg py-1.5 z-50">
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-sm font-semibold text-slate-900 truncate">{session?.user?.name}</p>
                     <p className="text-xs text-slate-500 truncate">{session?.user?.email}</p>

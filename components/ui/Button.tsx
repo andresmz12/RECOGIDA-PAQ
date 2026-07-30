@@ -12,11 +12,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<Variant, string> = {
-  primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 active:bg-indigo-800',
+  primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow active:bg-indigo-800',
   secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-900 active:bg-slate-300',
   outline: 'border-2 border-slate-300 hover:bg-slate-50 text-slate-900 active:bg-slate-100',
   ghost: 'hover:bg-slate-100 text-slate-600 hover:text-slate-900 active:bg-slate-200',
-  danger: 'bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-200 hover:shadow-lg hover:shadow-red-300 active:bg-red-800',
+  danger: 'bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow active:bg-red-800',
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -36,7 +36,7 @@ export default function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
-  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
