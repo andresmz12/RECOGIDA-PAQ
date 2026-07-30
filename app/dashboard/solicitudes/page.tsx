@@ -348,7 +348,7 @@ function SolicitudesPageInner() {
             )}
             <Link
               href="/recoger"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-indigo-200"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -359,7 +359,7 @@ function SolicitudesPageInner() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-5 shadow-xs">
+        <div className="bg-white rounded-md border border-slate-200 p-4 mb-5 shadow-xs">
           <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
             <div className="flex-1 relative min-w-48">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,7 +417,7 @@ function SolicitudesPageInner() {
 
         {/* Bulk assign bar */}
         {canEdit && selectedIds.size > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-3 animate-in slide-in-from-bottom-4">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white rounded-lg shadow-2xl px-5 py-3 flex items-center gap-3 animate-in slide-in-from-bottom-4">
             <span className="text-sm font-semibold">{selectedIds.size} {lang === "en" ? "selected" : "seleccionadas"}</span>
             <div className="w-px h-5 bg-white/20" />
             <select
@@ -447,7 +447,7 @@ function SolicitudesPageInner() {
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-md border border-slate-200 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -626,7 +626,7 @@ function SolicitudesPageInner() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
           <div
-            className="fixed z-50 w-56 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"
+            className="fixed z-50 w-56 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-xl py-1.5"
             style={{ left: menu.x, top: menu.y }}
           >
             {menu.type === "status" ? (

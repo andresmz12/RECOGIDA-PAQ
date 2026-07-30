@@ -124,7 +124,7 @@ function InternalComments({ pickupId }: { pickupId: string }) {
       ) : (
         <div className="space-y-3 mb-4">
           {comments.map(c => (
-            <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+            <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-md px-4 py-3">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-800 text-sm">{c.authorName}</span>
@@ -282,7 +282,7 @@ function CasesSection({ pickupId }: { pickupId: string }) {
       </div>
 
       {showForm && (
-        <form onSubmit={submit} className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 space-y-3">
+        <form onSubmit={submit} className="bg-slate-50 border border-slate-200 rounded-md p-4 mb-4 space-y-3">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1.5">{t("detail.caseType")}</label>
             <select
@@ -330,7 +330,7 @@ function CasesSection({ pickupId }: { pickupId: string }) {
       ) : (
         <div className="space-y-3">
           {cases.map(c => (
-            <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+            <div key={c.id} className="bg-slate-50 border border-slate-200 rounded-md px-4 py-3">
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-800 text-sm">{t(`detail.caseType_${c.type}`)}</span>
@@ -643,7 +643,7 @@ export default function SolicitudDetailPage() {
                       href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(navAddress)}&travelmode=driving`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                      className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-md text-sm font-semibold transition-all"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -654,7 +654,7 @@ export default function SolicitudDetailPage() {
                       href={`https://waze.com/ul?q=${encodeURIComponent(navAddress)}&navigate=yes`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+                      className="flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 px-3 py-2 rounded-md text-sm font-semibold transition-all"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20.54 6.55C19.18 4.38 16.96 3 14.5 3c-3.7 0-6.8 2.77-7.42 6.35C4.73 10.15 3 12.13 3 14.5 3 17.54 5.46 20 8.5 20c.96 0 1.86-.27 2.63-.73.59.45 1.32.73 2.12.73 1.65 0 3.06-1.14 3.43-2.68.18.02.37.03.57.03 2.62 0 4.75-2.13 4.75-4.75 0-2.37-1.71-4.37-4-.98zM9 14.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25S10.25 12.31 10.25 13 9.69 14.25 9 14.25zm6 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
@@ -860,7 +860,7 @@ export default function SolicitudDetailPage() {
                     <button
                       onClick={() => handleCourierAction("SCHEDULED")}
                       disabled={updating}
-                      className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-200 text-sm"
+                      className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-md transition-all shadow-lg text-sm"
                     >
                       {updating ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -886,7 +886,7 @@ export default function SolicitudDetailPage() {
                     <button
                       onClick={() => handleCourierAction("PICKED_UP")}
                       disabled={updating}
-                      className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-emerald-200 text-sm"
+                      className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-md transition-all shadow-lg text-sm"
                     >
                       {updating ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -913,7 +913,7 @@ export default function SolicitudDetailPage() {
             {role === "COURIER" && isCompleted && (
               <Card variant="default" padding="lg" className="sticky top-8">
                 {pickup.status === "PICKED_UP" ? (
-                  <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-md px-4 py-3">
                     <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -925,7 +925,7 @@ export default function SolicitudDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                  <div className="bg-slate-50 border border-slate-200 rounded-md px-4 py-3">
                     <p className="font-bold text-slate-700 text-sm">{t("detail.requestCancelled")}</p>
                   </div>
                 )}

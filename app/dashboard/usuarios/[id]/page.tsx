@@ -123,9 +123,9 @@ export default function UserProfilePage() {
         </Link>
 
         {/* Profile header */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 mb-6">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-xs p-6 mb-6">
           <div className="flex items-start gap-5">
-            <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${avatarGradient(user.name)} flex items-center justify-center text-white text-2xl font-bold shrink-0`}>
+            <div className={`w-16 h-16 rounded-lg bg-gradient-to-br ${avatarGradient(user.name)} flex items-center justify-center text-white text-2xl font-bold shrink-0`}>
               {user.name[0]?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -155,7 +155,7 @@ export default function UserProfilePage() {
                 { label: t("usuarios.inProgress"), value: inProgress, color: "bg-blue-50 border-blue-100", text: "text-blue-700" },
                 { label: t("usuarios.successRate"), value: `${successRate}%`, color: "bg-violet-50 border-violet-100", text: "text-violet-700" },
               ].map((s) => (
-                <div key={s.label} className={`${s.color} border rounded-xl p-4 text-center`}>
+                <div key={s.label} className={`${s.color} border rounded-md p-4 text-center`}>
                   <p className={`text-2xl font-bold ${s.text}`}>{s.value}</p>
                   <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
                 </div>
@@ -163,7 +163,7 @@ export default function UserProfilePage() {
             </div>
 
             {/* Recent pickups */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100">
                 <h2 className="font-semibold text-slate-900">{t("usuarios.recentPickups")}</h2>
               </div>

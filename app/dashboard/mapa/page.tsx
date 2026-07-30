@@ -17,7 +17,7 @@ import type { MapPoint } from "@/components/maps/MapView";
 const MapView = dynamicImport(() => import("@/components/maps/MapView"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-slate-100 rounded-xl flex items-center justify-center">
+    <div className="w-full h-full bg-slate-100 rounded-md flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
     </div>
   ),
@@ -255,7 +255,7 @@ function MapaPageInner() {
               {isCourier && (
                 <button
                   onClick={() => setShowRouteModal(true)}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm shadow-indigo-200"
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -365,7 +365,7 @@ function MapaPageInner() {
                   href={googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm shadow-green-200"
+                  className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -423,7 +423,7 @@ function MapaPageInner() {
           {/* Map */}
           <div className="flex-1 p-3 min-w-0">
             {loading ? (
-              <div className="w-full h-full bg-white rounded-xl flex flex-col items-center justify-center border border-slate-200">
+              <div className="w-full h-full bg-white rounded-md flex flex-col items-center justify-center border border-slate-200">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3" />
                 <p className="text-slate-500 text-sm">{t("common.loading")}</p>
               </div>
@@ -454,7 +454,7 @@ function MapaPageInner() {
             <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
               {displayPickups.length === 0 && !loading ? (
                 <div className="flex flex-col items-center justify-center py-14 px-4 text-center">
-                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3 text-slate-400">
+                  <div className="w-12 h-12 bg-slate-100 rounded-md flex items-center justify-center mb-3 text-slate-400">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>

@@ -180,7 +180,7 @@ export default function UsuariosPage() {
         </Card>
 
         {/* Table */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4" />
@@ -311,7 +311,7 @@ export default function UsuariosPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white border border-slate-200 shadow-2xl rounded-xl w-full max-w-md">
+          <div className="bg-white border border-slate-200 shadow-2xl rounded-md w-full max-w-md">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">
                 {editUser ? t("usuarios.editTitle") : t("usuarios.createTitle")}

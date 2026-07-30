@@ -105,7 +105,7 @@ export default function CalendarioPage() {
 
         <div className="grid lg:grid-cols-3 gap-5">
           {/* Calendar */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+          <div className="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs">
             {/* Month nav */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <button onClick={prevMonth} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
@@ -170,7 +170,7 @@ export default function CalendarioPage() {
           {/* Side panel */}
           <div className="space-y-4">
             {/* Legend */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
               <h3 className="font-bold text-slate-900 text-sm mb-3">{t("cal.legend")}</h3>
               <div className="space-y-1.5">
                 {Object.entries(STATUS_COLOR).map(([status, cls]) => (
@@ -184,7 +184,7 @@ export default function CalendarioPage() {
 
             {/* Selected day pickups */}
             {selectedKey ? (
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-100">
                   <h3 className="font-bold text-slate-900 text-sm">
                     {new Date(selectedKey + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
@@ -212,7 +212,7 @@ export default function CalendarioPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center">
+              <div className="bg-white rounded-lg border border-slate-200 p-6 text-center">
                 <svg className="w-8 h-8 text-slate-200 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -221,7 +221,7 @@ export default function CalendarioPage() {
             )}
 
             {/* Month summary */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
+            <div className="bg-white rounded-lg border border-slate-200 p-4">
               <h3 className="font-bold text-slate-900 text-sm mb-3">{t("cal.monthSummary")}</h3>
               <div className="space-y-2">
                 {[
