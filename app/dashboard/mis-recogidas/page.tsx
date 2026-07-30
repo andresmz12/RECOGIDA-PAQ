@@ -130,10 +130,13 @@ export default function MisRecogidasPage() {
 
   // ── Date helpers ────────────────────────────────────────────────
   // preferredDate is stored as a date-only value (UTC midnight), so compare
-  // calendar dates as YYYY-MM-DD strings — converting through local time
-  // shifts the day for negative UTC offsets (e.g. Colombia, US East).
+  // calendar dates as YYYY-MM-DD strings using UTC getters — using local
+  // getters here would shift "today" relative to preferredDate's UTC-based
+  // dateKeyOf() below for any courier not in UTC (e.g. Colombia, US East),
+  // desyncing this page's Overdue/Today buckets from the admin dashboard's
+  // UTC-based "today" count.
   const toYMD = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
   const now = new Date();
   const todayKey = toYMD(now);
   const tmrw = new Date(now);

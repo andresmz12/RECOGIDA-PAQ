@@ -3,6 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendCaseOpenedEmail } from "@/lib/email";
+import { dispatchWebhookEvent } from "@/lib/webhook-service";
+
+// A courier reporting one of these while a pickup is actively in their
+// hands (assigned/scheduled/en route) means the attempt failed — the job
+// needs to go back to dispatch for reassignment/rescheduling rather than
+// silently sitting on the courier's list until it's flagged overdue.
+const REASSIGNABLE_STATUSES = ["ASSIGNED", "SCHEDULED", "EN_CAMINO"];
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +81,7 @@ export async function POST(req: NextRequest) {
 
   const pickupRequest = await prisma.pickupRequest.findUnique({
     where: { id: pickupRequestId },
-    select: { id: true, userId: true, trackingCode: true, contactEmail: true, contactName: true, lang: true, assignedCourierId: true },
+    select: { id: true, userId: true, trackingCode: true, contactEmail: true, contactName: true, lang: true, assignedCourierId: true, status: true },
   });
   if (!pickupRequest) {
     return NextResponse.json({ error: "Pickup request not found" }, { status: 404 });
@@ -94,6 +101,31 @@ export async function POST(req: NextRequest) {
       description: description.trim(),
     },
   });
+
+  // A courier's failed pickup attempt (NOT_HOME/OTHER) sends the job back
+  // to PENDING and clears the assignment, mirroring how assignCourier()
+  // moves PENDING -> ASSIGNED — so it re-enters dispatch's queue instead of
+  // sitting on this courier's list until it's eventually flagged overdue.
+  if (isCourier && REASSIGNABLE_STATUSES.includes(pickupRequest.status)) {
+    const fromStatus = pickupRequest.status;
+    await prisma.pickupRequest.update({
+      where: { id: pickupRequestId },
+      data: { status: "PENDING", assignedCourierId: null },
+    });
+    await prisma.statusHistory.create({
+      data: {
+        pickupRequestId,
+        fromStatus,
+        toStatus: "PENDING",
+        changedById: user.id!,
+        notes: `Intento de recogida fallido reportado por el mensajero (caso ${newCase.id}) — reasignación pendiente`,
+      },
+    });
+    dispatchWebhookEvent(pickupRequestId, "STATUS_CHANGED", {
+      fromStatus,
+      toStatus: "PENDING",
+    }).catch((err) => console.error("[cases] dispatchWebhookEvent error:", err));
+  }
 
   // The case itself is the source of truth for the public tracking
   // timeline — /api/track reads the Case table directly, so no separate

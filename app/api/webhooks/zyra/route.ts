@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
   const phone: string | undefined = payload.prospect?.phone;
   const event: string = payload.event ?? "";
   const outcome: string | undefined = payload.call?.outcome;
+  // Same id we stored as lastCallId when the call was launched (call-service.ts
+  // reads it off `retell_call_id` in ZyraVoice's launch response) — used below
+  // to reject webhooks from a call attempt that's no longer the current one.
+  const callId: string | undefined =
+    payload.call?.retell_call_id ?? payload.call?.call_id ?? payload.call?.id;
 
   if (!phone) {
     // Nothing to act on — still return 200 so ZyraVoice doesn't retry
@@ -66,6 +71,17 @@ export async function POST(request: NextRequest) {
     });
 
     if (pickupRequest) {
+      // If a later call was already launched for this pickup (a new
+      // lastCallId), a webhook for an earlier attempt arriving late or out
+      // of order must not overwrite the newer, more accurate callStatus.
+      if (callId && pickupRequest.lastCallId && callId !== pickupRequest.lastCallId) {
+        console.warn(
+          `[webhook/zyra] Ignoring stale call event for pickup ${pickupRequest.id}: ` +
+            `webhook call ${callId} != current lastCallId ${pickupRequest.lastCallId}`
+        );
+        return NextResponse.json({ received: true, ignored: "stale_call_id" });
+      }
+
       const callStatus = resolveCallStatus(event, outcome);
       await prisma.pickupRequest.update({
         where: { id: pickupRequest.id },

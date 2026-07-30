@@ -341,8 +341,12 @@ export default function RecogerPage() {
     shippingMode === "AIR" && airKind === "PER_LB"
       ? calcAirPerLbPrice(airWeight, airPerLbRule)
       : items.reduce((sum, item) => sum + priceOf(item), 0);
-  const discountAmount = discount ? (totalPrice * discount.percent) / 100 : 0;
-  const finalPrice = totalPrice - discountAmount;
+  // Clamp defensively — percent ultimately comes from the DB via a public
+  // endpoint with no DB-level bound, so a bad value must never be able to
+  // push the displayed price negative or apply more than a 100% discount.
+  const discountPercent = discount ? Math.min(100, Math.max(0, discount.percent)) : 0;
+  const discountAmount = discount ? (totalPrice * discountPercent) / 100 : 0;
+  const finalPrice = Math.max(0, totalPrice - discountAmount);
 
   const applyDiscount = async () => {
     const code = discountInput.trim();
@@ -1141,7 +1145,7 @@ export default function RecogerPage() {
                 </div>
                 {discount && (
                   <p className="text-xs font-semibold text-emerald-600 mt-1.5">
-                    ✓ {t("recoger.discountApplied", { code: discount.code, percent: discount.percent })}
+                    ✓ {t("recoger.discountApplied", { code: discount.code, percent: discountPercent })}
                   </p>
                 )}
                 {discountError && (

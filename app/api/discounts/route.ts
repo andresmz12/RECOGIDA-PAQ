@@ -20,10 +20,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ valid: false });
     }
 
+    // The admin API bounds percent to (0, 100] on write, but this clamps
+    // defensively too — nothing here stops an out-of-range value reaching
+    // the DB some other way (direct edit, seed script), and this is the
+    // client-facing source of truth for pricing math.
+    const percent = Math.min(100, Math.max(0, discount.percent));
+
     return NextResponse.json({
       valid: true,
       code: discount.code,
-      percent: discount.percent,
+      percent,
     });
   } catch (error) {
     console.error("Error validating discount code:", error);
