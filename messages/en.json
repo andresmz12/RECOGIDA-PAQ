@@ -55,6 +55,7 @@
     "dateConfirmed": "Confirmed"
   },
   "status": {
+    "DRAFT": "Awaiting payment",
     "PENDING": "Pending",
     "ASSIGNED": "Assigned",
     "SCHEDULED": "Scheduled",
@@ -736,11 +737,13 @@
     "stepAssigned": "Assigned",
     "stepOnWay": "On the way",
     "stepPickedUp": "Picked up",
+    "statusDraft": "Awaiting Payment",
     "statusPending": "Request Pending",
     "statusAssigned": "Courier Assigned",
     "statusScheduled": "Courier On the Way",
     "statusPickedUp": "Package Picked Up",
     "statusCancelled": "Request Cancelled",
+    "descDraft": "Complete your payment to activate this pickup request — check your email for the payment link.",
     "descPending": "Your request is registered and waiting to be assigned to a courier.",
     "descAssigned": "A courier has been assigned to your pickup. The date and time will be confirmed soon.",
     "descScheduled": "Your courier is on the way and will arrive within the indicated time window.",

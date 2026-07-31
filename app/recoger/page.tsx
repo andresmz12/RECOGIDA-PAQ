@@ -10,55 +10,9 @@ import AddressAutocomplete from "@/components/Form/AddressAutocomplete";
 import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { getShippingConfig, AIR_ITEM_TYPES, AIR_PER_LB_KEY, type ShippingMode } from "@/lib/shipping-modes";
+import { calcMaritimePrice, calcAirPerLbPrice, calcAirFixedItemPrice, type PricingRule } from "@/lib/pricing";
 
 const AIR_PER_LB_LABEL = "Envío Aéreo (por libra)";
-
-// Fallback prices used when no pricing rule is configured in DB
-const BOX_BASE_FALLBACK: Record<string, number> = {
-  "Documento": 15,
-  "Caja 18x18x18": 35,
-  "Caja 20x20x20": 45,
-  "Caja 22x22x22": 55,
-  "Caja 24x24x24": 65,
-};
-
-interface PricingRule {
-  country: string;
-  shippingMode: string;
-  packageType: string;
-  basePrice: number;
-  weightThreshold: number;
-  weightRate: number;
-  pricePerLb: number | null;
-  minWeight: number | null;
-  maxWeight: number | null;
-}
-
-// Maritime: base box price + surcharge for weight over the included threshold.
-function calcMaritimePrice(
-  packageType: string,
-  weightStr: string,
-  rule?: PricingRule,
-) {
-  const base = rule?.basePrice ?? BOX_BASE_FALLBACK[packageType] ?? 45;
-  const threshold = rule?.weightThreshold ?? 20;
-  const rate = rule?.weightRate ?? 1.0;
-  const lbs = parseFloat(weightStr) || 0;
-  const extra = Math.max(0, lbs - threshold) * rate;
-  return base + extra;
-}
-
-// Air, per pound: declared weight × the country's per-lb rate. No base fee.
-function calcAirPerLbPrice(weightStr: string, rule?: PricingRule) {
-  const rate = rule?.pricePerLb ?? 0;
-  const lbs = parseFloat(weightStr) || 0;
-  return rate * lbs;
-}
-
-// Air, fixed fee by item type (HN/GT/NI): flat price per unit, weight-independent.
-function calcAirFixedItemPrice(rule?: PricingRule) {
-  return rule?.basePrice ?? 0;
-}
 
 const BOX_SIZES = [
   { value: "Caja 18x18x18", dimensions: "18x18x18 in", descKey: "boxSmall" },
@@ -335,11 +289,11 @@ export default function RecogerPage() {
     if (shippingMode === "AIR" && airKind === "FIXED_ITEM") {
       return calcAirFixedItemPrice(ruleFor("AIR", item.packageType));
     }
-    return calcMaritimePrice(item.packageType, item.estimatedWeight, ruleFor("MARITIME", item.packageType));
+    return calcMaritimePrice(item.packageType, parseFloat(item.estimatedWeight) || 0, ruleFor("MARITIME", item.packageType));
   };
   const totalPrice =
     shippingMode === "AIR" && airKind === "PER_LB"
-      ? calcAirPerLbPrice(airWeight, airPerLbRule)
+      ? calcAirPerLbPrice(airWeightNum, airPerLbRule)
       : items.reduce((sum, item) => sum + priceOf(item), 0);
   // Clamp defensively — percent ultimately comes from the DB via a public
   // endpoint with no DB-level bound, so a bad value must never be able to

@@ -6,6 +6,7 @@ import { useT } from "@/lib/i18n-context";
 // solid-fill pill, so status reads like a customs/manifest mark rather than
 // a generic SaaS badge.
 const STATUS_STYLE: Record<string, { className: string; dot: string }> = {
+  DRAFT:     { className: "border-slate-300 text-slate-500",   dot: "bg-slate-400" },
   PENDING:   { className: "border-amber-300 text-amber-700",   dot: "bg-amber-500" },
   ASSIGNED:  { className: "border-blue-300 text-blue-700",     dot: "bg-blue-500" },
   SCHEDULED: { className: "border-navy-300 text-navy-700",     dot: "bg-navy-500" },

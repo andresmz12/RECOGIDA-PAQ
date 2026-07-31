@@ -684,7 +684,7 @@ function PickupCard({ pickup, cancelling, onCancel, openCase }: {
   openCase?: { type: string };
 }) {
   const { t } = useT();
-  const canCancel = pickup.status === "PENDING";
+  const canCancel = pickup.status === "PENDING" || pickup.status === "DRAFT";
   const isDone = pickup.status === "PICKED_UP";
   const isCancelled = pickup.status === "CANCELLED";
 
@@ -758,7 +758,7 @@ function PickupCard({ pickup, cancelling, onCancel, openCase }: {
             </svg>
             {formatDate(pickup.preferredDate)}
             {!isCancelled && (
-              pickup.status === "PENDING" ? (
+              pickup.status === "PENDING" || pickup.status === "DRAFT" ? (
                 <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
                   {t("common.dateUnconfirmed")}
                 </span>

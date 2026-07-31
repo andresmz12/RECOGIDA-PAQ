@@ -55,6 +55,7 @@
     "dateConfirmed": "Confirmada"
   },
   "status": {
+    "DRAFT": "Pendiente de pago",
     "PENDING": "Pendiente",
     "ASSIGNED": "Asignado",
     "SCHEDULED": "Programado",
@@ -736,11 +737,13 @@
     "stepAssigned": "Asignada",
     "stepOnWay": "En camino",
     "stepPickedUp": "Recogida",
+    "statusDraft": "Pendiente de pago",
     "statusPending": "Solicitud pendiente",
     "statusAssigned": "Courier asignado",
     "statusScheduled": "Courier en camino",
     "statusPickedUp": "Paquete recogido",
     "statusCancelled": "Solicitud cancelada",
+    "descDraft": "Completa tu pago para activar esta solicitud de recogida — revisa tu correo para el link de pago.",
     "descPending": "Tu solicitud está registrada y esperando ser asignada a un courier.",
     "descAssigned": "Se ha asignado un courier a tu recogida. La fecha y hora se confirmarán pronto.",
     "descScheduled": "Tu courier está en camino y llegará dentro de la ventana de tiempo indicada.",

@@ -157,6 +157,10 @@ export async function sendPickupConfirmationEmail(
     securityCode?: string;
     declaredValue?: number | null;
     insuranceValue?: number | null;
+    // Square payment link — when set, the request is awaiting payment and
+    // hasn't been activated yet (no confirmation call, no tracking timeline
+    // movement) until it's paid.
+    paymentUrl?: string;
   },
   lang: "en" | "es" = "en"
 ) {
@@ -164,13 +168,16 @@ export async function sendPickupConfirmationEmail(
 
   const copy = lang === "es"
     ? {
-        subject: `Recogida Confirmada — ${trackingCode}`,
-        title: "Solicitud de Recogida Confirmada",
+        subject: details?.paymentUrl ? `Completa tu pago — ${trackingCode}` : `Recogida Confirmada — ${trackingCode}`,
+        title: details?.paymentUrl ? "Un Paso Más: Completa el Pago" : "Solicitud de Recogida Confirmada",
         preheader: `Tu código de rastreo es ${trackingCode}. Rastrea tu recogida en cualquier momento.`,
         hi: `Hola <strong>${esc(contactName)}</strong>,`,
         hiText: `Hola ${contactName},`,
         received: "Tu solicitud de recogida fue recibida y está siendo procesada. Usa el código de abajo para rastrear tu envío en cualquier momento.",
         receivedText: "Tu solicitud de recogida fue recibida y está siendo procesada.",
+        payReceived: "Recibimos tu solicitud de recogida. Falta un paso: completa el pago para activarla — aún no se ha asignado ningún mensajero.",
+        payReceivedText: "Recibimos tu solicitud de recogida. Falta completar el pago para activarla.",
+        payCta: "Pagar ahora →",
         cta: "Rastrear mi envío →",
         followUp: "Recibirás un correo cada vez que cambie el estado de tu recogida.",
         trackText: `Rastrea tu envío: ${trackingUrl}`,
@@ -184,13 +191,16 @@ export async function sendPickupConfirmationEmail(
         },
       }
     : {
-        subject: `Pickup Confirmed — ${trackingCode}`,
-        title: "Pickup Request Confirmed",
+        subject: details?.paymentUrl ? `Complete Your Payment — ${trackingCode}` : `Pickup Confirmed — ${trackingCode}`,
+        title: details?.paymentUrl ? "One Step Left: Complete Payment" : "Pickup Request Confirmed",
         preheader: `Your tracking code is ${trackingCode}. Track your pickup anytime.`,
         hi: `Hi <strong>${esc(contactName)}</strong>,`,
         hiText: `Hi ${contactName},`,
         received: "Your pickup request has been received and is being processed. Use the code below to track your shipment at any time.",
         receivedText: "Your pickup request has been received and is being processed.",
+        payReceived: "We received your pickup request. One step left: complete payment to activate it — no courier has been assigned yet.",
+        payReceivedText: "We received your pickup request. Complete payment to activate it.",
+        payCta: "Pay now →",
         cta: "Track My Shipment →",
         followUp: "You'll receive an email every time your pickup status changes.",
         trackText: `Track your shipment: ${trackingUrl}`,
@@ -221,8 +231,9 @@ export async function sendPickupConfirmationEmail(
 
   const body = `
     <p style="font-size:15px;line-height:1.6;margin-top:0;">${copy.hi}</p>
-    <p style="font-size:15px;line-height:1.6;color:#475569;">${copy.received}</p>
+    <p style="font-size:15px;line-height:1.6;color:#475569;">${details?.paymentUrl ? copy.payReceived : copy.received}</p>
     ${trackingBox(trackingCode, lang)}
+    ${details?.paymentUrl ? button(details.paymentUrl, copy.payCta) : ""}
     ${details?.securityCode ? `
     <div style="background:#fffbeb;border:2px dashed #f5a524;border-radius:12px;padding:16px 20px;margin:16px 0;">
       <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a3570c;">${copy.securityCodeLabel}</p>
@@ -243,8 +254,9 @@ export async function sendPickupConfirmationEmail(
   const text = [
     copy.hiText,
     ``,
-    copy.receivedText,
+    details?.paymentUrl ? copy.payReceivedText : copy.receivedText,
     `${copy.trackingCodeLabel}: ${trackingCode}`,
+    ...(details?.paymentUrl ? [``, `${copy.payCta} ${details.paymentUrl}`] : []),
     ...(details?.securityCode
       ? [`${copy.securityCodeLabel}: ${details.securityCode}`, copy.securityCodeNote]
       : []),

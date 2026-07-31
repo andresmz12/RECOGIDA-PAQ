@@ -127,12 +127,14 @@ export async function PATCH(
       );
     }
 
-    // Customers can only cancel their own pending requests
+    // Customers can only cancel their own pending (or still-unpaid draft)
+    // requests — a DRAFT awaiting Square payment must be cancellable too,
+    // otherwise an abandoned/unwanted draft is stuck forever.
     if (role === "CUSTOMER") {
       if (pickupRequest.userId !== userId) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-      if (pickupRequest.status !== "PENDING") {
+      if (!["PENDING", "DRAFT"].includes(pickupRequest.status)) {
         return NextResponse.json(
           { error: "Solo puedes cancelar solicitudes en estado Pendiente" },
           { status: 400 }

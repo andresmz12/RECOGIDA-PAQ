@@ -19,6 +19,10 @@ enum Role {
 }
 
 enum PickupStatus {
+  // Created but unpaid — a Square payment link was generated and the
+  // customer hasn't completed checkout yet. Not a real request until paid:
+  // excluded from dispatch's default views, stats, and the daily report.
+  DRAFT
   PENDING
   ASSIGNED
   SCHEDULED
@@ -168,6 +172,16 @@ model PickupRequest {
   // 4-digit pickup verification code. Only the customer sees it (guía,
   // email, success screen); the courier must enter it to confirm pickup.
   securityCode        String?
+  // Server-computed price (never trust a client-supplied amount for a real
+  // charge) — in cents to avoid float rounding on money.
+  priceCents          Int?
+  paymentStatus       String?         @default("UNPAID")
+  squarePaymentLinkId String?
+  squarePaymentLinkUrl String?
+  // Square's Order id, not the payment link id — this is what the
+  // `payment.updated` webhook payload actually references, so it's what we
+  // key off of to find the pickup a completed payment belongs to.
+  squareOrderId       String?
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 
@@ -176,6 +190,7 @@ model PickupRequest {
   @@index([userId])
   @@index([assignedCourierId])
   @@index([status])
+  @@index([squareOrderId])
   @@index([preferredDate])
   @@index([contactPhone])
   @@index([createdAt])

@@ -9,6 +9,8 @@ import { authOptions } from "@/lib/auth";
 import { triggerConfirmationCall } from "@/lib/call-service";
 import { dispatchWebhookEvent } from "@/lib/webhook-service";
 import { rateLimit } from "@/lib/rate-limit";
+import { calculatePriceCents, applyDiscountCents } from "@/lib/pricing";
+import { createPaymentLink } from "@/lib/square-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -188,9 +190,58 @@ export async function POST(request: NextRequest) {
       if (found) appliedDiscount = { code: found.code, percent: found.percent };
     }
 
+    // Price is computed server-side — never trust a client-supplied amount
+    // for a real charge. packageItems (multi-box maritime/fixed-item) comes
+    // in as a JSON string; parse it the same way it's stored.
+    let parsedItems: { packageType: string; estimatedWeight?: number | string | null }[] | undefined;
+    if (packageItems) {
+      try {
+        parsedItems = JSON.parse(packageItems);
+      } catch {
+        return NextResponse.json({ error: "Invalid packageItems" }, { status: 400 });
+      }
+    }
+
+    const pricingRules = await (prisma as any).pricing.findMany({ where: { active: true } });
+    const basePriceCents = calculatePriceCents(
+      {
+        shippingMode: shippingMode === "AIR" ? "AIR" : "MARITIME",
+        destinationCountry,
+        airWeight: estimatedWeight,
+        items: parsedItems,
+        packageType,
+        estimatedWeight,
+      },
+      pricingRules
+    );
+    const priceCents = applyDiscountCents(basePriceCents, appliedDiscount?.percent);
+
     // Pickup verification code — shown only to the customer; the courier
     // must enter it to confirm the pickup.
     const securityCode = generateSecurityCode();
+
+    // A fully-discounted (100%) request has nothing to charge — skip Square
+    // entirely and activate it immediately, same as before this feature
+    // existed. Otherwise generate the payment link *before* creating the
+    // row: if Square fails, we don't want a DRAFT stranded with no way to
+    // pay, or a real request created without ever generating one.
+    let paymentLink: { id: string; url: string; orderId: string } | null = null;
+    if (priceCents > 0) {
+      try {
+        paymentLink = await createPaymentLink(
+          priceCents,
+          trackingCode,
+          `O'Globo Cargo — ${trackingCode}`
+        );
+      } catch (err) {
+        console.error("[pickup-requests] Square createPaymentLink error:", err);
+        return NextResponse.json(
+          { error: "Could not generate a payment link. Please try again." },
+          { status: 502 }
+        );
+      }
+    }
+    const initialStatus: "DRAFT" | "PENDING" = paymentLink ? "DRAFT" : "PENDING";
 
     // Create pickup request
     const createData: Prisma.PickupRequestUncheckedCreateInput = {
@@ -232,10 +283,15 @@ export async function POST(request: NextRequest) {
         preferredTimeWindow,
         specialInstructions: specialInstructions || null,
         notes: notes || null,
-        status: "PENDING",
+        status: initialStatus,
         discountCode: appliedDiscount?.code ?? null,
         discountPercent: appliedDiscount?.percent ?? null,
         lang: emailLang,
+        priceCents,
+        paymentStatus: paymentLink ? "UNPAID" : "PAID",
+        squarePaymentLinkId: paymentLink?.id ?? null,
+        squarePaymentLinkUrl: paymentLink?.url ?? null,
+        squareOrderId: paymentLink?.orderId ?? null,
     };
     const pickupRequest = await prisma.pickupRequest.create({ data: createData });
 
@@ -244,8 +300,8 @@ export async function POST(request: NextRequest) {
       data: {
         pickupRequestId: pickupRequest.id,
         fromStatus: null,
-        toStatus: "PENDING",
-        notes: "Solicitud creada",
+        toStatus: initialStatus,
+        notes: paymentLink ? "Solicitud creada — pendiente de pago" : "Solicitud creada",
       },
     });
 
@@ -264,26 +320,30 @@ export async function POST(request: NextRequest) {
         securityCode,
         declaredValue: parsedDeclaredValue,
         insuranceValue: parsedInsuranceValue,
+        paymentUrl: paymentLink?.url,
       }, emailLang).catch((err) =>
         console.error("[pickup-requests] sendPickupConfirmationEmail error:", err)
       );
     }
 
-    // Trigger voice confirmation call in background (non-blocking)
-    triggerConfirmationCall(pickupRequest.id).catch((err) =>
-      console.error("[pickup-requests] triggerConfirmationCall error:", err)
-    );
-
-    // Notify external systems in background (non-blocking)
-    dispatchWebhookEvent(pickupRequest.id, "CREATED").catch((err) =>
-      console.error("[pickup-requests] dispatchWebhookEvent error:", err)
-    );
+    if (!paymentLink) {
+      // Nothing to pay (fully discounted) — activate immediately, same
+      // behavior as before this feature existed. When there IS a payment
+      // link, these fire later from the Square webhook once it's paid.
+      triggerConfirmationCall(pickupRequest.id).catch((err) =>
+        console.error("[pickup-requests] triggerConfirmationCall error:", err)
+      );
+      dispatchWebhookEvent(pickupRequest.id, "CREATED").catch((err) =>
+        console.error("[pickup-requests] dispatchWebhookEvent error:", err)
+      );
+    }
 
     return NextResponse.json({
       trackingCode,
       securityCode,
       createdAt: pickupRequest.createdAt,
       accountCreated: !!linkUserId,
+      paymentUrl: paymentLink?.url ?? null,
     });
   } catch (error) {
     console.error("Error creating pickup request:", error);
@@ -322,6 +382,11 @@ export async function GET(request: NextRequest) {
       // Supports comma-separated values, e.g. "SCHEDULED,EN_CAMINO"
       const statuses = status.split(",").filter(Boolean);
       where.status = statuses.length > 1 ? { in: statuses } : statuses[0];
+    } else {
+      // Default views (dispatch's list, map, calendar, dashboard home,
+      // courier's list) must never surface unpaid drafts — they aren't
+      // real work yet. Pass ?status=DRAFT explicitly to see them.
+      where.status = { not: "DRAFT" };
     }
 
     if (courierId) {

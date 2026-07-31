@@ -41,6 +41,7 @@ type TimelineItem =
 
 const STEPS = ["PENDING", "ASSIGNED", "SCHEDULED", "PICKED_UP"];
 const STATUS_MSG_KEY: Record<string, string> = {
+  DRAFT: "Draft",
   PENDING: "Pending",
   ASSIGNED: "Assigned",
   SCHEDULED: "Scheduled",
@@ -268,7 +269,7 @@ export default function RastreoPage() {
               <p className="text-2xl font-bold text-slate-900">{formattedDate}</p>
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xs text-slate-500">{t("rastreo.scheduledDate")}</p>
-                {tracking.status === "PENDING" ? (
+                {tracking.status === "PENDING" || tracking.status === "DRAFT" ? (
                   <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide">
                     {t("common.dateUnconfirmed")}
                   </span>
