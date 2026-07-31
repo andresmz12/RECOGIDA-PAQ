@@ -33,6 +33,7 @@ interface TrackingData {
   lastUpdated: string;
   statusHistory: StatusHistoryEntry[];
   caseEvents: CaseEvent[];
+  paymentUrl: string | null;
 }
 
 type TimelineItem =
@@ -221,6 +222,14 @@ export default function RastreoPage() {
             <p className="text-slate-600">
               {t(`rastreo.desc${STATUS_MSG_KEY[tracking.status] ?? tracking.status}`)}
             </p>
+            {tracking.paymentUrl && (
+              <a
+                href={tracking.paymentUrl}
+                className="inline-flex items-center justify-center gap-2 mt-4 px-6 py-3 rounded-xl font-bold text-sm text-white bg-accent-500 hover:bg-accent-600 transition-all"
+              >
+                {t("recoger.payNowButton")}
+              </a>
+            )}
           </div>
 
           {/* Progress indicator */}

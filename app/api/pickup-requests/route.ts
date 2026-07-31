@@ -11,6 +11,7 @@ import { dispatchWebhookEvent } from "@/lib/webhook-service";
 import { rateLimit } from "@/lib/rate-limit";
 import { calculatePriceCents, applyDiscountCents } from "@/lib/pricing";
 import { createPaymentLink } from "@/lib/square-client";
+import { isTestPhone } from "@/lib/test-accounts";
 
 export async function POST(request: NextRequest) {
   try {
@@ -220,13 +221,19 @@ export async function POST(request: NextRequest) {
     // must enter it to confirm the pickup.
     const securityCode = generateSecurityCode();
 
+    // QA/demo numbers (TEST_ACCOUNT_PHONES) skip Square entirely, same as a
+    // fully-discounted request — never a real charge, so paymentStatus is
+    // tagged "TEST" below instead of "PAID" to keep it out of financial
+    // reporting.
+    const isTest = isTestPhone(contactPhone);
+
     // A fully-discounted (100%) request has nothing to charge — skip Square
     // entirely and activate it immediately, same as before this feature
     // existed. Otherwise generate the payment link *before* creating the
     // row: if Square fails, we don't want a DRAFT stranded with no way to
     // pay, or a real request created without ever generating one.
     let paymentLink: { id: string; url: string; orderId: string } | null = null;
-    if (priceCents > 0) {
+    if (!isTest && priceCents > 0) {
       try {
         paymentLink = await createPaymentLink(
           priceCents,
@@ -288,7 +295,7 @@ export async function POST(request: NextRequest) {
         discountPercent: appliedDiscount?.percent ?? null,
         lang: emailLang,
         priceCents,
-        paymentStatus: paymentLink ? "UNPAID" : "PAID",
+        paymentStatus: paymentLink ? "UNPAID" : isTest ? "TEST" : "PAID",
         squarePaymentLinkId: paymentLink?.id ?? null,
         squarePaymentLinkUrl: paymentLink?.url ?? null,
         squareOrderId: paymentLink?.orderId ?? null,
@@ -301,7 +308,11 @@ export async function POST(request: NextRequest) {
         pickupRequestId: pickupRequest.id,
         fromStatus: null,
         toStatus: initialStatus,
-        notes: paymentLink ? "Solicitud creada — pendiente de pago" : "Solicitud creada",
+        notes: paymentLink
+          ? "Solicitud creada — pendiente de pago"
+          : isTest
+          ? "Solicitud creada — cuenta de prueba (pago omitido)"
+          : "Solicitud creada",
       },
     });
 
@@ -445,12 +456,12 @@ export async function GET(request: NextRequest) {
 
     const total = await prisma.pickupRequest.count({ where });
 
-    // Couriers must never see the pickup verification code — the customer
-    // handing it over in person is the whole proof of pickup. They only
-    // get a flag so the UI can require the input.
+    // Couriers must never see the pickup verification code, price, or
+    // payment link — none of that is needed to do the pickup, and it's
+    // financial data outside what their role should have visibility into.
     const data =
       role === "COURIER"
-        ? pickups.map(({ securityCode, ...rest }) => ({
+        ? pickups.map(({ securityCode, priceCents, paymentStatus, squarePaymentLinkId, squarePaymentLinkUrl, squareOrderId, ...rest }) => ({
             ...rest,
             requiresSecurityCode: !!securityCode,
           }))

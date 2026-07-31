@@ -72,10 +72,10 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Couriers must never see the pickup verification code — only a flag
-    // so the UI can require the input.
+    // Couriers must never see the pickup verification code, price, or
+    // payment link — only a flag so the UI can require the code input.
     if (role === "COURIER") {
-      const { securityCode, ...rest } = pickupRequest;
+      const { securityCode, priceCents, paymentStatus, squarePaymentLinkId, squarePaymentLinkUrl, squareOrderId, ...rest } = pickupRequest;
       return NextResponse.json({ ...rest, requiresSecurityCode: !!securityCode });
     }
 
@@ -271,9 +271,10 @@ export async function PATCH(
       },
     });
 
-    // Couriers must never see the pickup verification code
+    // Couriers must never see the pickup verification code, price, or
+    // payment link.
     if (role === "COURIER" && finalRequest) {
-      const { securityCode, ...rest } = finalRequest;
+      const { securityCode, priceCents, paymentStatus, squarePaymentLinkId, squarePaymentLinkUrl, squareOrderId, ...rest } = finalRequest;
       return NextResponse.json({ ...rest, requiresSecurityCode: !!securityCode });
     }
 

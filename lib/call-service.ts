@@ -4,6 +4,7 @@ import {
   createProspectAndCall,
   CallCustomContext,
 } from "@/lib/zyra-client";
+import { normalizePhone } from "@/lib/utils";
 
 const AGENT_ID_COURIER = parseInt(process.env.ZYRA_AGENT_ID_COURIER || "0");
 const CAMPAIGN_ID_CONFIRMATION = parseInt(
@@ -11,13 +12,6 @@ const CAMPAIGN_ID_CONFIRMATION = parseInt(
 );
 const MAX_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 60_000;
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  return `+${digits}`;
-}
 
 function isValidPhone(phone: string | null | undefined): boolean {
   if (!phone) return false;

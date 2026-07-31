@@ -26,6 +26,7 @@ export async function GET(
         preferredDate: true,
         preferredTimeWindow: true,
         updatedAt: true,
+        squarePaymentLinkUrl: true,
         statusHistory: {
           // Public endpoint: internal staff notes never leave this route.
           select: {
@@ -66,6 +67,9 @@ export async function GET(
       lastUpdated: lastHistory?.createdAt || pickupRequest.updatedAt,
       statusHistory: pickupRequest.statusHistory,
       caseEvents,
+      // Only meaningful (and only ever set) while still DRAFT — once paid,
+      // Square's checkout page is no longer useful and this stays null.
+      paymentUrl: pickupRequest.status === "DRAFT" ? pickupRequest.squarePaymentLinkUrl : null,
     });
   } catch (error) {
     console.error("Error tracking pickup request:", error);

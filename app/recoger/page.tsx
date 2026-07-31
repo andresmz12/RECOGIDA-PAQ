@@ -123,6 +123,7 @@ export default function RecogerPage() {
   const [error, setError] = useState("");
   const [trackingCode, setTrackingCode] = useState("");
   const [securityCode, setSecurityCode] = useState("");
+  const [paymentUrl, setPaymentUrl] = useState("");
   const [pricingRules, setPricingRules] = useState<PricingRule[]>([]);
   const [discountInput, setDiscountInput] = useState("");
   const [discount, setDiscount] = useState<{ code: string; percent: number } | null>(null);
@@ -405,6 +406,7 @@ export default function RecogerPage() {
       }
       setTrackingCode(data.trackingCode);
       setSecurityCode(data.securityCode ?? "");
+      setPaymentUrl(data.paymentUrl ?? "");
 
       // Save the recipient for next time — best-effort, doesn't block success
       if (saveRecipient && saveRecipientLabel.trim()) {
@@ -469,6 +471,21 @@ export default function RecogerPage() {
             <p className="text-3xl font-mono font-black text-indigo-300">{trackingCode}</p>
             <p className="text-white/40 text-xs mt-3">{t("recoger.saveCode")}</p>
           </div>
+
+          {paymentUrl && (
+            <div className="bg-accent-500/15 backdrop-blur border-2 border-accent-400/50 rounded-2xl p-5 mb-6">
+              <p className="text-accent-300 text-xs font-bold uppercase tracking-widest mb-3">
+                {t("recoger.payNowLabel")}
+              </p>
+              <a
+                href={paymentUrl}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all text-white bg-accent-500 hover:bg-accent-600"
+              >
+                {t("recoger.payNowButton")}
+              </a>
+              <p className="text-accent-200/70 text-xs mt-3">{t("recoger.payNowNote")}</p>
+            </div>
+          )}
 
           {securityCode && (
             <div className="bg-amber-500/15 backdrop-blur border-2 border-dashed border-amber-400/50 rounded-2xl p-5 mb-6">

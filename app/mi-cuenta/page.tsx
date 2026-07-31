@@ -33,6 +33,7 @@ interface Pickup {
   recipientCountry: string;
   packageType?: string;
   securityCode?: string;
+  squarePaymentLinkUrl?: string | null;
 }
 
 function formatDate(d: string) {
@@ -717,6 +718,16 @@ function PickupCard({ pickup, cancelling, onCancel, openCase }: {
 
         {/* Status stepper */}
         {!isCancelled && <StatusStepper status={pickup.status} openCase={openCase} />}
+
+        {/* Payment link — shown until the request is paid and activated */}
+        {pickup.status === "DRAFT" && pickup.squarePaymentLinkUrl && (
+          <a
+            href={pickup.squarePaymentLinkUrl}
+            className="flex items-center justify-center gap-2 bg-accent-500 hover:bg-accent-600 text-white font-bold text-sm px-4 py-2.5 rounded-xl my-3 transition-all"
+          >
+            {t("recoger.payNowButton")}
+          </a>
+        )}
 
         {/* Pickup security code — hand to the courier at pickup */}
         {pickup.securityCode && !isCancelled && pickup.status !== "PICKED_UP" && (

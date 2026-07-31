@@ -58,6 +58,15 @@ export function pickupDateKey(date: string | Date): string {
   return d.toLocaleDateString("en-CA", { timeZone: "UTC" });
 }
 
+// Shared by call-service.ts (ZyraVoice needs E.164) and test-accounts.ts
+// (matching TEST_ACCOUNT_PHONES regardless of how the number is formatted).
+export function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return `+${digits}`;
+}
+
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("es-ES", {
     year: "numeric",
