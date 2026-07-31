@@ -23,7 +23,9 @@ export async function POST(_req: NextRequest) {
 
   const [todayPickups, pending, assigned, enCamino, completed] = await Promise.all([
     prisma.pickupRequest.findMany({
-      where: { preferredDate: { gte: today, lt: tomorrow } },
+      // Unpaid drafts aren't real pickups yet — don't show them to
+      // dispatch as if they need to be worked today.
+      where: { preferredDate: { gte: today, lt: tomorrow }, status: { not: "DRAFT" } },
       include: { assignedCourier: { select: { name: true } } },
       orderBy: { preferredDate: "asc" },
     }),

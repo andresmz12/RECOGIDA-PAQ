@@ -9,7 +9,7 @@ import { authOptions } from "@/lib/auth";
 import { triggerConfirmationCall } from "@/lib/call-service";
 import { dispatchWebhookEvent } from "@/lib/webhook-service";
 import { rateLimit } from "@/lib/rate-limit";
-import { calculatePriceCents, applyDiscountCents } from "@/lib/pricing";
+import { calculatePriceCents, applyDiscountCents, PricingRuleNotFoundError } from "@/lib/pricing";
 import { createPaymentLink } from "@/lib/square-client";
 import { isTestPhone } from "@/lib/test-accounts";
 
@@ -204,17 +204,31 @@ export async function POST(request: NextRequest) {
     }
 
     const pricingRules = await (prisma as any).pricing.findMany({ where: { active: true } });
-    const basePriceCents = calculatePriceCents(
-      {
-        shippingMode: shippingMode === "AIR" ? "AIR" : "MARITIME",
-        destinationCountry,
-        airWeight: estimatedWeight,
-        items: parsedItems,
-        packageType,
-        estimatedWeight,
-      },
-      pricingRules
-    );
+    let basePriceCents: number;
+    try {
+      basePriceCents = calculatePriceCents(
+        {
+          shippingMode: shippingMode === "AIR" ? "AIR" : "MARITIME",
+          destinationCountry,
+          airWeight: estimatedWeight,
+          items: parsedItems,
+          packageType,
+          estimatedWeight,
+        },
+        pricingRules
+      );
+    } catch (err) {
+      if (err instanceof PricingRuleNotFoundError) {
+        // A missing pricing rule must never silently become a free request
+        // that skips the Square payment gate — fail loudly instead.
+        console.error("[pickup-requests]", err.message);
+        return NextResponse.json(
+          { error: "Pricing is not configured for this destination. Please contact support." },
+          { status: 400 }
+        );
+      }
+      throw err;
+    }
     const priceCents = applyDiscountCents(basePriceCents, appliedDiscount?.percent);
 
     // Pickup verification code — shown only to the customer; the courier

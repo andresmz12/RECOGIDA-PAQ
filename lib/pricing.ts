@@ -67,6 +67,13 @@ export interface PriceInput {
   estimatedWeight?: number | string | null;
 }
 
+// Thrown by calculatePriceCents when no DB Pricing row exists for an AIR
+// line item — unlike maritime (which has BOX_BASE_FALLBACK, a deliberate
+// business default), there is no sane fallback air rate. Letting this
+// silently price at $0 would skip the Square payment gate entirely for a
+// destination/item combo whose pricing was simply never configured.
+export class PricingRuleNotFoundError extends Error {}
+
 // Single source of truth for pricing math — used both server-side (to
 // compute the actual charge for a Square payment link) and by the /recoger
 // form (to show a live estimate). Keeping this in one place means the
@@ -80,6 +87,9 @@ export function calculatePriceCents(input: PriceInput, pricingRules: PricingRule
   if (shippingMode === "AIR" && airKind === "PER_LB") {
     const weight = parseFloat(String(input.airWeight ?? "")) || 0;
     const rule = ruleFor(pricingRules, destinationCountry, "AIR", AIR_PER_LB_KEY);
+    if (!rule) {
+      throw new PricingRuleNotFoundError(`No AIR/PER_LB pricing rule configured for ${destinationCountry}`);
+    }
     total = calcAirPerLbPrice(weight, rule);
   } else {
     const isFixedItem = shippingMode === "AIR" && airKind === "FIXED_ITEM";
@@ -90,8 +100,15 @@ export function calculatePriceCents(input: PriceInput, pricingRules: PricingRule
     total = items.reduce((sum, item) => {
       if (isFixedItem) {
         const rule = ruleFor(pricingRules, destinationCountry, "AIR", item.packageType);
+        if (!rule) {
+          throw new PricingRuleNotFoundError(
+            `No AIR/FIXED_ITEM pricing rule configured for ${destinationCountry}/${item.packageType}`
+          );
+        }
         return sum + calcAirFixedItemPrice(rule);
       }
+      // Maritime intentionally falls back to BOX_BASE_FALLBACK when
+      // unconfigured — a real (if generic) price, not a $0 skip.
       const weight = parseFloat(String(item.estimatedWeight ?? "")) || 0;
       const rule = ruleFor(pricingRules, destinationCountry, "MARITIME", item.packageType);
       return sum + calcMaritimePrice(item.packageType, weight, rule);

@@ -71,18 +71,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Square can deliver payment.updated more than once for the same
-    // COMPLETED payment (retries, duplicate delivery) — triggerConfirmationCall
-    // and dispatchWebhookEvent are NOT idempotent, so only act once.
-    if (pickupRequest.paymentStatus === "PAID") {
-      return NextResponse.json({ received: true, alreadyProcessed: true });
-    }
-
+    // COMPLETED payment (retries, duplicate delivery), and two deliveries
+    // can arrive concurrently — a plain read-then-write ("is it PAID yet?"
+    // followed by a separate update) lets both requests read UNPAID before
+    // either commits. updateMany's WHERE is evaluated atomically by
+    // Postgres, so only one concurrent request can ever match and flip the
+    // row; the loser's count is 0. triggerConfirmationCall and
+    // dispatchWebhookEvent are NOT idempotent, so this must be exact, not
+    // best-effort.
     const fromStatus = pickupRequest.status;
-
-    await prisma.pickupRequest.update({
-      where: { id: pickupRequest.id },
+    const { count } = await prisma.pickupRequest.updateMany({
+      where: { id: pickupRequest.id, paymentStatus: { not: "PAID" } },
       data: { paymentStatus: "PAID", status: "PENDING" },
     });
+    if (count === 0) {
+      return NextResponse.json({ received: true, alreadyProcessed: true });
+    }
 
     await prisma.statusHistory.create({
       data: {
