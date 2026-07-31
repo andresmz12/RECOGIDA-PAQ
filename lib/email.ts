@@ -283,6 +283,7 @@ export async function sendStatusUpdateEmail(
   const trackingUrl = `${BASE_URL}/rastreo/${trackingCode}`;
 
   const STATUS_MESSAGES_EN: Record<PickupStatus, { headline: string; body: string }> = {
+    DRAFT:     { headline: "Awaiting payment",  body: "Your pickup request is waiting for payment to be completed before it can be activated." },
     PENDING:   { headline: "Request received",  body: "Your pickup request has been received and will be assigned to a courier shortly." },
     ASSIGNED:  { headline: "Courier assigned",  body: "A courier has been assigned to your pickup request." },
     SCHEDULED: { headline: "Courier en route",  body: "Your courier is en route to the pickup address. Please ensure someone is available to hand over the package." },
@@ -292,6 +293,7 @@ export async function sendStatusUpdateEmail(
   };
 
   const STATUS_MESSAGES_ES: Record<PickupStatus, { headline: string; body: string }> = {
+    DRAFT:     { headline: "Pendiente de pago",    body: "Tu solicitud de recogida está esperando que se complete el pago para poder activarse." },
     PENDING:   { headline: "Solicitud recibida",   body: "Tu solicitud de recogida fue recibida y será asignada a un mensajero en breve." },
     ASSIGNED:  { headline: "Mensajero asignado",   body: "Un mensajero ha sido asignado a tu solicitud de recogida." },
     SCHEDULED: { headline: "Mensajero en camino",  body: "Tu mensajero se encuentra en camino a la dirección de recogida. Asegúrate de que haya alguien disponible para la entrega del paquete." },
@@ -330,7 +332,7 @@ export async function sendStatusUpdateEmail(
   const { headline, body: msgBody } = STATUS_MESSAGES[newStatus];
 
   const statusColor: Record<PickupStatus, string> = {
-    PENDING: "#f59e0b", ASSIGNED: "#3b82f6", SCHEDULED: "#2c629b",
+    DRAFT: "#94a3b8", PENDING: "#f59e0b", ASSIGNED: "#3b82f6", SCHEDULED: "#2c629b",
     EN_CAMINO: "#f97316", PICKED_UP: "#10b981", CANCELLED: "#ef4444",
   };
 
