@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { rateLimit } from "./rate-limit";
+import { normalizeEmail } from "./utils";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Brute-force protection: throttle attempts per account and per IP
-        const email = credentials.email.trim().toLowerCase();
+        const email = normalizeEmail(credentials.email);
         const ip = (req?.headers?.["x-forwarded-for"] as string) ?? "unknown";
         const perEmail = rateLimit(`login:email:${email}`, { limit: 5, windowMs: 60_000 });
         const perIp = rateLimit(`login:ip:${ip}`, { limit: 20, windowMs: 60_000 });
@@ -26,8 +27,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Demasiados intentos. Espera un minuto e intenta de nuevo.");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        // Case-insensitive: existing rows may predate email normalization
+        // (registered with mixed-case), and newly created ones are always
+        // lowercase — this matches both without a data migration.
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
         });
 
         if (!user || !user.password) {

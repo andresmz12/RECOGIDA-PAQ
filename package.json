@@ -11,6 +11,7 @@
     "build": "node scripts/build.js",
     "start": "node scripts/start.js",
     "lint": "next lint",
+    "test": "vitest run",
     "verify": "node scripts/verify-setup.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -48,6 +49,7 @@
     "@capacitor/cli": "^8.4.2",
     "@types/bcryptjs": "^2.4.6",
     "eslint": "^8.55.0",
-    "eslint-config-next": "^14.2.0"
+    "eslint-config-next": "^14.2.0",
+    "vitest": "^4.1.10"
   }
 }

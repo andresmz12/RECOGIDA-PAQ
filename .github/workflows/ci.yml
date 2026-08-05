@@ -1,0 +1,34 @@
+name: CI
+
+# Runs on every push/PR so a broken build or type error is caught before
+# merge — previously the only workflow in this repo (android-release.yml)
+# was a manual, unrelated Play Store build with nothing gating the web app.
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

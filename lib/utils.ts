@@ -58,6 +58,13 @@ export function pickupDateKey(date: string | Date): string {
   return d.toLocaleDateString("en-CA", { timeZone: "UTC" });
 }
 
+// Emails are stored/looked-up case-insensitively (User.email's unique
+// constraint is case-sensitive in Postgres) — normalize on every write so
+// "Juan@Gmail.com" and "juan@gmail.com" can never become two accounts.
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 // Shared by call-service.ts (ZyraVoice needs E.164) and test-accounts.ts
 // (matching TEST_ACCOUNT_PHONES regardless of how the number is formatted).
 export function normalizePhone(phone: string): string {
@@ -65,6 +72,14 @@ export function normalizePhone(phone: string): string {
   if (digits.length === 10) return `+1${digits}`;
   if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
   return `+${digits}`;
+}
+
+// US phone numbers only — a pickup contact is always in the US, unlike a
+// package recipient, who may be anywhere (this is an international courier).
+// Accepts any punctuation/spacing; just checks the digit count/prefix.
+export function isValidUSPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 10 || (digits.length === 11 && digits[0] === "1");
 }
 
 export function formatDate(date: Date): string {

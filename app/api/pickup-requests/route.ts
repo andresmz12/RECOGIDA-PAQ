@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/client";
-import { generateTrackingCode, generateSecurityCode } from "@/lib/utils";
+import { generateTrackingCode, generateSecurityCode, normalizeEmail, isValidUSPhone } from "@/lib/utils";
 import { sendPickupConfirmationEmail, sendWelcomeEmail } from "@/lib/email";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -99,6 +99,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // The pickup contact is always in the US, unlike the recipient (who may
+    // be anywhere — this is an international courier), so only this field
+    // is checked against US phone format.
+    if (!isValidUSPhone(contactPhone)) {
+      return NextResponse.json(
+        { error: "Please enter a valid US phone number for the pickup contact" },
+        { status: 400 }
+      );
+    }
+
     // Declared value and insured value are mandatory on every shipment.
     const parsedDeclaredValue = parseFloat(declaredValue);
     if (isNaN(parsedDeclaredValue) || parsedDeclaredValue <= 0) {
@@ -140,8 +150,11 @@ export async function POST(request: NextRequest) {
 
     // Create user account if requested
     if (createAccount && contactEmail) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: contactEmail },
+      // contactEmail keeps whatever case the customer typed for display/
+      // sending — only the account lookup/creation is normalized.
+      const accountEmail = normalizeEmail(contactEmail);
+      const existingUser = await prisma.user.findFirst({
+        where: { email: { equals: accountEmail, mode: "insensitive" } },
       });
 
       if (!existingUser) {
@@ -163,7 +176,7 @@ export async function POST(request: NextRequest) {
 
         const newUser = await prisma.user.create({
           data: {
-            email: contactEmail,
+            email: accountEmail,
             password: hashedPassword,
             name: contactName,
             phone: contactPhone,

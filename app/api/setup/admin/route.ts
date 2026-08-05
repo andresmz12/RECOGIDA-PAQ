@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { normalizeEmail } from "@/lib/utils";
 
 // Without this, "no ADMIN exists yet" is the only gate — anyone who hits
 // this endpoint first (a fresh deploy, a DB reset) becomes the first admin.
@@ -29,7 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, password, name, setupSecret } = body;
+    const { password, name, setupSecret } = body;
+    const email = typeof body.email === "string" ? normalizeEmail(body.email) : body.email;
 
     if (!verifySetupSecret(setupSecret)) {
       return NextResponse.json(

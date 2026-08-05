@@ -5,6 +5,11 @@
 **Mercado**: Estados Unidos  
 **Idioma**: Español (UI) con datos US
 
+> **Snapshot histórico** — este reporte describe el estado del repo al
+> 2026-06-25. Desde entonces se agregaron pagos (Square), PWA/Android, i18n
+> en+es, CI, y varias correcciones de seguridad y bugs. Para el roadmap
+> vigente ver `docs/IMPROVEMENTS.md` (actualizado 2026-08-05).
+
 ---
 
 ## 🎯 Resumen Ejecutivo

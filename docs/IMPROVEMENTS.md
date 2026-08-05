@@ -1,5 +1,12 @@
 # O'Globo Cargo - Estado y Mejoras
 
+> **Nota (2026-08-05)**: Este documento describía el roadmap de junio 2026.
+> Gran parte de esas mejoras ya se implementaron desde entonces (pagos con
+> Square, PWA/Android, i18n en+es, forgot password, health check, mapa,
+> export CSV, validación de teléfono US, CI). Las secciones de abajo se
+> actualizaron para reflejar el estado real; ver `docs/STATUS_REPORT.md`
+> para el detalle histórico de lo hecho en junio.
+
 ## ✅ Estado del Repositorio
 
 ### Cambios Realizados
@@ -45,21 +52,15 @@ npx prisma studio
 # Ver tabla User
 ```
 
-### 2. Falta de Validación de Teléfono
-**Problema**: El campo de teléfono no valida formato USA
-**Recomendación**: Agregar validación con expresión regular
+### 2. Validación de Teléfono — ✅ Resuelto
+`lib/utils.ts` exporta `isValidUSPhone()`, usado en el registro (cliente y
+`/api/auth/register`) y en el contacto de recogida (`/recoger` y
+`/api/pickup-requests`). El teléfono del destinatario no se valida como US
+porque el destinatario puede estar en cualquier país (courier internacional).
 
-```typescript
-// Función a agregar en lib/utils.ts
-export function isValidUSPhone(phone: string): boolean {
-  const regex = /^(\+1)?[-.\s]?\(?[2-9]\d{2}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/;
-  return regex.test(phone.replace(/\s/g, ''));
-}
-```
-
-### 3. Falta de "Forgot Password"
-**Impacto**: Usuarios no pueden recuperar acceso si olvidan contraseña
-**Solución**: Crear API endpoint `/api/auth/forgot-password`
+### 3. "Forgot Password" — ✅ Resuelto
+`/api/auth/forgot-password` + `/api/auth/reset-password` y las páginas
+`/forgot-password` y `/reset-password/[token]` ya existen.
 
 ### 4. Email Configuration
 **Requisito**: SendGrid API key debe estar configurado
@@ -69,42 +70,46 @@ export function isValidUSPhone(phone: string): boolean {
 # Revisar logs para errores
 ```
 
-### 5. Dashboard Pages Vacías
-**Estado**: Las páginas dashboard existen pero muchas son básicas
-**Archivos Afectados**:
-- `app/dashboard/usuarios/page.tsx` - Necesita lista de usuarios con CRUD
-- `app/dashboard/mapa/page.tsx` - Necesita integración Leaflet
-- `app/dashboard/mis-recogidas/page.tsx` - Parcialmente implementada
+### 5. Dashboard Pages — ✅ Resuelto
+`app/dashboard/usuarios` (CRUD + paginación client-side + export CSV),
+`app/dashboard/mapa` (Leaflet) y `app/dashboard/mis-recogidas` ya están
+completamente implementadas.
 
-### 6. Seguimiento Público Limitado
-**Problema**: `/rastreo/[code]` solo muestra info básica
-**Mejora**: Agregar timeline visual de cambios de estado
+### 6. Seguimiento Público — ✅ Resuelto
+`/rastreo/[code]` ya muestra un timeline visual combinando `statusHistory`
+y `caseEvents`.
 
 ## 📋 Plan de Mejoras Recomendadas (Prioridad)
 
 ### P0 - Crítico
-- [ ] Crear script de verificación: ¿funciona el sistema completo?
-- [ ] Agregar variables de ejemplo en .env.example
-- [ ] Crear endpoint `/api/health` para diagnosticar problemas
-- [ ] Documentar en README: "Setup Guide para Producción"
+- [x] Crear endpoint `/api/health` para diagnosticar problemas
+- [x] Agregar variables de ejemplo en .env.example
+- [ ] Añadir tests automatizados (auth, pagos, webhooks) — sigue siendo el
+      gap más grande: no hay ningún test en el repo
+- [x] CI en GitHub Actions corriendo lint/typecheck/build en cada push/PR
+      (`.github/workflows/ci.yml`)
 
 ### P1 - Alto
-- [ ] Validación de teléfono con formato USA
-- [ ] Feature de "Forgot Password"
-- [ ] Dashboard de analytics (total pedidos, status, etc.)
-- [ ] Persistencia de sesión correcta en producción (verificar cookies seguras)
+- [x] Validación de teléfono con formato USA
+- [x] Feature de "Forgot Password"
+- [x] Dashboard de analytics (`/dashboard`, `/api/stats`)
+- [ ] Mover el rate limiting (`lib/rate-limit.ts`) a un store compartido
+      (Redis) si el servicio llega a correr con más de una réplica — hoy es
+      en memoria por proceso, correcto para una sola instancia
 
 ### P2 - Medio
-- [ ] Completar página de usuarios (CRUD)
-- [ ] Mapa interactivo con Leaflet
-- [ ] Paginación en listados
-- [ ] Búsqueda avanzada de solicitudes
+- [x] Completar página de usuarios (CRUD)
+- [x] Mapa interactivo con Leaflet
+- [x] Paginación en listados (client-side en `usuarios`, server-side en
+      `solicitudes`)
+- [x] Búsqueda avanzada de solicitudes
 
 ### P3 - Menor
-- [ ] Exportar reportes a CSV
+- [x] Exportar reportes a CSV
+- [x] Soporte multiidioma (i18n: `lib/i18n-context.tsx`, `messages/en.json` /
+      `es.json`)
 - [ ] Integración con API de direcciones (Google Places)
 - [ ] Dark mode
-- [ ] Soporte multiidioma (i18n)
 
 ## 🔐 Security Considerations
 
@@ -120,7 +125,8 @@ export function isValidUSPhone(phone: string): boolean {
 - [ ] NEXTAUTH_SECRET debe ser valor fuerte y secreto
 - [ ] DATABASE_URL con conexión encriptada (SSL)
 - [ ] SendGrid API key debe tener permisos limitados
-- [ ] Considerar rate limiting en /api/auth endpoints
+- [x] Rate limiting en /api/auth y demás endpoints públicos
+      (`lib/rate-limit.ts`)
 
 ## 📊 Estructura de Datos - Correcciones Requeridas
 

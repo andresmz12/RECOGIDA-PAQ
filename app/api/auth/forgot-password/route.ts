@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { normalizeEmail } from "@/lib/utils";
 
 const schema = z.object({
   email: z.string().email(),
@@ -22,10 +23,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Valid email required." }, { status: 400 });
   }
 
-  const { email } = parsed.data;
+  const email = normalizeEmail(parsed.data.email);
 
   // Always return success to avoid user enumeration
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+  });
   if (user) {
     // Delete any existing token for this email
     await prisma.passwordResetToken.deleteMany({ where: { email } });

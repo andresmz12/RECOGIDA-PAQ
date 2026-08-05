@@ -40,8 +40,21 @@ export async function POST(request: NextRequest) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // Case-insensitive: the token's stored email is always normalized, but
+  // the User row may predate email normalization (mixed-case), so an
+  // exact-match update could miss it.
+  const existingUser = await prisma.user.findFirst({
+    where: { email: { equals: record.email, mode: "insensitive" } },
+  });
+  if (!existingUser) {
+    return NextResponse.json(
+      { error: "This reset link is invalid or has expired." },
+      { status: 400 }
+    );
+  }
+
   const user = await prisma.user.update({
-    where: { email: record.email },
+    where: { id: existingUser.id },
     data: { password: hashedPassword },
     select: { email: true, name: true },
   });

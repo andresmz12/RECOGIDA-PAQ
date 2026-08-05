@@ -718,7 +718,8 @@
     "itemType": "Item type",
     "airPriceRow": "{{weight}} lbs × ${{rate}}/lb",
     "addItem": "Add item",
-    "declaredValueRequired": "Enter the declared value of the package contents."
+    "declaredValueRequired": "Enter the declared value of the package contents.",
+    "errorContactPhone": "Please enter a valid US phone number for the pickup contact (e.g. (555) 123-4567)."
   },
   "rastreo": {
     "loading": "Loading tracking information...",

@@ -718,7 +718,8 @@
     "itemType": "Tipo de artículo",
     "airPriceRow": "{{weight}} lbs × ${{rate}}/lb",
     "addItem": "Agregar artículo",
-    "declaredValueRequired": "Ingresa el valor declarado del contenido del paquete."
+    "declaredValueRequired": "Ingresa el valor declarado del contenido del paquete.",
+    "errorContactPhone": "Ingresa un número de teléfono de EE.UU. válido para el contacto de recogida (ej. (555) 123-4567)."
   },
   "rastreo": {
     "loading": "Cargando información de rastreo...",

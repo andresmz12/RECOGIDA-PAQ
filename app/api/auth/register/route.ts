@@ -4,12 +4,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendWelcomeEmail } from "@/lib/email";
+import { normalizeEmail, isValidUSPhone } from "@/lib/utils";
 
 const schema = z.object({
   email: z.string().email("Valid email required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   name: z.string().min(1, "Name is required.").max(100),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine((v) => !v || isValidUSPhone(v), "Please enter a valid US phone number."),
   acceptedTerms: z
     .boolean()
     .refine((v) => v === true, "You must accept the Terms and Conditions."),
@@ -32,9 +36,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { email, password, name, phone, lang } = parsed.data;
+  const { password, name, phone, lang } = parsed.data;
+  const email = normalizeEmail(parsed.data.email);
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
+  const existingUser = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+  });
   if (existingUser) {
     return NextResponse.json({ error: "Email already registered." }, { status: 400 });
   }

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { normalizeEmail } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -31,9 +32,10 @@ export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { email, password, name, phone, role } = await req.json();
+  const body = await req.json();
+  const { password, name, phone, role } = body;
 
-  if (!email || !password || !name || !role) {
+  if (!body.email || !password || !name || !role) {
     return NextResponse.json({ error: "email, password, name y role son requeridos" }, { status: 400 });
   }
 
@@ -46,7 +48,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const email = normalizeEmail(body.email);
+
+  const existing = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+  });
   if (existing) return NextResponse.json({ error: "Email ya registrado" }, { status: 400 });
 
   const hashedPassword = await bcrypt.hash(password, 10);

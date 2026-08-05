@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n-context";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { getShippingConfig, AIR_ITEM_TYPES, AIR_PER_LB_KEY, type ShippingMode } from "@/lib/shipping-modes";
 import { calcMaritimePrice, calcAirPerLbPrice, calcAirFixedItemPrice, type PricingRule } from "@/lib/pricing";
+import { isValidUSPhone } from "@/lib/utils";
 
 const AIR_PER_LB_LABEL = "Envío Aéreo (por libra)";
 
@@ -329,6 +330,10 @@ export default function RecogerPage() {
     e.preventDefault();
     setError("");
 
+    if (!isValidUSPhone(form.contactPhone)) {
+      setError(t("recoger.errorContactPhone"));
+      return;
+    }
     if (!form.declaredValue || parseFloat(form.declaredValue) <= 0) {
       setError(t("recoger.declaredValueRequired"));
       return;
